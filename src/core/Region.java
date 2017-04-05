@@ -1,3 +1,5 @@
+package core;
+
 /**
  * Created by Paris on 18/03/2017.
  */

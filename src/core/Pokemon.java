@@ -1,3 +1,5 @@
+package core;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -6,7 +8,7 @@ import java.util.Arrays;
  */
 public class Pokemon {
 
-    static final ArrayList<String> VALID_NAMES = new ArrayList<String>(Arrays.asList(new String[]{
+    public static final ArrayList<String> VALID_NAMES = new ArrayList<String>(Arrays.asList(new String[]{
             "bulbasaur",
             "ivysaur",
             "venusaur",
@@ -260,7 +262,7 @@ public class Pokemon {
             "celebi"
     }));
 
-    String name;
+    public String name;
 
     float miniv = 0;
     float maxiv = 100;
@@ -313,7 +315,7 @@ public class Pokemon {
 
     @Override
     public boolean equals(Object obj) {
-        assert obj.getClass().getName().equals("Pokemon");
+        assert obj.getClass().getName().equals("core.Pokemon");
 
         Pokemon poke = (Pokemon) obj;
         return poke.name.equals(this.name);

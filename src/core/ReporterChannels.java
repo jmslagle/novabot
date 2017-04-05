@@ -1,3 +1,5 @@
+package core;
+
 import java.util.ArrayList;
 
 /**
@@ -16,7 +18,7 @@ public class ReporterChannels extends ArrayList<ReporterChannel>{
 
     public static Region getRegionByName(String name) {
 
-        System.out.println("Converting region name: " + name + " to Region");
+        System.out.println("Converting region name: " + name + " to core.Region");
 
         if(name.startsWith("inner-north")) return Region.Innernorth;
 
@@ -43,6 +45,8 @@ public class ReporterChannels extends ArrayList<ReporterChannel>{
         if(name.startsWith("dratini")) return Region.Dratini;
 
         if(name.startsWith("100-iv")) return Region.Hundrediv;
+
+        if(name.startsWith("ultra-rare")) return Region.Ultrarare;
 
         if(name.startsWith("event")) return Region.Event;
 

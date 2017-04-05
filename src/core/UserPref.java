@@ -1,3 +1,5 @@
+package core;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -84,7 +86,7 @@ public class UserPref {
                         if(pokemon.miniv == pokemon.maxiv){
                             str += " " + pokemon.miniv;
                         }else{
-                            str += " " + pokemon.miniv + "-" + pokemon.miniv;
+                            str += " " + pokemon.miniv + "-" + pokemon.maxiv;
                         }
 
                         str += "%";

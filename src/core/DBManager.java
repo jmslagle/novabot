@@ -1,9 +1,9 @@
+package core;
+
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 
@@ -20,8 +20,8 @@ public class DBManager {
         ArrayList<Pokemon> pokemons = new ArrayList<>();
         pokemons.add(pokemon);
 
-
-
+//        logNewUser("123456");
+        System.out.println(getJoinDate("123456"));
 
     }
 
@@ -31,8 +31,8 @@ public class DBManager {
     public static void connect(String user, String pass){
         dataSource.setUser(user);
         dataSource.setPassword(pass);
-//        dataSource.setUrl("jdbc:mysql://localhost:3306/pokealerts");
-        dataSource.setUrl("jdbc:mysql://192.168.200.210:3306/pokealerts");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/pokealerts");
+//        dataSource.setUrl("jdbc:mysql://192.168.200.210:3306/pokealerts");
         dataSource.setDatabaseName("pokealerts");
 
     }
@@ -81,6 +81,78 @@ public class DBManager {
         }
 
         return true;
+    }
+
+    public static Timestamp getJoinDate(String userID){
+
+        Timestamp timestamp = null;
+
+        conn = getConnection();
+
+        Statement statement = null;
+        try {
+
+            statement = conn.createStatement();
+            statement.executeQuery(
+                    String.format(
+                            "SELECT joindate FROM users WHERE id=%s;",
+                            userID));
+
+            ResultSet rs = statement.getResultSet();
+
+            if(rs.next()){
+                timestamp = (rs.getTimestamp(1));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return timestamp;
+    }
+
+    public static void logNewUser(String userID){
+
+        conn = getConnection();
+
+        Statement statement = null;
+        try {
+
+            java.util.Date date = new java.util.Date();
+            java.sql.Timestamp timestamp = new java.sql.Timestamp(date.getTime());
+
+            statement = conn.createStatement();
+            statement.executeUpdate(
+                    String.format(
+                            "INSERT INTO users VALUES ('%s','%s');",
+                            userID,
+                            timestamp));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static boolean shouldNotify(String userID, PokeSpawn pokeSpawn){

@@ -1,3 +1,5 @@
+package nests;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -10,6 +12,8 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
+import core.Pokemon;
+import core.Region;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,10 +75,10 @@ public class NestSheetManager {
     public static void main(String[] args) {
         String spreadsheetId = NEST_DATA_ID;
 
-//        getNestsByPokemon(new Pokemon("Girafarig"));
+//        getNestsByPokemon(new core.Pokemon("Girafarig"));
 
-//        NestStatus[] statuses = new ArrayList<>();
-//        statuses.add(NestStatus.Confirmed);
+//        nests.NestStatus[] statuses = new ArrayList<>();
+//        statuses.add(nests.NestStatus.Confirmed);
 
 //        System.out.println(getNestsByStatus(statuses));
     }

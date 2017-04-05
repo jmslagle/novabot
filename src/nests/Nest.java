@@ -1,3 +1,8 @@
+package nests;
+
+import core.Pokemon;
+import core.Region;
+
 /**
  * Created by Paris on 28/03/2017.
  */
@@ -9,7 +14,7 @@ public class Nest {
     String suburb;
     NestType type;
     NestStatus status;
-    Pokemon pokemon;
+    public Pokemon pokemon;
     String coordStr;
 
     public Nest(Region region, String name, String street, String suburb, NestType type, NestStatus status, Pokemon poke, String coordinates) {
