@@ -2,9 +2,9 @@ package parser;
 
 import core.Pokemon;
 import core.Region;
-import parser.exceptions.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,15 +16,15 @@ public class Parser {
 
     static final Pattern PATTERN = Pattern.compile("!?\\w+|<(.*?)>");
 
-    public static void main(String[] args) {
-
-        UserCommand command = parseInput("!addpokemon dog");
-
-        if(command.getExceptions().size() > 0){
-            System.out.println("Invalid command");
-            command.getExceptions().forEach(e -> System.out.println(e.getMessage()));
-        }
-    }
+//    public static void main(String[] args) {
+//
+//        UserCommand command = parseInput("!addpokemon dog");
+//
+//        if(command.getExceptions().size() > 0){
+//            System.out.println("Invalid command");
+//            command.getExceptions().forEach(e -> System.out.println(e.getMessage()));
+//        }
+//    }
 
     public static Pokemon[] parseArgs(String[] args){
         Region[] regions;
@@ -40,40 +40,39 @@ public class Parser {
     public static UserCommand parseInput(String input){
         UserCommand command = new UserCommand();
 
-        if(input.charAt(0) != '!'){
-            command.addException(new InvalidCommandException());
-            return command;
-        }
-
         Argument[] args = getArgs(input);
 
         String firstArg = (String) args[0].getParams()[0];
 
         if(!Commands.isCommandWithArgs(firstArg)){
-            command.addException(new InvalidCommandException());
+            command.addException(InputError.InvalidCommand);
             return command;
         }
 
         Command cmd = Commands.get(firstArg);
 
         if(args.length -1 < cmd.minArgs){
-            command.addException(new NotEnoughArgumentsException());
+            command.addException(InputError.NotEnoughArgs);
         }else if(args.length-1 > cmd.maxArgs){
-            command.addException(new TooManyArgumentsException());
+            command.addException(InputError.TooManyArgs);
         }
 
         for (Argument arg : args) {
             if(!arg.fullyParsed()){
-                command.addException(new MalformedArgumentException());
+                command.addException(InputError.MalformedArg);
             }
 
             if(!cmd.validArgTypes.contains(arg.getType())){
-                command.addException(new InvalidArgumentException());
+                command.addException(InputError.InvalidArg);
             }
         }
 
         if(!cmd.meetsRequirements(args)){
-            command.addException(new MissingRequiredArgumentException());
+            command.addException(InputError.MissingRequiredArg);
+        }
+
+        if(!cmd.allowDuplicateArgs && Argument.containsDuplicates(args)){
+            command.addException(InputError.DuplicateArgs);
         }
 
         command.setArgs(args);
@@ -115,7 +114,9 @@ public class Parser {
             argument.setType(ArgType.Iv);
             argument.setParams(new Object[] {getFloat(s.trim())});
         }else{
-            argument.setParams(new Object[] {s});
+            argument.setType(ArgType.Unkown);
+            argument.setParams(new Object[] {null});
+            argument.setMalformed(new ArrayList<>(Arrays.asList(new String[] {s})));
         }
 
         return argument;
@@ -143,18 +144,29 @@ public class Parser {
 
         System.arraycopy(strings,0,args,0,strings.length);
 
+        ArrayList<String> malformed = new ArrayList<>();
+
         for (int i = 0; i < strings.length; i++) {
             args[i] = Region.fromString(strings[i].trim());
+            if(args[i] == null) malformed.add(strings[i]);
         }
 
+
         if(allNull(args)) {
+            malformed.clear();
+
             for (int i = 0; i < strings.length; i++) {
-                args[i] = (Pokemon.VALID_NAMES.contains(strings[i])) ? strings[i] : null;
+                Pokemon pokemon = new Pokemon(strings[i]);
+
+                if(pokemon.name == null) malformed.add(strings[i]);
+
+                args[i] = pokemon.name;
             }
 
             if(!allNull(args)){
                   argument.setType(ArgType.Pokemon);
             }else{
+                malformed.clear();
                 if(args.length == 1 || args.length == 2){
                     for (int i = 0; i < strings.length; i++) {
                         args[i] = getFloat(strings[i].trim());
@@ -169,7 +181,10 @@ public class Parser {
             argument.setType(ArgType.Regions);
         }
 
-        if(argument.getType() != null) argument.setParams(args);
+        if(argument.getType() != null){
+            argument.setParams(args);
+            argument.setMalformed(malformed);
+        }
         return argument;
     }
 

@@ -1,7 +1,6 @@
 package parser;
 
 import javafx.util.Pair;
-import parser.exceptions.CommandException;
 
 import java.util.HashSet;
 
@@ -17,8 +16,9 @@ public class Command {
 
     HashSet<ArgType> requiredArgTypes = new HashSet<>();
 
+    boolean allowDuplicateArgs = false;
+
     Argument[] arguments;
-    private CommandException exception = null;
 
     public Command(){}
 
@@ -34,14 +34,6 @@ public class Command {
         }
 
         return null;
-    }
-
-    public void setException(CommandException e){
-        exception = e;
-    }
-
-    public CommandException getException() {
-        return exception;
     }
 
     public void setValidArgTypes(HashSet<ArgType> validArgTypes) {
@@ -78,6 +70,7 @@ public class Command {
 
         boolean meetsRequirements = true;
 
+
         for (ArgType argType : requiredArgTypes) {
             boolean containsThisArg = false;
             for (Argument arg : args) {
@@ -88,5 +81,9 @@ public class Command {
         }
 
         return true;
+    }
+
+    public int getMinArgs() {
+        return minArgs;
     }
 }

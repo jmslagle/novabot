@@ -14,6 +14,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import parser.InputError;
 import parser.Parser;
 import parser.UserCommand;
 
@@ -282,7 +283,9 @@ public class MessageListener extends ListenerAdapter {
             if (channel.getName().equals("novabot-testing")) {
                 parseMsg(msg.toLowerCase(), author, textChannel);
             } else if (channel.getName().equals("nests-testing")) {
-                parseNestMsg(msg.toLowerCase(), author, textChannel, ChannelType.TEXT);
+                parseNestMsg(msg.toLowerCase().trim(),author,channel,event.getChannelType());
+
+//                parseNestMsg(msg.toLowerCase(), author, textChannel, ChannelType.TEXT);
             } else {
 //                return;
 //                if (!message.isWebhookMessage()) return;
@@ -395,6 +398,10 @@ public class MessageListener extends ListenerAdapter {
                 channel.sendMessage(nestHelp).queue();
                 break;
             default:
+                if(msg.startsWith("!reportnest")){
+                    return;
+                }
+
                 if (msg.startsWith("!nest")) {
 
                     if (countChars(msg, '<') + countChars(msg, '>') < 2) {
@@ -776,12 +783,20 @@ public class MessageListener extends ListenerAdapter {
 
         {
             channel.sendMessage(regionHelp).queue();
-        } else {
+        } else if (msg.startsWith("!")){
             UserCommand userCommand = Parser.parseInput(msg);
 
-            if(userCommand.getExceptions().size() > 0){
-                System.out.println("exception in command");
-                channel.sendMessage("exception in command").queue();
+            ArrayList<InputError> exceptions = userCommand.getExceptions();
+
+
+            if(exceptions.size() > 0){
+                String errorMessage = author.getAsMention() + ", I had " +
+                        (exceptions.size() == 1 ? "a problem" : "problems") + " reading your input.\n\n";
+
+                InputError error = InputError.mostSevere(exceptions);
+                errorMessage += error.getErrorMessage(userCommand);
+
+                channel.sendMessage(errorMessage).queue();
             }else {
                 String cmdStr = (String) userCommand.getArg(0).getParams()[0];
 
@@ -801,412 +816,6 @@ public class MessageListener extends ListenerAdapter {
                     channel.sendMessage("command executed").queue();
                 }
             }
-
-//        } if (msg.startsWith("!addpokemon")) {
-//            if (countChars(msg, '<') + countChars(msg, '>') == 0) {
-//                int pokeStart = msg.indexOf(" ") + 1;
-//
-//                Pokemon pokemon = new Pokemon(msg.substring(pokeStart).trim());
-//
-//                if (pokemon.name == null) {
-//                    channel.sendMessage(author.getAsMention() + " sorry, I don't recognise that pokemon").queue();
-//                    return;
-//                }
-//
-//                DBManager.addPokemon(author.getId(), pokemon);
-//
-//                channel.sendMessage(author.getAsMention() + " you will now be notified of " + pokemon.name + " in all channels").queue();
-//
-//
-//            } else {
-//
-//                if ((countChars(msg, '<') + countChars(msg, '>')) % 2 != 0) {
-//                    channel.sendMessage(author.getAsMention() + " " + badInputFormat).queue();
-//                    return;
-//                }
-//
-//                if (!DBManager.containsUser(author.getId())) {
-//                    DBManager.addUser(author.getId());
-//                }
-//
-//                int pokeStart = msg.indexOf('<') + 1;
-//
-//                int pokeEnd = msg.substring(pokeStart).indexOf('>') + pokeStart;
-//
-//                String pokeList = msg.substring(pokeStart, pokeEnd);
-//
-//                String[] pokemonStrings = pokeList.split(",");
-//
-//                ArrayList<String> badPokeNames = new ArrayList<>();
-//
-//                String toSend = author.getAsMention() + ", you will now be notified of ";
-//
-//                boolean nullPokemon = false;
-//
-//                for (int i = 0; i < pokemonStrings.length; i++) {
-//                    String mon = pokemonStrings[i].trim();
-//                    if (!Pokemon.VALID_NAMES.contains(mon)) {
-//                        nullPokemon = true;
-//                        badPokeNames.add(mon);
-//                    }
-//                    pokemonStrings[i] = mon;
-//                    toSend += (i < pokemonStrings.length - 1) ? mon + ", " : mon;
-//                }
-//
-//                if (!nullPokemon) {
-//
-//                    if (countChars(msg, '<') + countChars(msg, '>') == 2) {
-//                        for (String name : pokemonStrings) {
-//                            Pokemon pokemon = new Pokemon(name);
-//                            DBManager.addPokemon(author.getId(), pokemon);
-//                        }
-//
-//                        toSend += " in all regions";
-//                        channel.sendMessage(toSend).queue();
-//                        return;
-//                    }
-//
-//                    float miniv = 0;
-//                    float maxiv = 100;
-//
-//
-//                    int ivsEnd = pokeEnd;
-//
-//                    if (countChars(msg, '<') + countChars(msg, '>') == 6) {
-//                        int ivsStart = msg.substring(pokeEnd).indexOf('<') + 1 + pokeEnd;
-//                        ivsEnd = msg.substring(ivsStart).indexOf('>') + ivsStart;
-//
-//                        int ivSplit = msg.substring(ivsStart, ivsEnd).indexOf(',') + ivsStart;
-//
-//                        if ((ivSplit - ivsStart) < 0) { //no , in iv block, assume min IV only
-//                            miniv = Float.parseFloat(msg.substring(ivsStart, ivsEnd));
-//                            maxiv = 100;
-//
-//                            toSend += " " + miniv + "% or above";
-//                        } else {
-//                            miniv = Float.parseFloat(msg.substring(ivsStart, ivSplit));
-//                            maxiv = Float.parseFloat(msg.substring(ivSplit + 1, ivsEnd));
-//
-//                            toSend += " between " + miniv + " and " + maxiv + "%";
-//
-//                        }
-//                    }
-//
-//                    int regionStart = msg.substring(ivsEnd).indexOf('<') + 1 + ivsEnd;
-//                    int regionEnd = msg.substring(regionStart).indexOf('>') + regionStart;
-//
-//                    String regionList = msg.substring(regionStart, regionEnd);
-//
-//                    String[] regionStrings = regionList.split(",");
-//
-//                    toSend += regionStrings.length == 1 ? " in channel: " : " in channels: ";
-//
-//                    Region[] regions = new Region[regionStrings.length];
-//
-//                    boolean nullRegion = false;
-//
-//
-//                    ArrayList<String> badRegionNames = new ArrayList<>();
-//
-//                    for (int i = 0; i < regionStrings.length; i++) {
-//                        regions[i] = Region.fromString(regionStrings[i].trim());
-//                        if (regions[i] == null) {
-//                            nullRegion = true;
-//                            badRegionNames.add(regionStrings[i].trim());
-//                        }
-//                    }
-//
-//                    if (!nullRegion) {
-//
-//                        if (!isSupporter(author.getId()) && (pokemonStrings.length * regions.length + DBManager.countPokemon(author.getId()) > 3)) {
-//                            channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 pokemon " +
-//                                    "notifications set up. What you tried to add would put you over this limit, please remove some pokemon" +
-//                                    " with the !delpokemon command or try adding fewer pokemon.").queue();
-//                            return;
-//                        }
-//
-//
-//                        for (int i = 0; i < regions.length; i++) {
-//                            String region = regionStrings[i];
-//                            toSend += (i < regions.length - 1) ? region + ", " : region;
-//                        }
-//                        channel.sendMessage(toSend).queue();
-//
-//                        for (String name : pokemonStrings) {
-//                            for (Region region : regions) {
-//                                Pokemon pokemon = new Pokemon(name, region, miniv, maxiv);
-//
-//                                DBManager.addPokemon(author.getId(), pokemon);
-//                            }
-//                        }
-//                    } else {
-//                        MessageBuilder builder = new MessageBuilder();
-//                        builder.append(author.getAsMention() + "," + badRegionError(badRegionNames));
-//
-//                        for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                            channel.sendMessage(message).queue();
-//                        }
-//
-//                    }
-//                } else {
-//                    MessageBuilder builder = new MessageBuilder();
-//                    builder.append(author.getAsMention() + "," + badPokenameError(badPokeNames));
-//
-//                    for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                        channel.sendMessage(message).queue();
-//                    }
-//                }
-//            }
-//
-//        } else if (msg.startsWith("!delpokemon"))
-//
-//        {
-//            if (countChars(msg, '<') + countChars(msg, '>') == 0) {
-//                int pokeStart = msg.indexOf(" ") + 1;
-//
-//                Pokemon pokemon = new Pokemon(msg.substring(pokeStart).trim());
-//
-//                if (pokemon.name == null) {
-//                    channel.sendMessage(author.getAsMention() + " sorry, I don't recognise that pokemon").queue();
-//                    return;
-//                }
-//
-//                channel.sendMessage(author.getAsMention() + " you will no longer be notified of " + pokemon.name + " in any channel").queue();
-//
-//                ArrayList<Pokemon> pokemons = new ArrayList<>();
-//                pokemons.add(pokemon);
-//
-//                DBManager.clearPokemon(author.getId(), pokemons);
-//
-//            } else {
-//
-//
-//                if ((countChars(msg, '<') + countChars(msg, '>')) % 2 != 0) {
-//                    channel.sendMessage(author.getAsMention() + " " + badInputFormat).queue();
-//                    return;
-//                }
-//
-//
-//                int pokeStart = msg.indexOf('<') + 1;
-//
-//                int pokeEnd = msg.substring(pokeStart).indexOf('>') + pokeStart;
-//
-//                String pokeList = msg.substring(pokeStart, pokeEnd);
-//
-//                String[] pokemonStrings = pokeList.split(",");
-//
-//                ArrayList<String> badPokeNames = new ArrayList<>();
-//
-//                String toSend = author.getAsMention() + ", you will no longer be notified of ";
-//
-//                boolean nullPokemon = false;
-//
-//                for (int i = 0; i < pokemonStrings.length; i++) {
-//                    String mon = pokemonStrings[i].trim();
-//                    if (!Pokemon.VALID_NAMES.contains(mon)) {
-//                        nullPokemon = true;
-//                        badPokeNames.add(mon);
-//                    }
-//                    pokemonStrings[i] = mon;
-//                    toSend += (i < pokemonStrings.length - 1) ? mon + ", " : mon;
-//                }
-//
-//                if (!nullPokemon) {
-//
-//                    if (countChars(msg, '<') + countChars(msg, '>') == 2) {
-//                        for (String name : pokemonStrings) {
-//                            Pokemon pokemon = new Pokemon(name);
-//                            DBManager.addPokemon(author.getId(), pokemon);
-//                        }
-//
-//                        toSend += " in all regions";
-//                        channel.sendMessage(toSend).queue();
-//                        return;
-//                    }
-//
-//                    float miniv = 0;
-//                    float maxiv = 100;
-//
-//
-//                    int ivsEnd = pokeEnd;
-//
-//                    if (countChars(msg, '<') + countChars(msg, '>') == 6) {
-//                        int ivsStart = msg.substring(pokeEnd).indexOf('<') + 1 + pokeEnd;
-//                        ivsEnd = msg.substring(ivsStart).indexOf('>') + ivsStart;
-//
-//                        int ivSplit = msg.substring(ivsStart, ivsEnd).indexOf(',') + ivsStart;
-//
-//                        if ((ivSplit - ivsStart) < 0) { //no , in iv block, assume min IV only
-//                            miniv = Float.parseFloat(msg.substring(ivsStart, ivsEnd));
-//                            maxiv = 100;
-//
-//                            toSend += miniv + "% or above ";
-//                        } else {
-//                            miniv = Float.parseFloat(msg.substring(ivsStart, ivSplit));
-//                            maxiv = Float.parseFloat(msg.substring(ivSplit + 1, ivsEnd));
-//
-//                            toSend += " between " + miniv + " and " + maxiv + "%";
-//
-//                        }
-//                    }
-//
-//                    int regionStart = msg.substring(ivsEnd).indexOf('<') + 1 + ivsEnd;
-//                    int regionEnd = msg.substring(regionStart).indexOf('>') + regionStart;
-//
-//                    String regionList = msg.substring(regionStart, regionEnd);
-//
-//                    String[] regionStrings = regionList.split(",");
-//
-//                    toSend += regionStrings.length == 1 ? " in channel: " : " in channels: ";
-//
-//                    Region[] regions = new Region[regionStrings.length];
-//
-//                    boolean nullRegion = false;
-//
-//                    ArrayList<String> badRegionNames = new ArrayList<>();
-//
-//                    for (int i = 0; i < regionStrings.length; i++) {
-//                        regions[i] = Region.fromString(regionStrings[i].trim());
-//                        if (regions[i] == null) {
-//                            nullRegion = true;
-//                            badRegionNames.add(regionStrings[i].trim());
-//                        }
-//                    }
-//
-//                    if (!nullRegion) {
-//                        for (int i = 0; i < regions.length; i++) {
-//                            String region = regionStrings[i];
-//                            toSend += (i < regions.length - 1) ? region + ", " : region;
-//                        }
-//                        channel.sendMessage(toSend).queue();
-//
-//                        for (String name : pokemonStrings) {
-//                            for (Region region : regions) {
-//                                Pokemon pokemon = new Pokemon(name, region, miniv, maxiv);
-//
-//                                DBManager.deletePokemon(author.getId(), pokemon);
-//                            }
-//                        }
-//                    } else {
-//                        MessageBuilder builder = new MessageBuilder();
-//                        builder.append(author.getAsMention() + "," + badRegionError(badRegionNames));
-//
-//                        for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                            channel.sendMessage(message).queue();
-//                        }
-//
-//                    }
-//                } else {
-//                    MessageBuilder builder = new MessageBuilder();
-//                    builder.append(author.getAsMention() + "," + badPokenameError(badPokeNames));
-//
-//                    for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                        channel.sendMessage(message).queue();
-//                    }
-//                }
-//            }
-//        } else if (msg.startsWith("!clearpokemon"))
-//
-//        {
-//            int pokeStart = msg.indexOf('<') + 1;
-//
-//            int pokeEnd = msg.substring(pokeStart).indexOf('>') + pokeStart;
-//
-//            String pokeList = msg.substring(pokeStart, pokeEnd);
-//
-//            String[] pokemonStrings = pokeList.split(",");
-//
-//            ArrayList<String> badNames = new ArrayList<>();
-//
-//            String toSend = author.getAsMention() + ", you will no longer be notified of ";
-//
-//            boolean nullPokemon = false;
-//
-//            for (int i = 0; i < pokemonStrings.length; i++) {
-//                String mon = pokemonStrings[i].trim();
-//                if (!Pokemon.VALID_NAMES.contains(mon)) {
-//                    nullPokemon = true;
-//                    badNames.add(mon);
-//                }
-//                pokemonStrings[i] = mon;
-//                toSend += (i < pokemonStrings.length - 1) ? mon + ", " : mon;
-//            }
-//
-//            toSend += " in any channels";
-//            if (!nullPokemon) {
-//
-//                ArrayList<Pokemon> pokemons = new ArrayList<>();
-//
-//                for (String name : pokemonStrings) {
-//                    pokemons.add(new Pokemon(name));
-//                }
-//
-//                channel.sendMessage(toSend).queue();
-//
-//                DBManager.clearPokemon(author.getId(), pokemons);
-//
-//            } else {
-//                MessageBuilder builder = new MessageBuilder();
-//                builder.append(author.getAsMention() + "," + badPokenameError(badNames));
-//
-//                for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                    channel.sendMessage(message).queue();
-//                }
-//            }
-//
-//        } else if (msg.startsWith("!clearchannel"))
-//
-//        {
-//
-//            int regionStart = msg.indexOf('<') + 1;
-//            int regionEnd = msg.substring(regionStart).indexOf('>') + regionStart;
-//
-//            String regionList = msg.substring(regionStart, regionEnd);
-//
-//            String[] regionStrings = regionList.split(",");
-//
-//            String toSend = author.getAsMention() + ", you will no longer be notified of anything";
-//
-//            toSend += regionStrings.length == 1 ? " in channel: " : " in channels: ";
-//
-//            Region[] regions = new Region[regionStrings.length];
-//
-//            boolean nullRegion = false;
-//
-//            ArrayList<String> badRegionNames = new ArrayList<>();
-//
-//            for (int i = 0; i < regionStrings.length; i++) {
-//                regions[i] = Region.fromString(regionStrings[i].trim());
-//                if (regions[i] == null) {
-//                    nullRegion = true;
-//                    badRegionNames.add(regionStrings[i].trim());
-//                }
-//            }
-//
-//            if (!nullRegion) {
-//                for (int i = 0; i < regions.length; i++) {
-//                    String region = regionStrings[i];
-//                    toSend += (i < regions.length - 1) ? region + ", " : region;
-//                }
-//                channel.sendMessage(toSend).queue();
-//
-//                DBManager.clearRegions(author.getId(), regions);
-//
-//            } else {
-//
-//                MessageBuilder builder = new MessageBuilder();
-//                builder.append(author.getAsMention() + "," + badRegionError(badRegionNames));
-//
-//                for (Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-//                    channel.sendMessage(message).queue();
-//                }
-//
-//            }
-//
-//        } else
-//
-//        {
-//            channel.sendMessage(author.getAsMention() + ", I don't recognize that message. Use !help to see my commands").queue();
         }
 
     }
