@@ -1,93 +1,71 @@
 package parser;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
-/**
- * Created by Paris on 3/04/2017.
- */
-public class Argument {
-
-
+public class Argument
+{
     private ArgType type;
     private Object[] params;
     private ArrayList<String> malformed;
 
-    public Argument (ArgType argType, Object[] args){
-
-    }
-
-
-    public Argument() {
-
-    }
-
-    public Argument(String group) {
-
-    }
-
-    public void setType(ArgType type) {
+    public void setType(final ArgType type) {
         this.type = type;
     }
 
-    public void setParams(Object[] params) {
+    public void setParams(final Object[] params) {
         this.params = params;
     }
 
     public ArgType getType() {
-        return type;
+        return this.type;
     }
 
     public Object[] getParams() {
-        return params;
+        return this.params;
     }
 
     public boolean fullyParsed() {
-        for (Object param : params) {
-            if(param == null) return false;
+        for (final Object param : this.params) {
+            if (param == null) {
+                return false;
+            }
         }
-
         return true;
     }
 
-    public static ArgType getDuplicateArg(Argument[] args) {
-        ArrayList<ArgType> argTypes = new ArrayList<>();
-
-        for (Argument arg : args) {
-            if(argTypes.contains(arg.getType())) return arg.getType();
-
+    public static ArgType getDuplicateArg(final Argument[] args) {
+        final ArrayList<ArgType> argTypes = new ArrayList<ArgType>();
+        for (final Argument arg : args) {
+            if (argTypes.contains(arg.getType())) {
+                return arg.getType();
+            }
             argTypes.add(arg.getType());
         }
-
         return null;
     }
 
-    public static boolean containsDuplicates(Argument[] args){
+    public static boolean containsDuplicates(final Argument[] args) {
         return getDuplicateArg(args) != null;
     }
 
-    public void setMalformed(ArrayList<String> malformed) {
+    public void setMalformed(final ArrayList<String> malformed) {
         this.malformed = malformed;
     }
 
     public ArrayList<String> getMalformed() {
-        return malformed;
+        return this.malformed;
     }
 
-    public static String malformedToString(HashMap<ArgType, ArrayList<String>> malformedArgs) {
+    public static String malformedToString(final HashMap<ArgType, ArrayList<String>> malformedArgs) {
+
         final String[] str = {""};
 
-        malformedArgs.forEach((key,value) -> {
-            str[0] += "**" + key + "?**\n";
+        malformedArgs.forEach((key, value) -> {
             for (String s : value) {
-                str[0] += "  " + s +"\n";
+                str[0] += "  " + s + "\n";
             }
-
-            str[0] += "\n";
         });
 
         return str[0];
     }
 }
-
-

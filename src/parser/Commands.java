@@ -1,59 +1,50 @@
 package parser;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
-import static parser.ArgType.*;
+class Commands
+{
+    private static final HashMap<String, Command> commands;
 
+    public static boolean isCommandWithArgs(final String s) {
+        return Commands.commands.get(s) != null;
+    }
 
-/**
- * Created by Paris on 4/04/2017.
- */
-public class Commands {
-
-    public static HashMap<String,Command> commands = new HashMap<>();
+    public static Command get(final String firstArg) {
+        return Commands.commands.get(firstArg);
+    }
 
     static {
-        Command addPokemon = new Command();
-        addPokemon.setValidArgTypes(new HashSet<>(Arrays.asList(new ArgType[] {CommandStr,Pokemon,Regions,Iv})));
-        addPokemon.setRequiredArgTypes(new HashSet<>(Arrays.asList(new ArgType[] {Pokemon})));
-        addPokemon.setArgRange(1,3);
-
-        Command delPokemon = new Command();
+        commands = new HashMap<String, Command>();
+        final Command addPokemon = new Command();
+        addPokemon.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Iv)));
+        addPokemon.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)));
+        addPokemon.setArgRange(1, 3);
+        final Command addChannel = new Command();
+        addChannel.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
+        addChannel.setRequiredArgTypes(addChannel.getValidArgTypes());
+        addChannel.setArgRange(1, 1);
+        final Command delPokemon = new Command();
         delPokemon.setValidArgTypes(addPokemon.getValidArgTypes());
         addPokemon.setRequiredArgTypes(addPokemon.getRequiredArgTypes());
-        delPokemon.setArgRange(1,3);
-
-        Command clearPokemon = new Command();
-        clearPokemon.setValidArgTypes(new HashSet<>(Arrays.asList(new ArgType[] {CommandStr,Pokemon})));
+        delPokemon.setArgRange(1, 3);
+        final Command clearPokemon = new Command();
+        clearPokemon.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
         clearPokemon.setRequiredArgTypes(clearPokemon.getValidArgTypes());
-        clearPokemon.setArgRange(1,1);
-
-        Command clearChannel = new Command();
-        clearChannel.setValidArgTypes(new HashSet<>(Arrays.asList(new ArgType[] {CommandStr,Regions})));
-        clearChannel.setRequiredArgTypes(clearChannel.getValidArgTypes());
-        clearChannel.setArgRange(1,1);
-
-
-        commands.put("!addpokemon",addPokemon);
-        commands.put("!delpokemon",delPokemon);
-//        commands.add("!help");
-        commands.put("!clearpokemon",clearPokemon);
-        commands.put("!clearchannel",clearChannel);
-//        commands.add("!reset");
-//        commands.add("!settings");
-//        commands.add("!help");
-//        commands.add("!channellist");
-//        commands.add("!channels");
-    }
-
-
-    public static boolean isCommandWithArgs(String s) {
-        return commands.get(s) != null;
-    }
-
-    public static Command get(String firstArg) {
-        return commands.get(firstArg);
+        clearPokemon.setArgRange(1, 1);
+        final Command clearLocation = new Command();
+        clearLocation.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
+        clearLocation.setRequiredArgTypes(clearLocation.getValidArgTypes());
+        clearLocation.setArgRange(1, 1);
+        final Command nest = new Command();
+        nest.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Status)));
+        nest.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
+        nest.setArgRange(1, 2);
+        Commands.commands.put("!addpokemon", addPokemon);
+        Commands.commands.put("!addchannel", addChannel);
+        Commands.commands.put("!delpokemon", delPokemon);
+        Commands.commands.put("!nest", nest);
+        Commands.commands.put("!clearpokemon", clearPokemon);
+        Commands.commands.put("!clearlocation", clearLocation);
     }
 }

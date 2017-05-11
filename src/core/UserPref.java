@@ -1,117 +1,67 @@
 package core;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Created by Paris on 18/03/2017.
- */
-public class UserPref {
+public class UserPref
+{
+    private final HashMap<String, Set<Pokemon>> pokemonPrefs;
 
-    String userID;
-
-    HashMap<Region,Set<Pokemon>> pokemonPrefs = new HashMap<>();
-
-    public UserPref (String userID){
-        this.userID = userID;
+    public UserPref(final String userID) {
+        this.pokemonPrefs = new HashMap<String, Set<Pokemon>>();
     }
 
-    public void addPokemon(Pokemon pokemon, Region[] regions){
-        for (Region region : regions) {
-            if(!pokemonPrefs.containsKey(region)){
-                Set<Pokemon> set = new HashSet<>();
+    public void addPokemon(final Pokemon pokemon, final Location[] locations) {
+        for (final Location location : locations) {
+            if (!this.pokemonPrefs.containsKey(location.toWords())) {
+                final Set<Pokemon> set = new HashSet<Pokemon>();
                 set.add(pokemon);
-
-                pokemonPrefs.put(region, set);
-            }else {
-                pokemonPrefs.get(region).add(pokemon);
+                this.pokemonPrefs.put(location.toWords(), set);
+            }
+            else {
+                this.pokemonPrefs.get(location.toWords()).add(pokemon);
             }
         }
     }
 
-    public void addPokemons(Pokemon[] pokemons, Region[] regions){
-        for (Pokemon pokemon : pokemons) {
-            addPokemon(pokemon,regions);
-        }
-    }
-
-    public void removePokemon(Pokemon pokemon, Region[] regions){
-        for (Region region : regions){
-            pokemonPrefs.get(region).remove(pokemon);
-        }
-    }
-
-    public void removePokemons(Pokemon[] pokemons, Region[] regions){
-        for (Pokemon pokemon : pokemons) {
-            removePokemon(pokemon, regions);
-        }
-    }
-
-    public boolean hasRegion(Region region) {
-        return pokemonPrefs.containsKey(region);
-    }
-
-    public boolean contains(Pokemon[] pokemons, Region[] regions) {
-        int failedRegions = 0;
-
-        for (Region r1 : regions) {
-            for (Region r2 : pokemonPrefs.keySet()) {
-                if(r1 == r2){
-                    Set<Pokemon> set = pokemonPrefs.get(r2);
-                    for (Pokemon pokemon : pokemons) {
-                        if(!set.contains(pokemon)){
-                            failedRegions++;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return failedRegions != pokemonPrefs.keySet().size();
-
-    }
-
-    public String allPokemonToString(){
+    public String allPokemonToString() {
         String str = "";
-
-        for (Region region : pokemonPrefs.keySet()) {
-            str += "**" + region.toWords() + "**:\n";
-            for (Pokemon pokemon : pokemonPrefs.get(region)) {
-                str += "    " + pokemon.name;
-
-                if(pokemon.miniv > 0 || pokemon.maxiv < 100){
-                    if(pokemon.maxiv < 100){
-                        if(pokemon.miniv == pokemon.maxiv){
-                            str += " " + pokemon.miniv;
-                        }else{
-                            str += " " + pokemon.miniv + "-" + pokemon.maxiv;
+        for (String locname : this.pokemonPrefs.keySet()) {
+            final String location = locname;
+            if (Region.fromString(location) != null) {
+                locname = Region.fromString(location).toWords();
+            }
+            str = str + "**" + locname + "**:\n";
+            for (final Pokemon pokemon : this.pokemonPrefs.get(location)) {
+                str = str + "    " + pokemon.name;
+                if (pokemon.miniv > 0.0f || pokemon.maxiv < 100.0f) {
+                    if (pokemon.maxiv < 100.0f) {
+                        if (pokemon.miniv == pokemon.maxiv) {
+                            str = str + " " + pokemon.miniv;
                         }
-
+                        else {
+                            str = str + " " + pokemon.miniv + "-" + pokemon.maxiv;
+                        }
                         str += "%";
-                    }else{
-                        str += " " + pokemon.miniv + (pokemon.miniv == 100 ? "%" : "%+");
+                    }
+                    else {
+                        str = str + " " + pokemon.miniv + ((pokemon.miniv == 100.0f) ? "%" : "%+");
                     }
                 }
-
-                str+="\n";
+                str += "\n";
             }
-            str+="\n";
+            str += "\n";
         }
-
         return str;
     }
 
     public boolean isEmpty() {
-        final boolean[] empty = {true};
-
-        pokemonPrefs.forEach((region,pokemons) -> {
-            if(pokemons.size() > 0) {
+        final boolean[] empty = { true };
+        this.pokemonPrefs.forEach((region, pokemons) -> {
+            if (pokemons.size() > 0) {
                 empty[0] = false;
             }
+            return;
         });
-
         return empty[0];
     }
 }

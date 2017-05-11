@@ -1,55 +1,71 @@
 package core;
 
-import java.util.ArrayList;
+import java.util.*;
 
-/**
- * Created by Paris on 18/03/2017.
- */
-public class ReporterChannels extends ArrayList<ReporterChannel>{
-
-
-    public boolean containsChannel(String channelName) {
-
-        for (ReporterChannel reporterChannel : this) {
-            if(channelName.startsWith(reporterChannel.discordName)) return true;
+class ReporterChannels extends ArrayList<ReporterChannel>
+{
+    public boolean containsChannel(final String channelName) {
+        for (final ReporterChannel reporterChannel : this) {
+            if (channelName.startsWith(reporterChannel.discordName)) {
+                return true;
+            }
         }
         return false;
     }
 
-    public static Region getRegionByName(String name) {
-
+    public static Region getRegionByName(final String name) {
         System.out.println("Converting region name: " + name + " to core.Region");
-
-        if(name.startsWith("inner-north")) return Region.Innernorth;
-
-        if(name.startsWith("inner-south")) return Region.Innersouth;
-
-        if(name.startsWith("gungahlin")) return Region.Gungahlin;
-
-        if(name.startsWith("belconnen")) return Region.Belconnen;
-
-        if(name.startsWith("tuggeranong")) return Region.Tuggeranong;
-
-        if(name.startsWith("woden-weston")) return Region.Wodenweston;
-
-        if(name.startsWith("queanbeyan")) return Region.Queanbeyan;
-
-        if(name.startsWith("legacy-rare")) return Region.Legacyrare;
-
-        if(name.startsWith("snorlax")) return Region.Snorlax;
-
-        if(name.startsWith("mareep")) return Region.Mareep;
-
-        if(name.startsWith("larvitar")) return Region.Larvitar;
-
-        if(name.startsWith("dratini")) return Region.Dratini;
-
-        if(name.startsWith("100-iv")) return Region.Hundrediv;
-
-        if(name.startsWith("ultra-rare")) return Region.Ultrarare;
-
-        if(name.startsWith("event")) return Region.Event;
-
+        if (name.startsWith("inner-north")) {
+            return Region.Innernorth;
+        }
+        if (name.startsWith("inner-south")) {
+            return Region.Innersouth;
+        }
+        if (name.startsWith("gungahlin")) {
+            return Region.GungahlinRegion;
+        }
+        if (name.startsWith("belconnen")) {
+            return Region.BelconnenRegion;
+        }
+        if (name.startsWith("tuggeranong")) {
+            return Region.TuggeranongRegion;
+        }
+        if (name.startsWith("woden-weston")) {
+            return Region.Wodenweston;
+        }
+        if (name.startsWith("queanbeyan")) {
+            return Region.QueanbeyanRegion;
+        }
+        if (name.startsWith("legacy-rare")) {
+            return Region.Legacyrare;
+        }
+        if (name.startsWith("snorlax")) {
+            return Region.SnorlaxCandy;
+        }
+        if (name.startsWith("mareep")) {
+            return Region.MareepCandy;
+        }
+        if (name.startsWith("larvitar")) {
+            return Region.LarvitarCandy;
+        }
+        if (name.startsWith("dratini")) {
+            return Region.DratiniCandy;
+        }
+        if (name.startsWith("100-iv")) {
+            return Region.Hundrediv;
+        }
+        if (name.startsWith("ultra-rare")) {
+            return Region.Ultrarare;
+        }
+        if (name.startsWith("event")) {
+            return Region.Event;
+        }
+        if (name.startsWith("0-iv")) {
+            return Region.Zeroiv;
+        }
+        if (name.equals("dex-filler")) {
+            return Region.Dexfiller;
+        }
         return null;
     }
 }

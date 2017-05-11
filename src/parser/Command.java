@@ -1,89 +1,64 @@
 package parser;
 
-import javafx.util.Pair;
+import java.util.*;
 
-import java.util.HashSet;
-
-/**
- * Created by Paris on 3/04/2017.
- */
-public class Command {
-
+public class Command
+{
     int minArgs;
     int maxArgs;
+    HashSet<ArgType> validArgTypes;
+    private HashSet<ArgType> requiredArgTypes;
+    boolean allowDuplicateArgs;
+    private Argument[] arguments;
 
-    HashSet<ArgType> validArgTypes = new HashSet<>();
-
-    HashSet<ArgType> requiredArgTypes = new HashSet<>();
-
-    boolean allowDuplicateArgs = false;
-
-    Argument[] arguments;
-
-    public Command(){}
-
-
-    public static Pair<Integer,Integer> requiredArgs(String s){
-
-        if(s.startsWith("!add") || s.startsWith("!del")){
-            return new Pair<>(1,3);
-        }
-
-        if(s.startsWith("!clear")){
-            return new Pair<>(1,1);
-        }
-
-        return null;
+    public Command() {
+        this.validArgTypes = new HashSet<ArgType>();
+        this.requiredArgTypes = new HashSet<ArgType>();
+        this.allowDuplicateArgs = false;
     }
 
-    public void setValidArgTypes(HashSet<ArgType> validArgTypes) {
+    public void setValidArgTypes(final HashSet<ArgType> validArgTypes) {
         this.validArgTypes = validArgTypes;
     }
 
-    public void setRequiredArgTypes(HashSet<ArgType> requiredArgTypes) {
+    public void setRequiredArgTypes(final HashSet<ArgType> requiredArgTypes) {
         this.requiredArgTypes = requiredArgTypes;
     }
 
-    public void setMaxArgs(int maxArgs) {
-        this.maxArgs = maxArgs;
-    }
-
-    public void setMinArgs(int minArgs) {
-        this.minArgs = minArgs;
-    }
-
     public HashSet<ArgType> getValidArgTypes() {
-        return validArgTypes;
+        return this.validArgTypes;
     }
 
-    public void setArgRange(int min, int max) {
-        minArgs = min;
-        maxArgs = max;
+    public void setArgRange(final int min, final int max) {
+        this.minArgs = min;
+        this.maxArgs = max;
     }
-
 
     public HashSet<ArgType> getRequiredArgTypes() {
-        return requiredArgTypes;
+        return this.requiredArgTypes;
     }
 
-    public boolean meetsRequirements(Argument[] args) {
-
-        boolean meetsRequirements = true;
-
-
-        for (ArgType argType : requiredArgTypes) {
+    public boolean meetsRequirements(final Argument[] args) {
+        final boolean meetsRequirements = true;
+        for (final ArgType argType : this.requiredArgTypes) {
             boolean containsThisArg = false;
-            for (Argument arg : args) {
-                if(arg.getType() == argType) containsThisArg = true;
+            for (final Argument arg : args) {
+                if (arg.getType() == argType) {
+                    containsThisArg = true;
+                }
             }
-
-            if(!containsThisArg) return false;
+            if (!containsThisArg) {
+                return false;
+            }
         }
-
         return true;
     }
 
     public int getMinArgs() {
-        return minArgs;
+        return this.minArgs;
+    }
+
+    public int getMaxArgs() {
+        return this.maxArgs;
     }
 }

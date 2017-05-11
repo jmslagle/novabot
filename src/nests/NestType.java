@@ -1,25 +1,22 @@
 package nests;
 
-/**
- * Created by Paris on 28/03/2017.
- */
-public enum NestType {
+public enum NestType
+{
     FrequentSpawnPoint,
     HotSpot,
     ClusterSpawn,
     FrequentSpawnArea;
 
-    public static NestType fromString(String s) {
-
-        switch(s){
+    public static NestType fromString(final String s) {
+        switch (s) {
             case "Frequent Spawn Point":
-                return FrequentSpawnPoint;
+                return NestType.FrequentSpawnPoint;
             case "Cluster Spawn":
-                return ClusterSpawn;
+                return NestType.ClusterSpawn;
             case "Hot Spot":
-                return HotSpot;
+                return NestType.HotSpot;
             case "Frequent Spawn Area":
-                return FrequentSpawnArea;
+                return NestType.FrequentSpawnArea;
             default:
                 return null;
         }
@@ -27,7 +24,7 @@ public enum NestType {
 
     @Override
     public String toString() {
-        switch(this){
+        switch (this) {
             case ClusterSpawn:
                 return "Cluster spawn";
             case FrequentSpawnArea:

@@ -1,17 +1,12 @@
 package core;
 
-/**
- * Created by Paris on 18/03/2017.
- */
-public class ReporterChannel {
+class ReporterChannel
+{
+    private final Region region;
+    final String discordName;
 
-    Region region;
-
-    String discordName;
-
-    public ReporterChannel(Region region, String discordName){
+    public ReporterChannel(final Region region, final String discordName) {
         this.region = region;
         this.discordName = discordName;
     }
-
 }

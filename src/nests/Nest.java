@@ -1,23 +1,19 @@
 package nests;
 
-import core.Pokemon;
-import core.Region;
+import core.*;
 
-/**
- * Created by Paris on 28/03/2017.
- */
-public class Nest {
+public class Nest
+{
+    private final Region region;
+    private final String name;
+    private final String street;
+    private final String suburb;
+    private final NestType type;
+    private final NestStatus status;
+    public final Pokemon pokemon;
+    private final String coordStr;
 
-    Region region;
-    String name;
-    String street;
-    String suburb;
-    NestType type;
-    NestStatus status;
-    public Pokemon pokemon;
-    String coordStr;
-
-    public Nest(Region region, String name, String street, String suburb, NestType type, NestStatus status, Pokemon poke, String coordinates) {
+    public Nest(final Region region, final String name, final String street, final String suburb, final NestType type, final NestStatus status, final Pokemon poke, final String coordinates) {
         this.region = region;
         this.name = name;
         this.street = street;
@@ -25,25 +21,21 @@ public class Nest {
         this.type = type;
         this.status = status;
         this.pokemon = poke;
-
-        if(region == null || status == null || type == null || poke.name == null){
+        if (region == null || status == null || type == null || poke.name == null) {
             System.out.println("fak");
         }
-
-        int coordSplit = coordinates.indexOf(",");
-        String coord1 = coordinates.substring(0,coordSplit);
-        String coord2 = coordinates.substring(coordSplit+1,coordinates.substring(coordSplit+1).indexOf(",") + coordSplit+1) ;
-
-        this.coordStr = coord2+","+coord1;
+        final int coordSplit = coordinates.indexOf(",");
+        final String coord1 = coordinates.substring(0, coordSplit);
+        final String coord2 = coordinates.substring(coordSplit + 1, coordinates.substring(coordSplit + 1).indexOf(",") + coordSplit + 1);
+        this.coordStr = coord2 + "," + coord1;
     }
 
     @Override
     public String toString() {
-        return status.toString() + " **" + pokemon.name + "** " + type.toString().toLowerCase() + " at " + name + " on " + street + ", " + suburb + ", in the " + region.toString() + " region";
+        return this.status.toString() + " **" + this.pokemon.name + "** " + this.type.toString().toLowerCase() + " at " + this.name + " on " + this.street + ", " + this.suburb + ", in the " + this.region.toWords();
     }
 
-    public String getGMapsLink(){
-//        return "https://www.google.com/maps/d/u/0/viewer?mid=1d-QuaDK1tJRiHKODXErTQIDqIAY&ll="+coordStr;
-        return "https://www.google.com/maps?q=loc:"+coordStr;
+    public String getGMapsLink() {
+        return "https://www.google.com/maps?q=loc:" + this.coordStr;
     }
 }
