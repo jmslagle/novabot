@@ -7,6 +7,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static core.MessageListener.config;
+
 public class DBManager
 {
     private static final MysqlDataSource rocketmapDataSource;
@@ -14,36 +16,64 @@ public class DBManager
     private static Connection novabotConnection;
     private static Timestamp lastChecked;
 
+    private static RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
+
+
+
     public static void main(final String[] args) {
+
+        MessageListener.main(null);
+
         System.out.println("Connecting to db");
-        rocketmapdbConnect("root", "mimi");
-        novabotdbConnect("root", "mimi");
+//        rocketmapdbConnect();
+        novabotdbConnect();
         System.out.println("Getting db connection");
-        final PokeSpawn pokeSpawn = new PokeSpawn(143, -35.0, 149.0, new Time(123L), 15, 15, 15, "", "", 1.0f, 2.0f, 1, 0);
-        System.out.println(pokeSpawn);
-        getUserIDsToNotify(pokeSpawn).forEach(System.out::println);
+        final PokeSpawn pokeSpawn = new PokeSpawn(149, -35.264327, 149.116087, new Time(123L), 15, 15, 15, "", "", 1.0f, 2.0f, 1, 0, 2314);
+        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getTitle());
+        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getDescription());
+
+        getUserIDsToNotify(pokeSpawn).forEach((id) -> {if(id.equals("107730875596169216")) System.out.println("true");});
+
+//        getUserIDsToNotify(pokeSpawn).forEach(System.out::println);
     }
 
     public static ArrayList<PokeSpawn> getNewPokemon() {
+
         System.out.println("Getting new pokemon");
         final Connection connection = getConnection(DBManager.rocketmapDataSource);
-        final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<PokeSpawn>();
+        final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
         PreparedStatement statement = null;
         try {
             String blacklistQMarks = "(";
-            for (int i = 0; i < MessageListener.blacklist.size(); ++i) {
+            for (int i = 0; i < config.getBlacklist().size(); ++i) {
                 blacklistQMarks += "?";
-                if (i != MessageListener.blacklist.size() - 1) {
+                if (i != config.getBlacklist().size() - 1) {
                     blacklistQMarks += ",";
                 }
             }
             blacklistQMarks += ")";
             assert connection != null;
-            statement = connection.prepareStatement("SELECT pokemon_id,latitude, longitude, TIME((CONVERT_TZ(disappear_time,'UTC','Australia/Canberra'))),individual_attack, individual_defense,individual_stamina,move_1,move_2,weight,height,gender,form FROM pokemon WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified > CONVERT_TZ(?,'Australia/Canberra','UTC')");
-            for (int i = 1; i <= MessageListener.blacklist.size(); ++i) {
-                statement.setString(i, String.valueOf(MessageListener.blacklist.get(i - 1)));
+            statement = connection.prepareStatement("" +
+                    "SELECT pokemon_id," +
+                    "       latitude," +
+                    "       longitude," +
+                    "       TIME((CONVERT_TZ(disappear_time,'UTC','Australia/Canberra')))," +
+                    "       individual_attack, " +
+                    "       individual_defense," +
+                    "       individual_stamina," +
+                    "       move_1," +
+                    "       move_2," +
+                    "       weight," +
+                    "       height," +
+                    "       gender," +
+                    "       form," +
+                    "       cp " +
+                    "FROM pokemon " +
+                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'Australia/Canberra','UTC'),INTERVAL 1 SECOND)");
+            for (int i = 1; i <= config.getBlacklist().size(); ++i) {
+                statement.setString(i, String.valueOf(config.getBlacklist().get(i - 1)));
             }
-            statement.setTimestamp(MessageListener.blacklist.size() + 1, DBManager.lastChecked);
+            statement.setTimestamp(config.getBlacklist().size() + 1, DBManager.lastChecked);
             System.out.println("Executing query");
             final ResultSet rs = statement.executeQuery();
             System.out.println("Query complete");
@@ -61,10 +91,19 @@ public class DBManager
                 final float height = rs.getFloat(11);
                 final int gender = rs.getInt(12);
                 final int form = rs.getInt(13);
+                final int cp = rs.getInt(14);
                 try {
-                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form);
+                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp);
                     System.out.println(pokeSpawn.toString());
-                    pokeSpawns.add(pokeSpawn);
+                    System.out.println(pokeSpawn.hashCode());
+
+                    if(!hashCodes.contains(pokeSpawn.hashCode())) {
+                        System.out.println("new pokemon, adding to list");
+                        hashCodes.add(pokeSpawn.hashCode());
+                        pokeSpawns.add(pokeSpawn);
+                    }else{
+                        System.out.println("pokemon already seen, ignoring");
+                    }
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -111,28 +150,18 @@ public class DBManager
         return pokeSpawns;
     }
 
-    public static void novabotdbConnect(final String user, final String pass) {
-        DBManager.novabotDataSource.setUser(user);
-        DBManager.novabotDataSource.setPassword(pass);
-        if (user.equals("novabot")) {
-            DBManager.novabotDataSource.setUrl("jdbc:mysql://192.168.200.210:3306/pokealerts");
-        }
-        else {
-            DBManager.novabotDataSource.setUrl("jdbc:mysql://localhost:3306/pokealerts");
-        }
-        DBManager.novabotDataSource.setDatabaseName("pokealerts");
+    public static void novabotdbConnect() {
+        DBManager.novabotDataSource.setUser(config.getNbUser());
+        DBManager.novabotDataSource.setPassword(config.getNbPass());
+        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s",   config.getNbIp(),config.getNbPort(),config.getNbDbName()));
+        DBManager.novabotDataSource.setDatabaseName(config.getNbDbName());
     }
 
-    public static void rocketmapdbConnect(final String user, final String pass) {
-        DBManager.rocketmapDataSource.setUser(user);
-        DBManager.rocketmapDataSource.setPassword(pass);
-        if (user.equals("novabot")) {
-            DBManager.rocketmapDataSource.setUrl("jdbc:mysql://192.168.200.210:3306/pokemongomapdb");
-        }
-        else {
-            DBManager.rocketmapDataSource.setUrl("jdbc:mysql://localhost:3306/pokemongomapdb");
-        }
-        DBManager.rocketmapDataSource.setDatabaseName("pokemongomapdb");
+    public static void rocketmapdbConnect() {
+        DBManager.rocketmapDataSource.setUser(config.getRmUser());
+        DBManager.rocketmapDataSource.setPassword(config.getRmPass());
+        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getRmIp(),config.getRmPort(),config.getRmDbName()));
+        DBManager.rocketmapDataSource.setDatabaseName(config.getRmDbName());
     }
 
     private static Connection getConnection(final MysqlDataSource dataSource) {

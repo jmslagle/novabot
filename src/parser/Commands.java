@@ -1,6 +1,10 @@
 package parser;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import static core.MessageListener.config;
 
 class Commands
 {
@@ -36,14 +40,16 @@ class Commands
         clearLocation.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
         clearLocation.setRequiredArgTypes(clearLocation.getValidArgTypes());
         clearLocation.setArgRange(1, 1);
-        final Command nest = new Command();
-        nest.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Status)));
-        nest.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
-        nest.setArgRange(1, 2);
+        if(config.nestsEnabled()) {
+            final Command nest = new Command();
+            nest.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Status)));
+            nest.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
+            nest.setArgRange(1, 2);
+            Commands.commands.put("!nest", nest);
+        }
         Commands.commands.put("!addpokemon", addPokemon);
         Commands.commands.put("!addchannel", addChannel);
         Commands.commands.put("!delpokemon", delPokemon);
-        Commands.commands.put("!nest", nest);
         Commands.commands.put("!clearpokemon", clearPokemon);
         Commands.commands.put("!clearlocation", clearLocation);
     }

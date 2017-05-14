@@ -14,6 +14,8 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 
+import static core.MessageListener.config;
+
 public class PokeSpawn
 {
     private static final String STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap?";
@@ -36,6 +38,7 @@ public class PokeSpawn
     private int iv_defense;
     private int iv_stamina;
     private static int lastKey;
+    private int cp;
 
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
         this.imageUrl = null;
@@ -52,10 +55,11 @@ public class PokeSpawn
     }
 
     public static void main(final String[] args) {
-        System.out.println(new PokeSpawn(12, 12.0, 12.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1).getGender());
+        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142).hashCode());
+        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142).hashCode());
     }
 
-    public PokeSpawn(final int id, final double lat, final double lon, final Time disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form) {
+    public PokeSpawn(final int id, final double lat, final double lon, final Time disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp) {
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
@@ -81,9 +85,10 @@ public class PokeSpawn
             this.id = id * 10 + form;
         }
         this.form = ((Pokemon.intToForm(form) == null) ? null : String.valueOf(Pokemon.intToForm(form)));
+        this.cp = cp;
     }
 
-    public PokeSpawn(final int id, final String suburb, final float pokeIV, final String move_1, final String move_2, final String form) {
+    public PokeSpawn(final int id, final String suburb, final float pokeIV, final String move_1, final String move_2, final String form, int cp) {
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
@@ -95,6 +100,7 @@ public class PokeSpawn
         this.move_2 = move_2;
         this.move_1 = move_1;
         this.form = form;
+        this.cp = cp;
     }
 
     public String getSuburb() {
@@ -120,7 +126,7 @@ public class PokeSpawn
         if (this.disappearTime == null) {
             return ((this.region == null) ? "null" : this.region.toString()) + ": [" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.move_1 + ", " + this.move_2;
         }
-        return ((this.region == null) ? "null" : this.region.toString()) + ": [" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.move_1 + ", " + this.move_2 + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
+        return ((this.region == null) ? "null" : this.region.toString()) + ": [" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%,CP: " + this.cp + ", " + this.move_1 + ", " + this.move_2 + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
     }
 
     private String timeLeft() {
@@ -136,15 +142,37 @@ public class PokeSpawn
         if (name.startsWith("Unown")) {
             name = "Unown";
         }
-        embedBuilder.setColor(Color.gray);
+        embedBuilder.setColor(getColor());
         embedBuilder.setTitle("[" + this.getSuburb() + "] " + name + " " + ((this.form != null) ? ("[" + this.form + "] ") : ""), this.getGmapsLink());
-        embedBuilder.setDescription("**Available until: " + this.disappearTime + " (" + this.timeLeft() + ")**\n\nDue to recent changes from Niantic, IV and moveset etc are no longer accurate");
+        embedBuilder.setDescription(
+                String.format("**Available until: %s (%s)**%n%n" +
+                        "Lvl30+ IVs: %sA/%sD/%sS (%s%%)%n" +
+                        "Lvl30+ CP: %s%n" +
+                        "Lvl30+ Moveset: %s - %s%n" +
+                        "Gender: %s, Height: %s, Weight: %s", disappearTime,timeLeft(),iv_attack,iv_defense,iv_stamina,getIv(),cp == 0 ? "?" : cp,move_1,move_2,getGender(),getHeight(),getWeight()));
         embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
         embedBuilder.setImage(this.getImage());
-        embedBuilder.setFooter("CBR Sightings", "https://google.com");
+        embedBuilder.setFooter("CBR Sightings", null);
         embedBuilder.setTimestamp(Instant.now());
         messageBuilder.setEmbed(embedBuilder.build());
         return messageBuilder.build();
+    }
+
+    private Color getColor() {
+        if(iv < 25)
+            return new Color(0x9d9d9d);
+        if(iv < 50)
+            return new Color(0xffffff);
+        if(iv < 81)
+            return new Color(0x1eff00);
+        if(iv < 90)
+            return new Color(0x0070dd);
+        if(iv < 100)
+            return new Color(0xa335ee);
+        if(iv == 100)
+            return new Color(0xff8000);
+
+        return Color.GRAY;
     }
 
     private String getGender() {
@@ -176,12 +204,12 @@ public class PokeSpawn
     }
 
     private static String getNextKey() {
-        if (PokeSpawn.lastKey == ReverseGeocoder.GMAPS_KEYS.size() - 1) {
+        if (PokeSpawn.lastKey == config.getKeys().size() - 1) {
             PokeSpawn.lastKey = 0;
-            return ReverseGeocoder.GMAPS_KEYS.get(PokeSpawn.lastKey);
+            return config.getKeys().get(PokeSpawn.lastKey);
         }
         ++PokeSpawn.lastKey;
-        return ReverseGeocoder.GMAPS_KEYS.get(PokeSpawn.lastKey);
+        return config.getKeys().get(PokeSpawn.lastKey);
     }
 
     private String getGmapsLink() {
@@ -195,5 +223,30 @@ public class PokeSpawn
     static {
         (df = new DecimalFormat("#.##")).setRoundingMode(RoundingMode.CEILING);
         PokeSpawn.lastKey = 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = (int) (lat * lon);
+
+        hash *= Suburb.indexOf(suburb);
+
+        hash *= id;
+
+        hash += iv * 1000;
+
+        hash *= gender + 1;
+
+        hash += (weight * height);
+
+        hash += PokeMove.indexOf(move_1) * PokeMove.indexOf(move_2);
+
+        hash += (iv_attack + iv_defense + iv_stamina);
+
+        hash += cp;
+
+        hash += disappearTime.hashCode();
+
+        return hash;
     }
 }

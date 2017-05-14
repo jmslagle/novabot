@@ -21,7 +21,7 @@ public enum Region
     Regional,
     Dexfiller,
     Zeroiv,
-    BigFishLittleRat;
+    BigFishLittleRat, UnownAlphabet;
 
     public static Region fromDbString(final String regionStr) {
         switch (regionStr) {
@@ -130,71 +130,55 @@ public enum Region
         if (regionStr.equals("bigfishlittlerat") || regionStr.equals("big-fish-little-rat") || regionStr.equals("big-fish-little-rat-cardboard-box")) {
             return Region.BigFishLittleRat;
         }
+        if (regionStr.equals("unownalphabet") || regionStr.equals("unown-alphabet"))
+            return UnownAlphabet;
         return null;
     }
 
     public String toWords() {
         switch (this) {
-            case Innernorth: {
+            case Innernorth:
                 return "inner north";
-            }
-            case Innersouth: {
+            case Innersouth:
                 return "inner south";
-            }
-            case GungahlinRegion: {
+            case GungahlinRegion:
                 return "gungahlin region";
-            }
-            case BelconnenRegion: {
+            case BelconnenRegion:
                 return "belconnen region";
-            }
-            case Wodenweston: {
+            case Wodenweston:
                 return "woden-weston";
-            }
-            case TuggeranongRegion: {
+            case TuggeranongRegion:
                 return "tuggeranong region";
-            }
-            case QueanbeyanRegion: {
+            case QueanbeyanRegion:
                 return "queanbeyan region";
-            }
-            case Hundrediv: {
+            case Hundrediv:
                 return "100% iv";
-            }
-            case DratiniCandy: {
+            case DratiniCandy:
                 return "dratini candy";
-            }
-            case MareepCandy: {
+            case MareepCandy:
                 return "mareep candy";
-            }
-            case SnorlaxCandy: {
+            case SnorlaxCandy:
                 return "snorlax";
-            }
-            case LarvitarCandy: {
+            case LarvitarCandy:
                 return "larvitar candy";
-            }
-            case Legacyrare: {
+            case Legacyrare:
                 return "legacy rare";
-            }
-            case Ultrarare: {
+            case Ultrarare:
                 return "ultra rare";
-            }
-            case Event: {
+            case Event:
                 return "event";
-            }
-            case All: {
+            case All:
                 return "all";
-            }
-            case Zeroiv: {
+            case Zeroiv:
                 return "0% iv";
-            }
-            case Dexfiller: {
+            case Dexfiller:
                 return "dex filler";
-            }
-            case BigFishLittleRat: {
+            case BigFishLittleRat:
                 return "big fish little rat";
-            }
-            default: {
+            case UnownAlphabet:
+                return "unown alphabet";
+            default:
                 return "";
-            }
         }
     }
 }

@@ -34,7 +34,7 @@ public class Argument
     }
 
     public static ArgType getDuplicateArg(final Argument[] args) {
-        final ArrayList<ArgType> argTypes = new ArrayList<ArgType>();
+        final ArrayList<ArgType> argTypes = new ArrayList<>();
         for (final Argument arg : args) {
             if (argTypes.contains(arg.getType())) {
                 return arg.getType();

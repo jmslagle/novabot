@@ -161,7 +161,7 @@ public class UserCommand
     public ArrayList<String> getBlacklisted() {
         final ArrayList<String> blacklisted = new ArrayList<String>();
         for (final Object o : this.getArg(ArgType.Pokemon).getParams()) {
-            if (MessageListener.blacklist.contains(Pokemon.nameToID((String)o))) {
+            if (MessageListener.config.getBlacklist().contains(Pokemon.nameToID((String)o))) {
                 blacklisted.add((String)o);
             }
         }
@@ -170,5 +170,19 @@ public class UserCommand
 
     public Location[] getLocations() {
         return this.toLocations(this.getArg(ArgType.Locations).getParams());
+    }
+
+    public String getIvMessage() {
+        String message = "";
+        if (containsArg(ArgType.Iv)) {
+            final Argument ivArg = getArg(ArgType.Iv);
+            if (ivArg.getParams().length == 1) {
+                message = message + " " + ivArg.getParams()[0] + "% IV or above";
+            }
+            else {
+                message = message + " between " + ivArg.getParams()[0] + " and " + ivArg.getParams()[1] + "% IV";
+            }
+        }
+        return message;
     }
 }
