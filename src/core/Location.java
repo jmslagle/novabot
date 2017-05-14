@@ -1,5 +1,7 @@
 package core;
 
+import static core.MessageListener.config;
+
 public class Location
 {
     private boolean isSuburb;
@@ -54,9 +56,17 @@ public class Location
     }
 
     public static Location fromString(final String str) {
+
         final Region region = Region.fromString(str);
-        if (region != null) {
-            return new Location(region);
+
+        if(config.useGeofences()) {
+            if (region != null) {
+                return new Location(region);
+            }
+        }else{
+            if (region == Region.All){
+                return new Location(region);
+            }
         }
         if (Suburb.isSuburb(str)) {
             return new Location(str);

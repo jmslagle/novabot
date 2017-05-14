@@ -143,7 +143,7 @@ public class Config {
         }
     }
 
-    private boolean useGeofences() {
+    public boolean useGeofences() {
         return geofences;
     }
 
