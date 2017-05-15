@@ -11,10 +11,9 @@ import static core.MessageListener.config;
 
 public class DBManager
 {
-    private static final MysqlDataSource rocketmapDataSource;
-    private static final MysqlDataSource novabotDataSource;
-    private static Connection novabotConnection;
-    private static Timestamp lastChecked;
+    private static final MysqlDataSource rocketmapDataSource = new MysqlDataSource();
+    private static final MysqlDataSource novabotDataSource = new MysqlDataSource();
+    private static Timestamp lastChecked = getCurrentTime();
 
     private static RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
@@ -37,23 +36,48 @@ public class DBManager
 //        getUserIDsToNotify(pokeSpawn).forEach(System.out::println);
     }
 
-    public static ArrayList<PokeSpawn> getNewPokemon() {
 
-        System.out.println("Getting new pokemon");
-        final Connection connection = getConnection(DBManager.rocketmapDataSource);
-        final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
-        PreparedStatement statement = null;
+    public static void novabotdbConnect() {
+        DBManager.novabotDataSource.setUser(config.getNbUser());
+        DBManager.novabotDataSource.setPassword(config.getNbPass());
+        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s",   config.getNbIp(),config.getNbPort(),config.getNbDbName()));
+        DBManager.novabotDataSource.setDatabaseName(config.getNbDbName());
+    }
+
+    public static void rocketmapdbConnect() {
+        DBManager.rocketmapDataSource.setUser(config.getRmUser());
+        DBManager.rocketmapDataSource.setPassword(config.getRmPass());
+        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getRmIp(),config.getRmPort(),config.getRmDbName()));
+        DBManager.rocketmapDataSource.setDatabaseName(config.getRmDbName());
+    }
+
+    private static Connection getConnection(final MysqlDataSource dataSource) {
         try {
-            String blacklistQMarks = "(";
-            for (int i = 0; i < config.getBlacklist().size(); ++i) {
-                blacklistQMarks += "?";
-                if (i != config.getBlacklist().size() - 1) {
-                    blacklistQMarks += ",";
-                }
+            return dataSource.getConnection();
+        }
+        catch (SQLException e) {
+            System.out.println("Conn is null, something fukedup");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ArrayList<PokeSpawn> getNewPokemon() {
+        System.out.println("Getting new pokemon");
+
+        final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
+
+        String blacklistQMarks = "(";
+        for (int i = 0; i < config.getBlacklist().size(); ++i) {
+            blacklistQMarks += "?";
+            if (i != config.getBlacklist().size() - 1) {
+                blacklistQMarks += ",";
             }
-            blacklistQMarks += ")";
-            assert connection != null;
-            statement = connection.prepareStatement("" +
+        }
+        blacklistQMarks += ")";
+
+        try (Connection connection = getConnection(rocketmapDataSource);
+            PreparedStatement statement = connection.prepareStatement("" +
                     "SELECT pokemon_id," +
                     "       latitude," +
                     "       longitude," +
@@ -69,7 +93,8 @@ public class DBManager
                     "       form," +
                     "       cp " +
                     "FROM pokemon " +
-                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'"+config.getTimeZone()+"','UTC'),INTERVAL 1 SECOND)");
+                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'"+config.getTimeZone()+"','UTC'),INTERVAL 1 SECOND)");)
+        {
             for (int i = 1; i <= config.getBlacklist().size(); ++i) {
                 statement.setString(i, String.valueOf(config.getBlacklist().get(i - 1)));
             }
@@ -111,126 +136,37 @@ public class DBManager
                 }
             }
         }
-        catch (SQLException e2) {
-            e2.printStackTrace();
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            }
-            catch (SQLException e3) {
-                e2.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e3) {
-                e2.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            }
-            catch (SQLException e3) {
-                e3.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e3) {
-                e3.printStackTrace();
-            }
+        catch (SQLException e) {
+            e.printStackTrace();
         }
         DBManager.lastChecked = getCurrentTime();
         System.out.println("Found: " + pokeSpawns.size());
         return pokeSpawns;
     }
 
-    public static void novabotdbConnect() {
-        DBManager.novabotDataSource.setUser(config.getNbUser());
-        DBManager.novabotDataSource.setPassword(config.getNbPass());
-        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s",   config.getNbIp(),config.getNbPort(),config.getNbDbName()));
-        DBManager.novabotDataSource.setDatabaseName(config.getNbDbName());
-    }
-
-    public static void rocketmapdbConnect() {
-        DBManager.rocketmapDataSource.setUser(config.getRmUser());
-        DBManager.rocketmapDataSource.setPassword(config.getRmPass());
-        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getRmIp(),config.getRmPort(),config.getRmDbName()));
-        DBManager.rocketmapDataSource.setDatabaseName(config.getRmDbName());
-    }
-
-    private static Connection getConnection(final MysqlDataSource dataSource) {
-        try {
-            return dataSource.getConnection();
-        }
-        catch (SQLException e) {
-            System.out.println("Conn is null, something fukedup");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public static boolean containsUser(final String userID) {
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert DBManager.novabotConnection != null;
-            statement = DBManager.novabotConnection.createStatement();
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeQuery(String.format("SELECT * FROM users WHERE id = %s;", "'" + userID + "'"));
             final ResultSet rs = statement.getResultSet();
             if (!rs.next()) {
-                DBManager.novabotConnection.close();
+                connection.close();
                 statement.close();
                 return false;
             }
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         return true;
     }
 
     public static Timestamp getJoinDate(final String userID) {
         Timestamp timestamp = null;
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert DBManager.novabotConnection != null;
-            statement = DBManager.novabotConnection.createStatement();
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeQuery(String.format("SELECT joindate FROM users WHERE id=%s;", userID));
             final ResultSet rs = statement.getResultSet();
             if (rs.next()) {
@@ -239,135 +175,46 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         return timestamp;
     }
 
     public static void logNewUser(final String userID) {
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             final Date date = new Date();
             final Timestamp timestamp = new Timestamp(date.getTime());
-            statement = DBManager.novabotConnection.createStatement();
             statement.executeUpdate(String.format("INSERT INTO users VALUES ('%s','%s');", userID, timestamp));
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
     }
 
     public static boolean shouldNotify(final String userID, final PokeSpawn pokeSpawn) {
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert DBManager.novabotConnection != null;
-            assert DBManager.novabotConnection != null;
-            statement = DBManager.novabotConnection.createStatement();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeQuery(String.format("SELECT * FROM pokemon WHERE ((user_id=%s) AND ((channel=%s) OR (channel='All')) AND (id=%s) AND (min_iv <= %s) AND (max_iv >= %s));", "'" + userID + "'", "'" + pokeSpawn.region + "'", pokeSpawn.id, pokeSpawn.iv, pokeSpawn.iv));
             final ResultSet rs = statement.getResultSet();
             if (!rs.next()) {
-                DBManager.novabotConnection.close();
+                connection.close();
                 statement.close();
                 return false;
             }
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         return true;
     }
 
     public static void addUser(final String userID) {
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert DBManager.novabotConnection != null;
-            statement = DBManager.novabotConnection.createStatement();
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeUpdate(String.format("INSERT INTO users (id) VALUES (%s);", "'" + userID + "'"));
         }
         catch (MySQLIntegrityConstraintViolationException e3) {
@@ -376,29 +223,19 @@ public class DBManager
         catch (SQLException e) {
             e.printStackTrace();
         }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-        }
     }
 
     public static void deletePokemon(final String userID, final Pokemon pokemon) {
-        DBManager.novabotConnection = getConnection(DBManager.novabotDataSource);
-        PreparedStatement statement = null;
-        try {
-            assert DBManager.novabotConnection != null;
-            statement = DBManager.novabotConnection.prepareStatement("DELETE FROM pokemon WHERE ((user_id=?) AND (LOWER(channel)=LOWER(?)) AND (id=?) AND (min_iv=?) AND (max_iv=?))");
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement("" +
+                     "DELETE FROM pokemon " +
+                     "WHERE ((user_id=?) " +
+                     "AND (LOWER(channel)=LOWER(?)) " +
+                     "AND (id=?) " +
+                     "AND (min_iv=?) " +
+                     "AND (max_iv=?))"))
+        {
             statement.setString(1, userID);
             statement.setString(2, (pokemon.getLocation().toString() == null) ? "All" : pokemon.getLocation().toString());
             statement.setDouble(3, pokemon.getID());
@@ -408,43 +245,14 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                DBManager.novabotConnection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
     }
 
     public static void addPokemon(final String userID, final Pokemon pokemon) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        PreparedStatement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.prepareStatement("INSERT INTO pokemon VALUES (?,?,?,?,?)");
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement =connection.prepareStatement("INSERT INTO pokemon VALUES (?,?,?,?,?)"))
+        {
             statement.setString(1, userID);
             statement.setInt(2, pokemon.getID());
             statement.setString(3, pokemon.getLocation().toString());
@@ -458,58 +266,33 @@ public class DBManager
         catch (SQLException e2) {
             e2.printStackTrace();
         }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e3) {
-                e3.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e3) {
-                e3.printStackTrace();
-            }
-        }
     }
 
     public static void resetUser(final String id) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.createStatement();
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id = %s;", id));
-            statement.close();
-            connection.close();
         }
         catch (SQLException e) {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException f) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException f) {
-                e.printStackTrace();
-            }
             e.printStackTrace();
         }
     }
 
     public static ArrayList<String> getUserIDsToNotify(final PokeSpawn pokeSpawn) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        final ArrayList<String> ids = new ArrayList<String>();
-        PreparedStatement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.prepareStatement("SELECT DISTINCT(user_id) FROM pokemon WHERE (((LOWER(channel)=LOWER(?)) OR (LOWER(channel)=LOWER(?)) OR (LOWER(channel)=LOWER('All'))) AND (id=? OR id=?) AND (min_iv <= ?) AND (max_iv >= ?));");
+        final ArrayList<String> ids = new ArrayList<>();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT DISTINCT(user_id) " +
+                         "FROM pokemon " +
+                         "WHERE (((LOWER(channel)=LOWER(?)) " +
+                         "OR (LOWER(channel)=LOWER(?)) " +
+                         "OR (LOWER(channel)=LOWER('All'))) " +
+                         "AND (id=? OR id=?) " +
+                         "AND (min_iv <= ?) " +
+                         "AND (max_iv >= ?));"))
+        {
             statement.setString(1, (pokeSpawn.getRegion() == null) ? "All" : pokeSpawn.getRegion().toString());
             statement.setString(2, pokeSpawn.getSuburb());
             statement.setInt(3, pokeSpawn.id);
@@ -524,46 +307,17 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         System.out.println("Found " + ids.size() + " to notify");
         return ids;
     }
 
     public static UserPref getUserPref(final String id) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
         final UserPref userPref = new UserPref(id);
-        Statement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.createStatement();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeQuery(String.format("SELECT * FROM pokemon WHERE user_id=%s", "'" + id + "'"));
             final ResultSet rs = statement.getResultSet();
             while (rs.next()) {
@@ -576,34 +330,6 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         return userPref;
     }
@@ -613,61 +339,28 @@ public class DBManager
         for (int i = 0; i < pokemons.size(); ++i) {
             if (i == pokemons.size() - 1) {
                 idsString += pokemons.get(i).getID();
-            }
-            else {
+            } else {
                 idsString = idsString + pokemons.get(i).getID() + ",";
             }
         }
         idsString += ")";
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.createStatement();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement   statement = connection.createStatement())
+        {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString));
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
     }
 
     public static int countPokemon(final String id) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
         int pokemon = 0;
-        Statement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.createStatement();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement =  connection.createStatement())
+        {
             statement.executeQuery(String.format("SELECT count(id) FROM pokemon WHERE user_id=%s;", "'" + id + "'"));
             final ResultSet rs = statement.getResultSet();
             if (rs.next()) {
@@ -676,36 +369,6 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
         return pokemon;
     }
@@ -716,63 +379,28 @@ public class DBManager
     }
 
     public static String getSuburb(final double lat, final double lon) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
         String suburb = null;
-        PreparedStatement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.prepareStatement("SELECT suburb FROM geocoding WHERE lat = ? AND lon = ?");
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement("SELECT suburb FROM geocoding WHERE lat = ? AND lon = ?"))
+        {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             final ResultSet rs = statement.executeQuery();
             if (rs.next()) {
                 suburb = rs.getString(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
         }
-        finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-        }
+
         return suburb;
     }
 
     public static void setSuburb(final double lat, final double lon, final String suburb) {
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        PreparedStatement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.prepareStatement("INSERT INTO geocoding VALUES (?,?,?)");
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO geocoding VALUES (?,?,?)"))
+        {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             statement.setString(3, suburb);
@@ -780,35 +408,6 @@ public class DBManager
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-        }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                assert connection != null;
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
         }
     }
 
@@ -823,61 +422,27 @@ public class DBManager
             }
         }
         locationsString += ")";
-        final Connection connection = getConnection(DBManager.novabotDataSource);
-        Statement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.createStatement();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND channel IN %s;", "'" + id + "'", locationsString));
         }
         catch (SQLException e) {
             e.printStackTrace();
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e1) {
-                e.printStackTrace();
-            }
         }
-        finally {
-            try {
-                assert statement != null;
-                statement.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                connection.close();
-            }
-            catch (SQLException e2) {
-                e2.printStackTrace();
-            }
-        }
-
     }
 
 
     public static int countSpawns(int id, TimeUnit intervalType, int intervalLength){
-
         int numSpawns = 0;
 
-        final Connection connection = getConnection(DBManager.rocketmapDataSource);
-        String suburb = null;
-        PreparedStatement statement = null;
-        try {
-            assert connection != null;
-            statement = connection.prepareStatement(
-                    "SELECT COUNT(*) " +
-                        "FROM pokemon " +
-                        "WHERE pokemon_id = ? AND disappear_time > NOW() - INTERVAL ? "+intervalType.toString());
+        try (Connection connection = getConnection(DBManager.rocketmapDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                 "SELECT COUNT(*) " +
+                     "FROM pokemon " +
+                     "WHERE pokemon_id = ? AND disappear_time > NOW() - INTERVAL ? "+intervalType.toString()))
+        {
             statement.setDouble(1, id);
             statement.setDouble(2, intervalLength);
             statement.executeQuery();
@@ -893,13 +458,5 @@ public class DBManager
         }
 
         return numSpawns;
-    }
-
-
-
-    static {
-        rocketmapDataSource = new MysqlDataSource();
-        novabotDataSource = new MysqlDataSource();
-        DBManager.lastChecked = getCurrentTime();
     }
 }

@@ -53,7 +53,7 @@ public class MessageListener extends ListenerAdapter
 
     public static void main(final String[] args) {
 
-        testing = true;
+        testing = false;
 
         loadConfig();
         loadSuburbs();

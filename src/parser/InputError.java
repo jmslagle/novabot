@@ -41,7 +41,7 @@ public enum InputError
             case DuplicateArgs: {
                 final ArgType duplicateType = Argument.getDuplicateArg(userCommand.getArgs());
                 String str = "You specified multiple " + duplicateType;
-                if (duplicateType == ArgType.Float) {
+                if (duplicateType == ArgType.Float || duplicateType == ArgType.Int) {
                     return str;
                 }
                 str += " without putting them in a list.";
@@ -54,6 +54,7 @@ public enum InputError
                     case Locations:
                         str += "`!addpokemon lapras <belconnen,gungahlin>`";
                         break;
+
                 }
                 return str + "\n\n";
             }
