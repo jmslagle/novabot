@@ -48,9 +48,9 @@ public class UserCommand
                     }
                     break;
                 case Int:
-                    miniv = (float)arg.getParams()[0];
+                    miniv = ((Integer)arg.getParams()[0]).floatValue();
                     if (arg.getParams().length == 2) {
-                        maxiv = (float)arg.getParams()[1];
+                        maxiv = ((Integer)arg.getParams()[1]).floatValue();
                         break;
                     }
                     break;
@@ -183,6 +183,14 @@ public class UserCommand
         String message = "";
         if (containsArg(ArgType.Float)) {
             final Argument ivArg = getArg(ArgType.Float);
+            if (ivArg.getParams().length == 1) {
+                message = message + " " + ivArg.getParams()[0] + "% IV or above";
+            }
+            else {
+                message = message + " between " + ivArg.getParams()[0] + " and " + ivArg.getParams()[1] + "% IV";
+            }
+        }else if(containsArg(ArgType.Int)){
+            final Argument ivArg = getArg(ArgType.Int);
             if (ivArg.getParams().length == 1) {
                 message = message + " " + ivArg.getParams()[0] + "% IV or above";
             }
