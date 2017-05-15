@@ -40,7 +40,14 @@ public class UserCommand
                 case Pokemon:
                     pokeNames = this.toStrings(arg.getParams());
                     break;
-                case Iv:
+                case Float:
+                    miniv = (float)arg.getParams()[0];
+                    if (arg.getParams().length == 2) {
+                        maxiv = (float)arg.getParams()[1];
+                        break;
+                    }
+                    break;
+                case Int:
                     miniv = (float)arg.getParams()[0];
                     if (arg.getParams().length == 2) {
                         maxiv = (float)arg.getParams()[1];
@@ -174,8 +181,8 @@ public class UserCommand
 
     public String getIvMessage() {
         String message = "";
-        if (containsArg(ArgType.Iv)) {
-            final Argument ivArg = getArg(ArgType.Iv);
+        if (containsArg(ArgType.Float)) {
+            final Argument ivArg = getArg(ArgType.Float);
             if (ivArg.getParams().length == 1) {
                 message = message + " " + ivArg.getParams()[0] + "% IV or above";
             }

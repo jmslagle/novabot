@@ -57,7 +57,7 @@ public class DBManager
                     "SELECT pokemon_id," +
                     "       latitude," +
                     "       longitude," +
-                    "       TIME((CONVERT_TZ(disappear_time,'UTC','Australia/Canberra')))," +
+                    "       TIME((CONVERT_TZ(disappear_time,'UTC','"+config.getTimeZone()+"')))," +
                     "       individual_attack, " +
                     "       individual_defense," +
                     "       individual_stamina," +
@@ -69,13 +69,14 @@ public class DBManager
                     "       form," +
                     "       cp " +
                     "FROM pokemon " +
-                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'Australia/Canberra','UTC'),INTERVAL 1 SECOND)");
+                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'"+config.getTimeZone()+"','UTC'),INTERVAL 1 SECOND)");
             for (int i = 1; i <= config.getBlacklist().size(); ++i) {
                 statement.setString(i, String.valueOf(config.getBlacklist().get(i - 1)));
             }
             statement.setTimestamp(config.getBlacklist().size() + 1, DBManager.lastChecked);
-            System.out.println("Executing query");
+            System.out.println("Executing query:");
             final ResultSet rs = statement.executeQuery();
+            System.out.println(statement);
             System.out.println("Query complete");
             while (rs.next()) {
                 final int id = rs.getInt(1);
@@ -367,7 +368,7 @@ public class DBManager
         try {
             assert DBManager.novabotConnection != null;
             statement = DBManager.novabotConnection.createStatement();
-            statement.executeUpdate(String.format("INSERT INTO users VALUES (%s);", "'" + userID + "'"));
+            statement.executeUpdate(String.format("INSERT INTO users (id) VALUES (%s);", "'" + userID + "'"));
         }
         catch (MySQLIntegrityConstraintViolationException e3) {
             System.out.println("Cannot add duplicate");
@@ -860,7 +861,41 @@ public class DBManager
                 e2.printStackTrace();
             }
         }
+
     }
+
+
+    public static int countSpawns(int id, TimeUnit intervalType, int intervalLength){
+
+        int numSpawns = 0;
+
+        final Connection connection = getConnection(DBManager.rocketmapDataSource);
+        String suburb = null;
+        PreparedStatement statement = null;
+        try {
+            assert connection != null;
+            statement = connection.prepareStatement(
+                    "SELECT COUNT(*) " +
+                        "FROM pokemon " +
+                        "WHERE pokemon_id = ? AND disappear_time > NOW() - INTERVAL ? "+intervalType.toString());
+            statement.setDouble(1, id);
+            statement.setDouble(2, intervalLength);
+            statement.executeQuery();
+
+            ResultSet rs = statement.getResultSet();
+
+            if(rs.next()){
+                numSpawns = rs.getInt(1);
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return numSpawns;
+    }
+
+
 
     static {
         rocketmapDataSource = new MysqlDataSource();

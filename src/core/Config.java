@@ -24,7 +24,12 @@ public class Config {
     private boolean geofences;
     private boolean logging;
     private boolean nests;
+    private boolean stats;
     private final boolean supporterOnly;
+
+    private String timeZone;
+
+    private String footerText;
 
     private String commandChannelId;
     private String roleLogId;
@@ -75,6 +80,12 @@ public class Config {
         roleLogId = config.get("roleLogChannel");
 
         userUpdatesId = config.get("userUpdatesChannel");
+
+        timeZone = config.get("timezone");
+
+        footerText = config.get("footerText");
+
+        stats = Boolean.parseBoolean(config.get("stats"));
 
         Ini.Section rocketmapDb = ini.get("rocketmap db");
         rmUser = rocketmapDb.get("user");
@@ -229,5 +240,17 @@ public class Config {
 
     public String getNbDbName() {
         return nbDbName;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public String getFooterText() {
+        return footerText;
+    }
+
+    public boolean statsEnabled() {
+        return stats;
     }
 }

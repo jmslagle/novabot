@@ -49,19 +49,14 @@ public class MessageListener extends ListenerAdapter
     private static MessageChannel userUpdatesLog;
 
     public static Config config;
+    public static SuburbManager suburbs;
 
     public static void main(final String[] args) {
 
-        testing = false;
+        testing = true;
 
-        try {
-            config = new Config(
-                    new Ini(new File(testing ? "config.example.ini" : "config.ini")),
-                    new File("gkeys.ini")
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        loadConfig();
+        loadSuburbs();
 
         System.out.println("Connecting to db");
 //        if (MessageListener.testing) {
@@ -113,6 +108,21 @@ public class MessageListener extends ListenerAdapter
             ex2.printStackTrace();
         }
         System.out.println("connected");
+    }
+
+    public static void loadSuburbs() {
+        suburbs = new SuburbManager(new File("suburbs.txt"));
+    }
+
+    public static void loadConfig() {
+        try {
+            config = new Config(
+                    new Ini(new File(testing ? "config.example.ini" : "config.ini")),
+                    new File("gkeys.ini")
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -187,11 +197,7 @@ public class MessageListener extends ListenerAdapter
             MessageListener.cbrSightings = guild;
 
             if(channel.getId().equals(config.getCommandChannelId())){
-                if(config.isSupporterOnly() && !isSupporter(author.getId())){
-                    channel.sendMessage(author.getAsMention() + ", sorry, I can only accept commands from supporters").queue();
-                }else{
-                    this.parseMsg(msg.toLowerCase(), author, textChannel);
-                }
+                this.parseMsg(msg.toLowerCase(), author, textChannel);
             }
             else if (config.nestsEnabled() && channel.getName().equals(MessageListener.testing ? "nests-testing" : "nests")) {
                 this.parseNestMsg(msg.toLowerCase().trim(), author, channel, event.getChannelType());
@@ -455,18 +461,20 @@ public class MessageListener extends ListenerAdapter
 
     private void parseMsg(final String msg, final User author, final MessageChannel channel) {
 
-        System.out.println(msg);
-        System.out.println(author);
-        System.out.println(channel);
-        System.out.println(config.isSupporterOnly() && !isSupporter(author.getId()));
-
         if (!msg.startsWith("!")) {
             return;
         }
-        if (msg.startsWith("!nest")) {
+
+        if(config.isSupporterOnly() && !isSupporter(author.getId())) {
+            channel.sendMessage(author.getAsMention() + ", sorry, I can only accept commands from supporters").queue();
+            return;
+        }
+
+        if (config.nestsEnabled() && msg.startsWith("!nest")) {
             channel.sendMessage(author.getAsMention() + " I only accept nest commands in the " + MessageListener.cbrSightings.getTextChannelsByName("nests", true).get(0).getAsMention() + " channel or via PM").queue();
             return;
         }
+
         if (msg.equals("!settings")) {
             final UserPref userPref = DBManager.getUserPref(author.getId());
             System.out.println("!settings");
@@ -483,80 +491,124 @@ public class MessageListener extends ListenerAdapter
                     channel.sendMessage(message).queue();
                 }
             }
+            return;
         }
         else if (msg.equals("!reset")) {
             DBManager.resetUser(author.getId());
             channel.sendMessage(author.getAsMention() + ", your notification settings have been reset").queue();
+            return;
         }
         else if (msg.equals("!help")) {
-            channel.sendMessage("My commands are: \n```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n!addpokemon pokemon\n!delpokemon <pokemon list> <miniv,maxiv> <location list>\n!delpokemon pokemon\n!clearpokemon <pokemon list>\n!clearlocation <location list>\n!reset\n!settings\n!help\n!channellist or !channels```").queue();
+            channel.sendMessage("My commands are: \n" +
+                    "```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
+                    "!addpokemon pokemon\n" +
+                    "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
+                    "!delpokemon pokemon\n" +
+                    "!clearpokemon <pokemon list>\n" +
+                    "!clearlocation <location list>\n" +
+                    (config.statsEnabled() ? "!countpokemon <pokemon list> <integer> <unit of time>\n" : "") +
+                    "!reset\n" +
+                    "!settings\n" +
+                    (config.useGeofences() ? "!channellist or !channels\n" : "") +
+                    "!help```").queue();
+            return;
         }
-        else if (msg.equals("!channellist") || msg.equals("!channels")) {
+        else if (config.useGeofences() &&(msg.equals("!channellist") || msg.equals("!channels"))) {
             channel.sendMessage("Accepted channels are:\n\nall\nwodenweston = woden-weston = woden-weston-region = woden-weston-supporter\ngungahlin = gungahlin-region = gungahlin-supporter\ninnernorth = inner-north = inner-north-region = inner-north-supporter\nbelconnen = belconnen-region = belconnen-supporter\ninnersouth = inner-south = inner-south-region = inner-south-supporter\ntuggeranong = tuggeranong-region = tuggeranong-supporter\nqueanbeyan = queanbeyan-region = queanbeyan-supporter\nlegacy = legacyrare = legacy-rare = legacy-rare-supporter\nlarvitar = larvitarcandy = larvitar-candy = larvitar-candy-supporter\ndratini = dratinicandy = dratini-candy = dratini-candy-supporter\nmareep = mareepcandy = mareep-candy = mareep-candy-supporter\nultrarare = ultra-rare = ultra-rare-supporter\n100iv = 100-iv = 100% = 100-iv-supporter\nsnorlax = snorlax-supporter\nevent\n0iv = 0-iv = 0% = 0-iv-supporter\ndexfiller = dex-filler\nbigfishlittlerat = big-fish-little-rat = big-fish-little-rat-cardboard-box\n").queue();
+            return;
         }
-        else if (msg.startsWith("!")) {
-            final UserCommand userCommand = Parser.parseInput(msg);
-            final ArrayList<InputError> exceptions = userCommand.getExceptions();
-            if (exceptions.size() > 0) {
-                String errorMessage = author.getAsMention() + ", I had " + ((exceptions.size() == 1) ? "a problem" : "problems") + " reading your input.\n\n";
-                final InputError error = InputError.mostSevere(exceptions);
-                errorMessage += error.getErrorMessage(userCommand);
-                channel.sendMessage(errorMessage).queue();
-            }
-            else {
-                final String cmdStr = (String)userCommand.getArg(0).getParams()[0];
-                if (cmdStr.contains("pokemon")) {
-                    final Pokemon[] pokemons = userCommand.buildPokemon();
-                    if (cmdStr.startsWith("!add")) {
-                        if (!isSupporter(author.getId()) && DBManager.countPokemon(author.getId()) + pokemons.length > 3) {
-                            channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 pokemon notifications set up. What you tried to add would put you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
-                            return;
-                        }
-                        if (!DBManager.containsUser(author.getId())) {
-                            DBManager.addUser(author.getId());
-                        }
-                        for (final Pokemon pokemon : pokemons) {
-                            System.out.println("adding pokemon " + pokemon);
-                            DBManager.addPokemon(author.getId(), pokemon);
-                        }
-                        String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-                        message2 += userCommand.getIvMessage();
 
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = { new Location(Region.All) };
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
-                    }
-                    else if (cmdStr.startsWith("!del")) {
-                        for (final Pokemon pokemon : pokemons) {
-                            DBManager.deletePokemon(author.getId(), pokemon);
-                        }
-                        String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-                        message2 += userCommand.getIvMessage();
+        final UserCommand userCommand = Parser.parseInput(msg);
+        final ArrayList<InputError> exceptions = userCommand.getExceptions();
 
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = { new Location(Region.All) };
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
+        if (exceptions.size() > 0) {
+            String errorMessage = author.getAsMention() + ", I had " + ((exceptions.size() == 1) ? "a problem" : "problems") + " reading your input.\n\n";
+            final InputError error = InputError.mostSevere(exceptions);
+            errorMessage += error.getErrorMessage(userCommand);
+            channel.sendMessage(errorMessage).queue();
+        }
+        else {
+            final String cmdStr = (String)userCommand.getArg(0).getParams()[0];
+
+            if (cmdStr.contains("pokemon")) {
+                final Pokemon[] pokemons = userCommand.buildPokemon();
+
+
+                if(cmdStr.equals("!countpokemon")){
+
+                    String str = author.getAsMention() + ", here's what I found:\n\n";
+
+                    for (Pokemon pokemon : pokemons) {
+
+                        core.TimeUnit timeUnit = (core.TimeUnit) userCommand.getArg(ArgType.TimeUnit).getParams()[0];
+
+                        int intervalLength = (int) userCommand.getArg(ArgType.Int).getParams()[0];
+
+                        int count = DBManager.countSpawns(pokemon.getID(),timeUnit,intervalLength);
+
+                        str+= String.format("  %s %s%s have been seen in the last %s %s%n%n",
+                                count,
+                                pokemon.name,
+                                count == 1 ? "" : "s",
+                                intervalLength,
+                                timeUnit);
+
                     }
-                    else if (cmdStr.startsWith("!clear")) {
-                        DBManager.clearPokemon(author.getId(), new ArrayList<Pokemon>(Arrays.asList(pokemons)));
-                        final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any channels";
-                        channel.sendMessage(message2).queue();
-                    }
+
+                    channel.sendMessage(str).queue();
+
+                    return;
                 }
-                else if (cmdStr.equals("!clearlocation")) {
-                    final Location[] locations2 = userCommand.getLocations();
-                    DBManager.clearLocations(author.getId(), locations2);
-                    final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
+
+                if (cmdStr.equals("!addpokemon")) {
+                    if (!isSupporter(author.getId()) && DBManager.countPokemon(author.getId()) + pokemons.length > 3) {
+                        channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 pokemon notifications set up. What you tried to add would put you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
+                        return;
+                    }
+                    if (!DBManager.containsUser(author.getId())) {
+                        DBManager.addUser(author.getId());
+                    }
+                    for (final Pokemon pokemon : pokemons) {
+                        System.out.println("adding pokemon " + pokemon);
+                        DBManager.addPokemon(author.getId(), pokemon);
+                    }
+                    String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+                    message2 += userCommand.getIvMessage();
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = { new Location(Region.All) };
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 = message2 + " in " + Location.listToString(locations);
                     channel.sendMessage(message2).queue();
                 }
+                else if (cmdStr.equals("!delpokemon")) {
+                    for (final Pokemon pokemon : pokemons) {
+                        DBManager.deletePokemon(author.getId(), pokemon);
+                    }
+                    String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+                    message2 += userCommand.getIvMessage();
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = { new Location(Region.All) };
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 = message2 + " in " + Location.listToString(locations);
+                    channel.sendMessage(message2).queue();
+                }
+                else if (cmdStr.equals("!clearpokemon")) {
+                    DBManager.clearPokemon(author.getId(), new ArrayList<Pokemon>(Arrays.asList(pokemons)));
+                    final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any channels";
+                    channel.sendMessage(message2).queue();
+                }
+            }
+            else if (cmdStr.equals("!clearlocation")) {
+                final Location[] locations2 = userCommand.getLocations();
+                DBManager.clearLocations(author.getId(), locations2);
+                final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
+                channel.sendMessage(message2).queue();
             }
         }
     }

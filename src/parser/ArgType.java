@@ -4,12 +4,14 @@ import java.util.*;
 
 public enum ArgType
 {
-    Iv,
+    Float,
     Locations,
     Pokemon,
     CommandStr,
     Unknown,
-    Status;
+    TimeUnit,
+    Status,
+    Int;
 
     public static void main(final String[] args) {
         final HashSet<ArgType> hashSet = new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
@@ -19,14 +21,20 @@ public enum ArgType
     @Override
     public String toString() {
         switch (this) {
-            case Iv:
-                return "iv";
+            case Float:
+                return "number";
             case Locations:
                 return "channel or location";
             case Pokemon:
                 return "pokemon";
             case Unknown:
                 return "other";
+            case Status:
+                return "nest status";
+            case TimeUnit:
+                return "time unit";
+            case Int:
+                return "whole number";
             default:
                 return null;
         }

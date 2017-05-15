@@ -1,9 +1,15 @@
 package parser;
 
-import java.util.regex.*;
-import core.*;
-import nests.*;
-import java.util.*;
+import core.Location;
+import core.MessageListener;
+import core.Pokemon;
+import core.TimeUnit;
+import nests.NestStatus;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parser
 {
@@ -90,8 +96,16 @@ public class Parser
                 argument.setType(ArgType.Status);
                 argument.setParams(new Object[] { NestStatus.fromString(s.trim()) });
             }
+            else if(TimeUnit.fromString(s.trim()) != null){
+                argument.setType(ArgType.TimeUnit);
+                argument.setParams(new Object[] { TimeUnit.fromString(s.trim())});
+            }
+            else if (getInt(s.trim()) != null) {
+                argument.setType(ArgType.Int);
+                argument.setParams(new Object[] { getInt(s.trim()) });
+            }
             else if (getFloat(s.trim()) != null) {
-                argument.setType(ArgType.Iv);
+                argument.setType(ArgType.Float);
                 argument.setParams(new Object[] { getFloat(s.trim()) });
             }
             else {
@@ -101,6 +115,16 @@ public class Parser
             }
         }
         return argument;
+    }
+
+
+    private static Integer getInt(String s) {
+        try {
+            return Integer.parseInt(s.trim());
+        }
+        catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private static Float getFloat(final String s) {
@@ -144,7 +168,7 @@ public class Parser
                         args[i] = getFloat(strings[i].trim());
                     }
                     if (!allNull(args)) {
-                        argument.setType(ArgType.Iv);
+                        argument.setType(ArgType.Float);
                     }
                     else {
                         malformed.clear();
@@ -185,7 +209,13 @@ public class Parser
         return true;
     }
 
+    public static void main(String[] args) {
+        MessageListener.loadConfig();
+        MessageListener.loadSuburbs();
+        getArgs("!countpokemon dragonite 4.5 hour");
+    }
+
     static {
-        PATTERN = Pattern.compile("(?=\\S*['-])([a-zA-Z'-]+)|!?\\w+|<(.*?)>");
+        PATTERN = Pattern.compile("(?=\\S*[.'-])([a-zA-Z0-9.'-]+)|!?\\w+|<(.*?)>");
     }
 }

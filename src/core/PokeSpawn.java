@@ -152,7 +152,7 @@ public class PokeSpawn
                         "Gender: %s, Height: %s, Weight: %s", disappearTime,timeLeft(),iv_attack,iv_defense,iv_stamina,getIv(),cp == 0 ? "?" : cp,move_1,move_2,getGender(),getHeight(),getWeight()));
         embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
         embedBuilder.setImage(this.getImage());
-        embedBuilder.setFooter("CBR Sightings", null);
+        embedBuilder.setFooter(config.getFooterText(), null);
         embedBuilder.setTimestamp(Instant.now());
         messageBuilder.setEmbed(embedBuilder.build());
         return messageBuilder.build();
@@ -229,7 +229,7 @@ public class PokeSpawn
     public int hashCode() {
         int hash = (int) (lat * lon);
 
-        hash *= Suburb.indexOf(suburb);
+        hash *= MessageListener.suburbs.indexOf(suburb);
 
         hash *= id;
 

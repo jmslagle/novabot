@@ -68,7 +68,7 @@ public class Location
                 return new Location(region);
             }
         }
-        if (Suburb.isSuburb(str)) {
+        if (MessageListener.suburbs.isSuburb(str)) {
             return new Location(str);
         }
         return null;
@@ -79,7 +79,7 @@ public class Location
         if (region != null) {
             return new Location(region);
         }
-        if (Suburb.isSuburb(str)) {
+        if (MessageListener.suburbs.isSuburb(str)) {
             return new Location(str);
         }
         if (str.equals("civic")) {
