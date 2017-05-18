@@ -8,19 +8,23 @@ import net.dv8tion.jda.core.entities.Message;
 
 import java.awt.*;
 import java.math.RoundingMode;
-import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Date;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static core.MessageListener.config;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class PokeSpawn
 {
     private static final String STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap?";
+    private int level;
     private String imageUrl;
-    private Time disappearTime;
+    private Timestamp disappearTime;
     private double lat;
     private double lon;
     private float weight;
@@ -40,6 +44,9 @@ public class PokeSpawn
     private static int lastKey;
     private int cp;
 
+
+    private static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
+
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
         this.imageUrl = null;
         this.disappearTime = null;
@@ -55,11 +62,17 @@ public class PokeSpawn
     }
 
     public static void main(final String[] args) {
-        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142).hashCode());
-        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142).hashCode());
+        System.out.println(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Australia/Adelaide")));
+
+        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Timestamp(DBManager.getCurrentTime().getTime() + 6000), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,0.743 ).getDespawnTime());
+
+
+        System.out.println(getLevel(0));
+//        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,0.743 ).hashCode());
+//        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,.743 ).hashCode());
     }
 
-    public PokeSpawn(final int id, final double lat, final double lon, final Time disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp) {
+    public PokeSpawn(final int id, final double lat, final double lon, final Timestamp disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
@@ -86,6 +99,7 @@ public class PokeSpawn
         }
         this.form = ((Pokemon.intToForm(form) == null) ? null : String.valueOf(Pokemon.intToForm(form)));
         this.cp = cp;
+        this.level = getLevel(cpModifier);
     }
 
     public PokeSpawn(final int id, final String suburb, final float pokeIV, final String move_1, final String move_2, final String form, int cp) {
@@ -101,6 +115,18 @@ public class PokeSpawn
         this.move_1 = move_1;
         this.form = form;
         this.cp = cp;
+    }
+
+    public static int getLevel(double cpModifier){
+        double unRoundedLevel;
+
+        if(cpModifier < 0.734){
+            unRoundedLevel = (58.35178527 * cpModifier * cpModifier - 2.838007664 * cpModifier + 0.8539209906);
+        }else{
+            unRoundedLevel = 171.0112688 * cpModifier - 95.20425243;
+        }
+
+        return (int) Math.round(unRoundedLevel);
     }
 
     public String getSuburb() {
@@ -130,9 +156,28 @@ public class PokeSpawn
     }
 
     private String timeLeft() {
-        final long diff = this.disappearTime.getTime() - DBManager.getCurrentTime().getTime();
-        final SimpleDateFormat format = new SimpleDateFormat("mm:ss");
-        return format.format(new Date(diff));
+//        ZonedDateTime.of(LocalDate.of, ZoneId.of("Australia/Canberra"))
+
+        Timestamp currentTime = DBManager.getCurrentTime();
+
+        System.out.println(disappearTime);
+        System.out.println(currentTime);
+
+        System.out.println(disappearTime.getTime() - currentTime.getTime());
+
+        long diff = this.disappearTime.getTime() - currentTime.getTime();
+
+        String time = String.format("%02d:%02d",
+                MILLISECONDS.toMinutes(Math.abs(diff)),
+                MILLISECONDS.toSeconds(Math.abs(diff)) -
+                        MINUTES.toSeconds(MILLISECONDS.toMinutes(Math.abs(diff)))
+        );
+
+        if(diff < 0){
+            time = "-" + time;
+        }
+
+        return time;
     }
 
     public Message buildMessage() {
@@ -147,9 +192,9 @@ public class PokeSpawn
         embedBuilder.setDescription(
                 String.format("**Available until: %s (%s)**%n%n" +
                         "Lvl30+ IVs: %sA/%sD/%sS (%s%%)%n" +
-                        "Lvl30+ CP: %s%n" +
+                        "Lvl30+ CP: %s (lvl %s)%n" +
                         "Lvl30+ Moveset: %s - %s%n" +
-                        "Gender: %s, Height: %s, Weight: %s", disappearTime,timeLeft(),iv_attack,iv_defense,iv_stamina,getIv(),cp == 0 ? "?" : cp,move_1,move_2,getGender(),getHeight(),getWeight()));
+                        "Gender: %s, Height: %s, Weight: %s", getDespawnTime(),timeLeft(),iv_attack,iv_defense,iv_stamina,getIv(),cp == 0 ? "?" : cp,level,move_1,move_2,getGender(),getHeight(),getWeight()));
         embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
         embedBuilder.setImage(this.getImage());
         embedBuilder.setFooter(config.getFooterText(), null);
@@ -248,5 +293,9 @@ public class PokeSpawn
         hash += disappearTime.hashCode();
 
         return hash;
+    }
+
+    public String getDespawnTime() {
+        return printFormat.format(disappearTime);
     }
 }

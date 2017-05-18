@@ -25,6 +25,7 @@ import parser.*;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -48,12 +49,15 @@ public class MessageListener extends ListenerAdapter
     private final String helpStr = "My commands are: \n```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n!addpokemon pokemon\n!delpokemon <pokemon list> <miniv,maxiv> <location list>\n!delpokemon pokemon\n!clearpokemon <pokemon list>\n!clearlocation <location list>\n!reset\n!settings\n!help\n!channellist or !channels```";
     private static MessageChannel userUpdatesLog;
 
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
     public static Config config;
     public static SuburbManager suburbs;
 
     public static void main(final String[] args) {
 
-        testing = false;
+        testing = true;
 
         loadConfig();
         loadSuburbs();
@@ -107,6 +111,9 @@ public class MessageListener extends ListenerAdapter
         catch (LoginException | InterruptedException | RateLimitedException ex2) {
             ex2.printStackTrace();
         }
+
+
+
         System.out.println("connected");
     }
 
@@ -155,7 +162,10 @@ public class MessageListener extends ListenerAdapter
 
         final JDA jda = event.getJDA();
         final User user = event.getMember().getUser();
-        MessageListener.userUpdatesLog.sendMessage(user.getAsMention() + " joined.").queue();
+        MessageListener.userUpdatesLog.sendMessage(
+                user.getAsMention() +
+                        " joined. The account was created " +
+                        user.getCreationTime().format(formatter)).queue();
         DBManager.logNewUser(user.getId());
     }
 

@@ -6,6 +6,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.TimeZone;
 
 import static core.MessageListener.config;
 
@@ -20,18 +21,20 @@ public class DBManager
 
 
     public static void main(final String[] args) {
+//        MessageListener.main(null);
 
-        MessageListener.main(null);
+        System.out.println(getCurrentTime());
+//        MessageListener.main(null);
 
-        System.out.println("Connecting to db");
-//        rocketmapdbConnect();
-        novabotdbConnect();
-        System.out.println("Getting db connection");
-        final PokeSpawn pokeSpawn = new PokeSpawn(149, -35.264327, 149.116087, new Time(123L), 15, 15, 15, "", "", 1.0f, 2.0f, 1, 0, 2314);
-        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getTitle());
-        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getDescription());
-
-        getUserIDsToNotify(pokeSpawn).forEach((id) -> {if(id.equals("107730875596169216")) System.out.println("true");});
+//        System.out.println("Connecting to db");
+////        rocketmapdbConnect();
+//        novabotdbConnect();
+//        System.out.println("Getting db connection");
+//        final PokeSpawn pokeSpawn = new PokeSpawn(149, -35.264327, 149.116087, new Time(123L), 15, 15, 15, "", "", 1.0f, 2.0f, 1, 0, 2314);
+//        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getTitle());
+//        System.out.println(pokeSpawn.buildMessage().getEmbeds().get(0).getDescription());
+//
+//        getUserIDsToNotify(pokeSpawn).forEach((id) -> {if(id.equals("107730875596169216")) System.out.println("true");});
 
 //        getUserIDsToNotify(pokeSpawn).forEach(System.out::println);
     }
@@ -81,7 +84,7 @@ public class DBManager
                     "SELECT pokemon_id," +
                     "       latitude," +
                     "       longitude," +
-                    "       TIME((CONVERT_TZ(disappear_time,'UTC','"+config.getTimeZone()+"')))," +
+                    "       (CONVERT_TZ(disappear_time,'UTC','"+config.getTimeZone()+"'))," +
                     "       individual_attack, " +
                     "       individual_defense," +
                     "       individual_stamina," +
@@ -91,7 +94,8 @@ public class DBManager
                     "       height," +
                     "       gender," +
                     "       form," +
-                    "       cp " +
+                    "       cp, " +
+                    "       cp_multiplier " +
                     "FROM pokemon " +
                     "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'"+config.getTimeZone()+"','UTC'),INTERVAL 1 SECOND)");)
         {
@@ -107,7 +111,7 @@ public class DBManager
                 final int id = rs.getInt(1);
                 final double lat = rs.getDouble(2);
                 final double lon = rs.getDouble(3);
-                final Time remainingTime = rs.getTime(4);
+                final Timestamp remainingTime = rs.getTimestamp(4);
                 final int attack = rs.getInt(5);
                 final int defense = rs.getInt(6);
                 final int stamina = rs.getInt(7);
@@ -118,8 +122,9 @@ public class DBManager
                 final int gender = rs.getInt(12);
                 final int form = rs.getInt(13);
                 final int cp = rs.getInt(14);
+                final double cpMod = rs.getDouble(15);
                 try {
-                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp);
+                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp,cpMod);
                     System.out.println(pokeSpawn.toString());
                     System.out.println(pokeSpawn.hashCode());
 
@@ -374,8 +379,12 @@ public class DBManager
     }
 
     public static Timestamp getCurrentTime() {
-        final Date date = new Date();
-        return new Timestamp(date.getTime());
+
+        if(MessageListener.config == null) MessageListener.loadConfig();
+
+        TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
+
+        return new Timestamp(new Date().getTime());
     }
 
     public static String getSuburb(final double lat, final double lon) {
