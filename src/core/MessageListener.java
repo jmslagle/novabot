@@ -84,7 +84,7 @@ public class MessageListener extends ListenerAdapter
                 System.out.println(guild.getName());
 
                 TextChannel channel = guild.getTextChannelById(config.getCommandChannelId());
-                if(channel != null){
+                if(channel != null && config.showStartupMessage()){
                     channel.sendMessage("I'm awake again!").queue();
                 }else{
                     System.out.println("couldn't find command channel by id specified in config");

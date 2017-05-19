@@ -25,7 +25,8 @@ public class Config {
     private boolean logging;
     private boolean nests;
     private boolean stats;
-    private final boolean supporterOnly;
+    private boolean startupMessage;
+    private boolean supporterOnly;
 
     private String timeZone;
 
@@ -86,6 +87,8 @@ public class Config {
         footerText = config.get("footerText");
 
         stats = Boolean.parseBoolean(config.get("stats"));
+
+        startupMessage = Boolean.parseBoolean(config.get("startupMessage"));
 
         Ini.Section rocketmapDb = ini.get("rocketmap db");
         rmUser = rocketmapDb.get("user");
@@ -252,5 +255,9 @@ public class Config {
 
     public boolean statsEnabled() {
         return stats;
+    }
+
+    public boolean showStartupMessage() {
+        return startupMessage;
     }
 }

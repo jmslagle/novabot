@@ -24,11 +24,11 @@ class NotificationSender implements Runnable
 
     private void notifyUser(final String userID, final Message message) {
         final User user = this.jda.getUserById(userID);
-//        final Thread thread = new Thread(new UserNotifier(user, message));
-//        thread.start();
-
-        UserNotifier notifier = new UserNotifier(user,message);
-        notifier.run();
+        final Thread thread = new Thread(new UserNotifier(user, message));
+        thread.start();
+//
+//        UserNotifier notifier = new UserNotifier(user,message);
+//        notifier.run();
     }
 
     @Override

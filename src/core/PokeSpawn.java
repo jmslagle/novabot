@@ -159,11 +159,11 @@ public class PokeSpawn
 //        ZonedDateTime.of(LocalDate.of, ZoneId.of("Australia/Canberra"))
 
         Timestamp currentTime = DBManager.getCurrentTime();
-
-        System.out.println(disappearTime);
-        System.out.println(currentTime);
-
-        System.out.println(disappearTime.getTime() - currentTime.getTime());
+//
+//        System.out.println(disappearTime);
+//        System.out.println(currentTime);
+//
+//        System.out.println(disappearTime.getTime() - currentTime.getTime());
 
         long diff = this.disappearTime.getTime() - currentTime.getTime();
 
