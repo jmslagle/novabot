@@ -1810,7 +1810,7 @@ public class ListTools
     // ------------------------------------------------------------------------
 
     /**
-    *** Returns a String array comprised of toString() calls to the specified Object array
+    *** Returns a String array comprised of toDbString() calls to the specified Object array
     *** @param a  The Object array
     *** @return The String array (does not return null)
     **/
@@ -1828,7 +1828,7 @@ public class ListTools
     }
 
     /**
-    *** Returns a String array comprised of toString() calls to the specified Collection of Objects
+    *** Returns a String array comprised of toDbString() calls to the specified Collection of Objects
     *** @param list  The Object Collection
     *** @return The String array (does not return null)
     **/
@@ -2958,7 +2958,7 @@ public class ListTools
     // ------------------------------------------------------------------------
 
     /**
-    *** StringComparator class for sorting objects based on their 'toString()' value
+    *** StringComparator class for sorting objects based on their 'toDbString()' value
     **/
     public static class StringComparator<T>
         implements Comparator<T>

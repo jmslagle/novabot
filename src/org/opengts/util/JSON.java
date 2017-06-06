@@ -40,7 +40,7 @@
 //  2013/11/11  Martin D. Flynn
 //     -Added additional overflow checking.
 //  2014/09/25  Martin D. Flynn
-//     -Added "toString(boolean inclPrefix)" to JSON object.
+//     -Added "toDbString(boolean inclPrefix)" to JSON object.
 //  2016/09/01  Martin D. Flynn
 //     -Added support to "parse_Number" for parsing hex integers (non-standard)
 //  2017/02/05  Martin D. Flynn
@@ -2197,7 +2197,7 @@ public class JSON
                         this.addValue(((Boolean)val).booleanValue());
                     } else {
                         Print.logInfo("Unrecognized data type: " + StringTools.className(val));
-                        this.addValue(val.toString());
+                        this.addValue(val.toDbString());
                     }
                 }
             }
@@ -2931,7 +2931,7 @@ public class JSON
                 if (hexCh) {
                     final long L = StringTools.parseLong(numStr,0L);
                     // -- unfortunately cannot subclass "Long"
-                    //val = (Number)(new Long(L) { public String toString() { return StringTools.toHexString(this.longValue(),16); } } );
+                    //val = (Number)(new Long(L) { public String toDbString() { return StringTools.toHexString(this.longValue(),16); } } );
                     val = (Number)(new Long(L));
                 } else {
                     final long L = StringTools.parseLong(numStr,0L);

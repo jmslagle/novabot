@@ -1187,7 +1187,7 @@ public class URIArg
             urlSB.append(uri.substring(p));
         }
         // -- set and return
-        this._setURI(urlSB.toString());
+        this._setURI(urlSB.toDbString());
         return true;
         */
 

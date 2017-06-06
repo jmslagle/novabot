@@ -10,8 +10,7 @@ public enum TimeUnit {
     Weeks,
     Months;
 
-    @Override
-    public String toString() {
+    public String toDbString() {
         switch(this){
             case Minutes:
                 return "MINUTE";
@@ -28,7 +27,6 @@ public enum TimeUnit {
     }
 
     public static TimeUnit fromString(String str){
-
         if(str.equals("minute") || str.equals("minutes"))
             return Minutes;
 

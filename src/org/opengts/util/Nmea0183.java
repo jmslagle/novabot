@@ -1633,7 +1633,7 @@ public class Nmea0183
                 for (int e = eNdx; e < fld.length; e++) {
                     ed.append(",").append(fld[e]);
                 }
-                this.extraData = ed.toString();
+                this.extraData = ed.toDbString();
             }
             */
         }
@@ -1734,7 +1734,7 @@ public class Nmea0183
                 for (int e = 16; e < fld.length; e++) {
                     ed.append(",").append(fld[e]);
                 }
-                this.extraData = ed.toString();
+                this.extraData = ed.toDbString();
             }
             */
         } else {

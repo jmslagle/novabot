@@ -13,6 +13,8 @@ public class SuburbManager
         try {
             Scanner in = new Scanner(file);
 
+            suburbs.clear();
+
             while(in.hasNext()){
                 suburbs.add(in.nextLine().toLowerCase());
             }

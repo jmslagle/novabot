@@ -92,7 +92,7 @@
 //     -Added "startsWithIgnoreCase" and "startsWith" method that allow specifying
 //      an array of pattern strings.
 //     -Added "formatLine"
-//     -Added "toString(...)" for debug logging of object values.
+//     -Added "toDbString(...)" for debug logging of object values.
 //  2013/05/28  Martin D. Flynn
 //     -Added ELAPSED_FORMAT_MMMSS
 //  2013/08/06  Martin D. Flynn
@@ -1420,7 +1420,7 @@ public class StringTools
     }
 
     /**
-    *** Returns true if the specified argument is null, or the "toString" value contains 0 or 
+    *** Returns true if the specified argument is null, or the "toDbString" value contains 0 or
     *** more whitespace characters.
     *** @param s  The Object to test for blank.
     *** @return True if the specified argument is blank, or null.
@@ -7275,7 +7275,7 @@ public class StringTools
     //private static StringBuffer _encodeNewline(StringBuffer sb)
     //{
     //    if (sb != null) {
-    //        String encTxt = StringTools.encodeNewline(sb.toString(), ESCAPED_NEWLINE);
+    //        String encTxt = StringTools.encodeNewline(sb.toDbString(), ESCAPED_NEWLINE);
     //        return new StringBuffer(encTxt);
     //    } else {
     //        return null;
@@ -7349,7 +7349,7 @@ public class StringTools
     //private static StringBuffer _decodeNewline(StringBuffer sb)
     //{
     //    if (sb != null) {
-    //        String decTxt = StringTools.decodeNewline(sb.toString(), ESCAPED_NEWLINE);
+    //        String decTxt = StringTools.decodeNewline(sb.toDbString(), ESCAPED_NEWLINE);
     //        return new StringBuffer(decTxt);
     //    } else {
     //        return null;
@@ -9117,7 +9117,7 @@ public class StringTools
     /**
     *** Encode special HTML character string for attibute specification "value='xxx'" 
     *** (NOT for URL parameter use.  See "URIArg.encodeArg" for encoding URL arg characters)
-    *** @param text The Object to encode [via 'toString()' method]
+    *** @param text The Object to encode [via 'toDbString()' method]
     *** @return     The encoded string.
     **/
     public static String htmlFilterValue(Object text)
@@ -9127,7 +9127,7 @@ public class StringTools
 
     /**
     *** Encode special HTML character string for node text
-    *** @param text The Object to encode [via 'toString()' method]
+    *** @param text The Object to encode [via 'toDbString()' method]
     *** @return     The encoded string.
     **/
     public static String htmlFilterText(Object text)
@@ -9137,7 +9137,7 @@ public class StringTools
 
     /**
     *** Encode special HTML character string
-    *** @param text The Object to encode [via 'toString()' method]
+    *** @param text The Object to encode [via 'toDbString()' method]
     *** @param filterType  Filter type (TEXT, VALUE)
     *** @return     The encoded string.
     **/

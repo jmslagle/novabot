@@ -101,7 +101,7 @@ public class EnumTools
     // ------------------------------------------------------------------------
 
     /**
-    *** Returns a localized String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a localized String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @param list      The array of enumerated types from which the localized Strings will be extracted
     *** @param loc       The Locale
@@ -114,7 +114,7 @@ public class EnumTools
             Enum<T> e[] = list;
             if (e != null) {
                 for (int n = 0; n < e.length; n++) {
-                    String k = e[n].name(); // toString();
+                    String k = e[n].name(); // toDbString();
                     String d = k;
                     if ((loc != null) && (e[n] instanceof EnumTools.StringLocale)) {
                         d = ((EnumTools.StringLocale)e[n]).toString(loc);
@@ -128,7 +128,7 @@ public class EnumTools
     }
 
     /**
-    *** Returns a localized String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a localized String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @param loc       The Locale
     *** @return A String array of enumerated type String values
@@ -154,7 +154,7 @@ public class EnumTools
     }
 
     /**
-    *** Returns a String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @return A String array of enumerated type String values
     **/
@@ -166,7 +166,7 @@ public class EnumTools
     // ------------------------------------------------------------------------
 
     /**
-    *** Returns a localized String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a localized String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @param loc       The Locale
     *** @return A String array of enumerated type String values
@@ -194,7 +194,7 @@ public class EnumTools
     }
 
     /**
-    *** Returns a String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @return A String array of enumerated type String values
     **/
@@ -206,7 +206,7 @@ public class EnumTools
     // ------------------------------------------------------------------------
 
     /**
-    *** Returns a localized String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a localized String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @param list      The array of enumerated types from which the localized Strings will be extracted
     *** @param loc       The Locale
@@ -232,7 +232,7 @@ public class EnumTools
     }
 
     /**
-    *** Returns a localized String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a localized String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @param loc       The Locale
     *** @return A String array of enumerated type String values
@@ -257,7 +257,7 @@ public class EnumTools
     }
 
     /**
-    *** Returns a String array of enumerated type 'toString()' values for the specified Enum type class
+    *** Returns a String array of enumerated type 'toDbString()' values for the specified Enum type class
     *** @param enumClass The enumerated type class
     *** @return A String array of enumerated type String values
     **/
@@ -295,11 +295,11 @@ public class EnumTools
     // ------------------------------------------------------------------------
 
     /**
-    *** Returns the enum constant of the specified enum type with the specified name or 'toString()' value.
+    *** Returns the enum constant of the specified enum type with the specified name or 'toDbString()' value.
     *** The default (first) constant will be returned, if the name is not found.
     *** @param enumClass The <tt>Class</tt> object of the enum type from which to return a constant
     *** @param name      The name of the constant to return
-    *** @return The enum constant of the specified enum type with the specified name or 'toString()' value
+    *** @return The enum constant of the specified enum type with the specified name or 'toDbString()' value
     **/
     public static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String name)
     {
@@ -307,11 +307,11 @@ public class EnumTools
     }
 
     /**
-    *** Returns the enum constant of the specified enum type with the specified name or 'toString()' value.
+    *** Returns the enum constant of the specified enum type with the specified name or 'toDbString()' value.
     *** @param enumClass The <tt>Class</tt> object of the enum type from which to return a constant
     *** @param name      The name of the constant to return
     *** @param dft       The default type to return if the name was not found
-    *** @return The enum constant of the specified enum type with the specified name or 'toString()' value
+    *** @return The enum constant of the specified enum type with the specified name or 'toDbString()' value
     **/
     public static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String name, T dft)
     {
@@ -319,12 +319,12 @@ public class EnumTools
     }
 
     /**
-    *** Returns the enum constant of the specified enum type with the specified name or 'toString()' value.
+    *** Returns the enum constant of the specified enum type with the specified name or 'toDbString()' value.
     *** The default (first) constant will be returned, if the name is not found.
     *** @param enumClass The <tt>Class</tt> object of the enum type from which to return a constant
     *** @param name      The name of the constant to return
     *** @param loc       The Locale
-    *** @return The enum constant of the specified enum type with the specified name or 'toString()' value
+    *** @return The enum constant of the specified enum type with the specified name or 'toDbString()' value
     **/
     public static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String name, Locale loc)
     {
@@ -332,13 +332,13 @@ public class EnumTools
     }
 
     /**
-    *** Returns the enum constant of the specified enum type with the specified name or 'toString()' value.
+    *** Returns the enum constant of the specified enum type with the specified name or 'toDbString()' value.
     *** @param enumClass  The <tt>Class</tt> object of the enum type from which to return a constant
     *** @param name       The name of the constant to return
     *** @param loc        The Locale
     *** @param dft        The default type to return if the name was not found, and 'rtnDefault' is false.
     *** @param rtnDefault True to return the first constant if name was not found and 'dft' is null.
-    *** @return The enum constant of the specified enum type with the specified name or 'toString()' value
+    *** @return The enum constant of the specified enum type with the specified name or 'toDbString()' value
     **/
     protected static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String name, Locale loc, T dft, boolean rtnDefault)
     {
@@ -352,7 +352,7 @@ public class EnumTools
                 // not found, continue
             }
 
-            /* now scan for a case-insensitive match on 'toString()' */
+            /* now scan for a case-insensitive match on 'toDbString()' */
             T e[] = enumClass.getEnumConstants();
             if ((e != null) && (e.length > 0)) {
 
@@ -434,7 +434,7 @@ public class EnumTools
     {
         if (enumClass != null) {
 
-            /* now scan for a case-insensitive match on 'toString()' */
+            /* now scan for a case-insensitive match on 'toDbString()' */
             T e[] = enumClass.getEnumConstants();
             if ((e != null) && (e.length > 0) && 
                 ((e[0] instanceof IntValue) || (e[0] instanceof LongValue))) {

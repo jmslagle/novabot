@@ -7,16 +7,85 @@ import com.google.maps.model.AddressComponentType;
 import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.LatLng;
 import core.DBManager;
+import core.MessageListener;
 
 import static core.MessageListener.config;
+import static core.MessageListener.loadConfig;
 
 public class ReverseGeocoder {
 
     private static int lastKey;
 
     public static void main(final String[] args) {
+//        DBManager.novabotdbConnect();
+        MessageListener.testing = true;
+        loadConfig();
+
         DBManager.novabotdbConnect();
-        System.out.println(getSuburb(-35.405055, 149.1270075));
+
+        DBManager.setGeocodedLocation(-35.405055,149.1270075,geocodedLocation(-35.405055, 149.1270075));
+    }
+
+    public static GeocodedLocation geocodedLocation(double lat, double lon){
+
+        GeocodedLocation location = DBManager.getGeocodedLocation(lat,lon);
+
+        if(location != null)  return location;
+
+        location = new GeocodedLocation();
+        location.set("street_num","unkn");
+        location.set("street","unkn");
+        location.set("city","unkn");
+        location.set("state","unkn");
+        location.set("postal","unkn");
+        location.set("neighbourhood","unkn");
+        location.set("sublocality","unkn");
+        location.set("country","unkn");
+
+        final GeoApiContext context = new GeoApiContext();
+        try {
+            context.setApiKey(getNextKey());
+            final GeocodingResult[] results = (GeocodingApi.reverseGeocode(context, new LatLng(lat, lon))).await();
+            for (final AddressComponent addressComponent : results[0].addressComponents) {
+                final AddressComponentType[] types = addressComponent.types;
+
+                for (AddressComponentType type : types) {
+
+                    switch(type){
+                        case STREET_NUMBER:
+                            location.set("street_num",addressComponent.longName);
+                            break;
+                        case ROUTE:
+                            location.set("street",addressComponent.longName);
+                            break;
+                        case LOCALITY:
+                            location.set("city",addressComponent.longName);
+                            break;
+                        case ADMINISTRATIVE_AREA_LEVEL_1:
+                            location.set("state",addressComponent.shortName);
+                        case POSTAL_CODE:
+                            location.set("postal",addressComponent.longName);
+                            break;
+                        case NEIGHBORHOOD:
+                            location.set("neighbourhood",addressComponent.longName);
+                            break;
+                        case SUBLOCALITY:
+                            location.set("sublocality",addressComponent.longName);
+                            break;
+                        case COUNTRY:
+                            location.set("country",addressComponent.longName);
+                            break;
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        DBManager.setGeocodedLocation(lat,lon,location);
+
+        return location;
     }
 
     public static String getSuburb(final double lat, final double lon) {

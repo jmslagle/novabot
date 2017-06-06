@@ -645,7 +645,7 @@ public class RTKey
                 keyList.add(key);
                 if (!key.equals(CONFIG_FILE) && RTConfig.hasProperty(key)) {
                     String val = RTConfig.getString(key, null);
-                    //if ((val != null) && ((dft == null) || !val.equals(dft.toString()))) {
+                    //if ((val != null) && ((dft == null) || !val.equals(dft.toDbString()))) {
                         out.println(rtk.toString(val));
                     //}
                 }

@@ -1,10 +1,15 @@
 package maps;
 
 import core.Region;
+import core.Util;
 import org.opengts.util.GeoPoint;
 import org.opengts.util.GeoPolygon;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class Geofencing
 {
@@ -18,8 +23,57 @@ public class Geofencing
     private static final GeoPolygon tuggeranong;
     private static final HashMap<GeoPolygon, Region> geofences;
 
+    static HashMap<GeofenceIdentifier,GeoPolygon> geofencesMap = new HashMap<>();
+
     public static void main(final String[] args) {
-        System.out.println(getRegion(-35.214385, 149.0405493));
+        loadGeofences();
+
+        System.out.println(getGeofence(-35.214385, 149.0405493));
+
+//        System.out.println(getRegion(-35.214385, 149.0405493));
+    }
+
+    public static void loadGeofences(){
+        File file = new File("geofences.txt");
+
+        try (Scanner in = new Scanner(file)) {
+
+            String name = null;
+            ArrayList<String> aliases = new ArrayList<>();
+            ArrayList<GeoPoint> points = new ArrayList<>();
+
+            while(in.hasNext()){
+                String line = in.nextLine();
+
+                if(line.charAt(0) == '['){
+
+                    if(name != null && !points.isEmpty()) {
+                        geofencesMap.put(new GeofenceIdentifier(name,aliases),new GeoPolygon(points));
+                    }
+
+                    ArrayList<String> names = Util.parseList(line);
+                    name = names.get(0);
+                    names.remove(0);
+
+                    aliases = names;
+
+                    points = new ArrayList<>();
+
+                }else{
+                    String[] split = line.split(",");
+
+                    double lat = Double.parseDouble(split[0].trim());
+                    double lon = Double.parseDouble(split[1].trim());
+
+                    points.add(new GeoPoint(lat,lon));
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(geofencesMap);
     }
 
     public static Region getRegion(final double lat, final double lon) {
@@ -30,6 +84,20 @@ public class Geofencing
             }
         }
         return null;
+    }
+
+    public static ArrayList<GeofenceIdentifier> getGeofence(double lat, double lon){
+        GeoPoint point = new GeoPoint(lat,lon);
+
+        ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
+
+        geofencesMap.forEach((identifier, geoPolygon) -> {
+            if(geoPolygon.containsPoint(point)){
+                geofenceIdentifiers.add(identifier);
+            }
+        });
+
+        return geofenceIdentifiers;
     }
 
     static {

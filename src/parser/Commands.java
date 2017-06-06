@@ -54,11 +54,11 @@ class Commands
         }
 
         if(config.statsEnabled()) {
-            final Command countPokemon = new Command();
-            countPokemon.setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)));
-            countPokemon.setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
-            countPokemon.setArgRange(1, 3);
-            Commands.commands.put("!countpokemon", countPokemon);
+            final Command stats = new Command();
+            stats.setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)));
+            stats.setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)));
+            stats.setArgRange(1, 3);
+            Commands.commands.put("!stats", stats);
         }
 
         Commands.commands.put("!addpokemon", addPokemon);

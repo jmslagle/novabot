@@ -1140,7 +1140,7 @@ public class RTConfig
         }
         Class mainClass = RTConfig.getMainClass();
         Print.logInfo("MainClass: " + mainClass);
-        URL cfgRes = (mainClass != null)? mainClass.getClassLoader().getResource(file.toString()) : null;
+        URL cfgRes = (mainClass != null)? mainClass.getClassLoader().getResource(file.toDbString()) : null;
         if (cfgRes != null) {
             Print.logInfo("ConfigFile found as resource: " + file);
             return true;

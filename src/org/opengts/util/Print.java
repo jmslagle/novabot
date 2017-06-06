@@ -293,7 +293,7 @@ public class Print
         //SimpleDateFormat sdf = new SimpleDateFormat(fmt);
         //StringBuffer sb = new StringBuffer();
         //sdf.format(nowDate, sb, new FieldPosition(0));
-        //return sb.toString();
+        //return sb.toDbString();
     }
 
     // ------------------------------------------------------------------------
@@ -1026,7 +1026,7 @@ public class Print
 
             /* close and send email */
             bosOut.close(); // not necessary
-            //Print.emailError("[" + host + "] " + msg, bos.toString());
+            //Print.emailError("[" + host + "] " + msg, bos.toDbString());
         }
     }
 

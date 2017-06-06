@@ -15,7 +15,7 @@ class UserNotifier implements Runnable
 
     @Override
     public void run() {
-        if (MessageListener.cbrSightings.getMember(user).getRoles().contains("Admin")) {
+        if (MessageListener.guild.getMember(user).getRoles().contains("Admin")) {
             return;
         }
         if (!user.hasPrivateChannel()) {

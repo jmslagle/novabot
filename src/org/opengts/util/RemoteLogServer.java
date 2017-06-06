@@ -374,7 +374,7 @@ public class RemoteLogServer
             //    sb.append("  reset  Clears/Resets the log contents\n");
             //    sb.append("  help   This help\n");
             //    sb.append("\n");
-            //    return sb.toString().getBytes();
+            //    return sb.toDbString().getBytes();
             //}
             return ("Unknown Command: " + cmd + "\n\n").getBytes();
         }

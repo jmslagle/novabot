@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 /**
@@ -18,7 +19,7 @@ public class Config {
     ArrayList<String> GMAPS_KEYS = new ArrayList<>();
 
     ArrayList<Integer> blacklist = new ArrayList<>();
-    private final ArrayList<String> supporterRoles;
+    private ArrayList<String> supporterRoles;
 
     private String token;
     private boolean geofences;
@@ -31,6 +32,8 @@ public class Config {
     private String timeZone;
 
     private String footerText;
+
+    private String adminRole;
 
     private String commandChannelId;
     private String roleLogId;
@@ -50,8 +53,18 @@ public class Config {
     private String nbPort;
     private String nbDbName;
 
+    private String bodyFormatting;
+    private String titleFormatting;
+    private String titleUrl;
 
-    public Config(Ini configIni, File gkeys){
+    private String mapZoom = "15";
+    private String mapWidth = "255";
+    private String mapHeight = "225";
+
+    private boolean showMap = true;
+
+
+    public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
 
         Ini.Section config = ini.get("config");
@@ -60,7 +73,7 @@ public class Config {
 
         String blacklistStr = config.get("blacklist");
 
-        for (String s : parseList(blacklistStr)) {
+        for (String s : Util.parseList(blacklistStr)) {
             blacklist.add(Integer.valueOf(s));
         }
 
@@ -72,7 +85,7 @@ public class Config {
 
         supporterOnly = Boolean.parseBoolean(config.get("supporterOnly"));
 
-        supporterRoles = parseList(config.get("supporterRoles"));
+        supporterRoles = Util.parseList(config.get("supporterRoles"));
 
         commandChannelId = config.get("commandChannel");
 
@@ -90,6 +103,8 @@ public class Config {
 
         startupMessage = Boolean.parseBoolean(config.get("startupMessage"));
 
+        adminRole = config.get("adminRole");
+
         Ini.Section rocketmapDb = ini.get("rocketmap db");
         rmUser = rocketmapDb.get("user");
         rmPass = rocketmapDb.get("password");
@@ -105,18 +120,21 @@ public class Config {
         nbDbName = novabotDb.get("dbName");
 
         GMAPS_KEYS = loadKeys(gkeys);
+
+        Ini.Section formatting = formattingIni.get("formatting");
+        titleFormatting = formatting.get("title");
+        titleUrl = formatting.get("titleUrl");
+        bodyFormatting = formatting.get("body");
+
+        showMap = Boolean.parseBoolean(formatting.get("showMap"));
+
+        mapZoom = formatting.get("mapZoom");
+        mapWidth = formatting.get("mapWidth");
+        mapHeight = formatting.get("mapHeight");
     }
 
-    private ArrayList<String> parseList(String strList){
-        ArrayList<String> list = new ArrayList<>();
-
-        String[] idStrings = strList.substring(1,strList.length()-1).split(",");
-
-        for (String idString : idStrings) {
-            list.add(idString.trim());
-        }
-
-        return list;
+    public String getTitleUrl() {
+        return titleUrl;
     }
 
     private ArrayList<String> loadKeys(File gkeys) {
@@ -142,7 +160,8 @@ public class Config {
         try {
             Config config = new Config(
                     new Ini(new File("config.example.ini")),
-                    new File("gkeys.ini")
+                    new File("gkeys.txt"),
+                    new Ini(new File("formatting.ini"))
             );
 
             System.out.println(config.getToken());
@@ -259,5 +278,43 @@ public class Config {
 
     public boolean showStartupMessage() {
         return startupMessage;
+    }
+
+    public String formatStr(HashMap<String,String> pokeProperties, String toFormat){
+        final String[] str = {toFormat};
+
+        pokeProperties.forEach((key, value) -> {
+            str[0] = str[0].replace(String.format("<%s>", key),value);
+        });
+
+        return str[0];
+    }
+
+    public String getTitleFormatting() {
+        return titleFormatting;
+    }
+
+    public String getBodyFormatting() {
+        return bodyFormatting;
+    }
+
+    public String getMapZoom() {
+        return mapZoom;
+    }
+
+    public String getMapWidth() {
+        return mapWidth;
+    }
+
+    public String getMapHeight() {
+        return mapHeight;
+    }
+
+    public boolean showMap() {
+        return showMap;
+    }
+
+    public String getAdminRole() {
+        return adminRole;
     }
 }

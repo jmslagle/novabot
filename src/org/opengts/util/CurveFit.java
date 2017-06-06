@@ -133,7 +133,7 @@ public class CurveFit
             // -- default precision
             return dft;
         } 
-        // -- use EnumTools to find match on "toString()"
+        // -- use EnumTools to find match on "toDbString()"
         Precision P = EnumTools.getValueOf(Precision.class, name, (Precision)null);
         if (P != null) {
             return P;

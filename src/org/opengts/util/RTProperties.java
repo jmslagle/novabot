@@ -95,7 +95,7 @@
 //  2009/11/29  Martin D. Flynn
 //     -Added 'isInt', 'isLong', 'isFloat', 'isDouble', 'isBoolean', 'isBigInteger'
 //  2011/05/13  Martin D. Flynn
-//     -Fixed name inclusion in 'toString' (was "name:...", should be "[name]...")
+//     -Fixed name inclusion in 'toDbString' (was "name:...", should be "[name]...")
 //  2011/07/01  Martin D. Flynn
 //     -Added "%ifTrue-", "%ifFalse-", "%ifDef-", "%ifNotDef-" keywords.
 //       %ifDef-testBool:testDef=true
@@ -1222,7 +1222,7 @@ public class RTProperties
     {
         Map<String,String> m = new OrderedMap<String,String>();
         for (Iterator<?> i = this.keyIterator(); i.hasNext();) {
-            String mkKey = i.next().toString();
+            String mkKey = i.next().toDbString();
             if (mkKey.endsWith(keyEnd)) {
                 String key = this.getString(mkKey, null);
                 if (key != null) { // <-- will never be null anyway

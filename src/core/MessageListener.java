@@ -5,15 +5,14 @@ import nests.NestSearch;
 import nests.NestSheetManager;
 import nests.NestStatus;
 import net.dv8tion.jda.client.entities.Group;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.*;
+import net.dv8tion.jda.core.audit.ActionType;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
+import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
@@ -25,11 +24,9 @@ import parser.*;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,9 +37,9 @@ public class MessageListener extends ListenerAdapter
     private static final String NEST_MAP = "http://www.google.com/maps/d/u/0/viewer?mid=1d-QuaDK1tJRiHKODXErTQIDqIAY";
     private static TextChannel roleLog;
     private static TextChannel nestsReports;
-    public static Guild cbrSightings;
+    public static Guild guild;
     private static final ReporterChannels reporterChannels;
-    private static boolean testing;
+    public static boolean testing;
     private final String regionHelp = "Accepted channels are:\n\nall\nwodenweston = woden-weston = woden-weston-region = woden-weston-supporter\ngungahlin = gungahlin-region = gungahlin-supporter\ninnernorth = inner-north = inner-north-region = inner-north-supporter\nbelconnen = belconnen-region = belconnen-supporter\ninnersouth = inner-south = inner-south-region = inner-south-supporter\ntuggeranong = tuggeranong-region = tuggeranong-supporter\nqueanbeyan = queanbeyan-region = queanbeyan-supporter\nlegacy = legacyrare = legacy-rare = legacy-rare-supporter\nlarvitar = larvitarcandy = larvitar-candy = larvitar-candy-supporter\ndratini = dratinicandy = dratini-candy = dratini-candy-supporter\nmareep = mareepcandy = mareep-candy = mareep-candy-supporter\nultrarare = ultra-rare = ultra-rare-supporter\n100iv = 100-iv = 100% = 100-iv-supporter\nsnorlax = snorlax-supporter\nevent\n0iv = 0-iv = 0% = 0-iv-supporter\ndexfiller = dex-filler\nbigfishlittlerat = big-fish-little-rat = big-fish-little-rat-cardboard-box\n";
     private final String inputFormat = "```!addpokemon <pokemon1, pokemon2, pokemon3> <channel1, channel2, channel3>```\nFor as many pokemon and channels as you want. Make sure you include the <>. For more information on regions use the !channellis command";
     private final String nestHelp = "My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```";
@@ -54,6 +51,8 @@ public class MessageListener extends ListenerAdapter
 
     public static Config config;
     public static SuburbManager suburbs;
+
+    HashMap<String,Message> messageMap = new HashMap<>();
 
     public static void main(final String[] args) {
 
@@ -77,10 +76,10 @@ public class MessageListener extends ListenerAdapter
                     .setAutoReconnect(true)
                     .setGame(Game.of("Pokemon Go"))
                     .setToken(config.getToken())
-                    .addListener(new MessageListener()).buildBlocking();
+                    .addEventListener(new MessageListener()).buildBlocking();
             final Iterator<Guild> iterator = jda.getGuilds().iterator();
             while (iterator.hasNext()) {
-                final Guild guild = MessageListener.cbrSightings = iterator.next();
+                final Guild guild = MessageListener.guild = iterator.next();
                 System.out.println(guild.getName());
 
                 TextChannel channel = guild.getTextChannelById(config.getCommandChannelId());
@@ -97,16 +96,19 @@ public class MessageListener extends ListenerAdapter
             }
 
             if(config.loggingEnabled()) {
-                MessageListener.roleLog = MessageListener.cbrSightings.getTextChannelById(config.getRoleLogId());
-                MessageListener.userUpdatesLog = MessageListener.cbrSightings.getTextChannelById(config.getUserUpdatesId());
+                MessageListener.roleLog = MessageListener.guild.getTextChannelById(config.getRoleLogId());
+                MessageListener.userUpdatesLog = MessageListener.guild.getTextChannelById(config.getUserUpdatesId());
             }
 
             if(config.nestsEnabled()) {
-                MessageListener.nestsReports = MessageListener.cbrSightings.getTextChannelsByName("nests-reports", true).get(0);
+                MessageListener.nestsReports = MessageListener.guild.getTextChannelsByName("nests-reports", true).get(0);
             }
 
-            final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-            executor.scheduleAtFixedRate(new Notifier(jda,testing), 0L, config.getPollingRate(), TimeUnit.SECONDS);
+            if(!testing) {
+
+                final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+                executor.scheduleAtFixedRate(new Notifier(jda, testing), 0L, config.getPollingRate(), TimeUnit.SECONDS);
+            }
         }
         catch (LoginException | InterruptedException | RateLimitedException ex2) {
             ex2.printStackTrace();
@@ -125,11 +127,54 @@ public class MessageListener extends ListenerAdapter
         try {
             config = new Config(
                     new Ini(new File(testing ? "config.example.ini" : "config.ini")),
-                    new File("gkeys.ini")
+                    new File("gkeys.txt"),
+                    new Ini(new File("formatting.ini"))
             );
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onMessageDelete(MessageDeleteEvent event) {
+        if(!config.loggingEnabled()) return;
+
+        JDA jda = event.getJDA();
+        final String id = event.getMessageId();
+        TextChannel channel = event.getGuild().getTextChannelById(event.getChannel().getId());
+
+
+        Message foundMessage = messageMap.get(id);
+
+        if(foundMessage == null){
+            MessageListener.userUpdatesLog.sendMessage("The message could not be retrieved from the log").queue();
+            return;
+        }
+
+        final User[] deleter = {foundMessage.getAuthor()};
+
+        System.out.println(String.format("Searching audit logs for message ID %s", id));
+        guild.getAuditLogs().queue(
+                success ->  guild.getAuditLogs().type(ActionType.MESSAGE_DELETE).forEach(entry -> {
+                                System.out.println(entry);
+                                if (entry.getTargetId().equals(id)) {
+                                    deleter[0] = entry.getUser();
+                                }
+                            }
+                ));
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.setTitle(String.format("A message was deleted from %s", channel.getName()),null);
+        embedBuilder.addField("Deleted By",deleter[0].getAsMention(),true);
+        embedBuilder.addField("Channel",channel.getAsMention(),true);
+        embedBuilder.setDescription(String.format("%s%n %s:%n %s",
+                foundMessage.getCreationTime().atZoneSameInstant(ZoneId.of(config.getTimeZone())).format(formatter),
+                foundMessage.getAuthor().getAsMention(),
+                foundMessage.getContent()));
+
+
+
+        MessageListener.userUpdatesLog.sendMessage(embedBuilder.build()).queue();
     }
 
     @Override
@@ -165,8 +210,15 @@ public class MessageListener extends ListenerAdapter
         MessageListener.userUpdatesLog.sendMessage(
                 user.getAsMention() +
                         " joined. The account was created " +
-                        user.getCreationTime().format(formatter)).queue();
+                        user.getCreationTime().atZoneSameInstant(ZoneId.of(config.getTimeZone())).format(formatter)).queue();
         DBManager.logNewUser(user.getId());
+
+        if(guild.getMember(user).getEffectiveName().equalsIgnoreCase("novabot") && !user.isBot()){
+            Member member = guild.getMember(user);
+            guild.getController().kick(member).queue(
+                    success -> userUpdatesLog.sendMessage("Kicked " + member.getEffectiveName() + " because their name was `novabot`").queue()
+            );
+        }
     }
 
     @Override
@@ -176,6 +228,13 @@ public class MessageListener extends ListenerAdapter
         final JDA jda = event.getJDA();
         final User user = event.getUser();
         MessageListener.userUpdatesLog.sendMessage(user.getAsMention() + " has changed their username from " + event.getOldName() + " to " + event.getUser().getName()).queue();
+
+        if(guild.getMember(user).getEffectiveName().equalsIgnoreCase("novabot") && !user.isBot()){
+            Member member = guild.getMember(user);
+            guild.getController().kick(member).queue(
+                    success -> userUpdatesLog.sendMessage("Kicked " + member.getEffectiveName() + " because their name was `novabot`").queue()
+            );
+        }
     }
 
     @Override
@@ -185,6 +244,13 @@ public class MessageListener extends ListenerAdapter
         final JDA jda = event.getJDA();
         final User user = event.getMember().getUser();
         MessageListener.userUpdatesLog.sendMessage(user.getAsMention() + " has changed their nickname from " + event.getPrevNick() + " to " + event.getNewNick()).queue();
+
+        if(guild.getMember(user).getEffectiveName().equalsIgnoreCase("novabot") && !user.isBot()){
+            Member member = guild.getMember(user);
+            guild.getController().kick(member).queue(
+                    success -> userUpdatesLog.sendMessage("Kicked " + member.getEffectiveName() + " because their name was `novabot`").queue()
+            );
+        }
     }
 
     @Override
@@ -194,17 +260,13 @@ public class MessageListener extends ListenerAdapter
         final Message message = event.getMessage();
         final MessageChannel channel = event.getChannel();
         final String msg = message.getContent();
-        if (author.getId().equals(jda.getSelfUser().getId())) {
-            System.out.printf("<%s>: %s\n", author.getName(), msg);
-            return;
-        }
 
-
+        messageMap.put(message.getId(),message);
 
         if (event.isFromType(ChannelType.TEXT)) {
             final Guild guild = event.getGuild();
             final TextChannel textChannel = event.getTextChannel();
-            MessageListener.cbrSightings = guild;
+            MessageListener.guild = guild;
 
             if(channel.getId().equals(config.getCommandChannelId())){
                 this.parseMsg(msg.toLowerCase(), author, textChannel);
@@ -221,7 +283,7 @@ public class MessageListener extends ListenerAdapter
                 else if (!message.isWebhookMessage()) {
                     return;
                 }
-                if (MessageListener.reporterChannels.containsChannel(channel.getName())) {
+                if (!channel.getName().endsWith("supporter") && MessageListener.reporterChannels.containsChannel(channel.getName())) {
                     final Region channelRegion = ReporterChannels.getRegionByName(channel.getName());
                     System.out.println("Converted channel name to region: " + channelRegion);
                     final String msgTitle = message.getEmbeds().get(0).getTitle();
@@ -311,20 +373,23 @@ public class MessageListener extends ListenerAdapter
         }
         switch (msg) {
             case "!fb":
-            case "!nestfb": {
+            case "!nestfb":
                 channel.sendMessage("https://www.facebook.com/groups/PogoCBRNests/").queue();
                 break;
-            }
             case "!map":
-            case "!nestmap": {
+            case "!nestmap":
                 channel.sendMessage("http://www.google.com/maps/d/u/0/viewer?mid=1d-QuaDK1tJRiHKODXErTQIDqIAY").queue();
                 break;
-            }
-            case "!help": {
+            case "!help":
                 channel.sendMessage("My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```").queue();
                 break;
-            }
-            default: {
+            case "!reload":
+                if(isAdmin(author)){
+                    loadConfig();
+                    loadSuburbs();
+                }
+                break;
+            default:
                 if (msg.startsWith("!reportnest")) {
                     final String report = msg.substring(msg.indexOf(" ") + 1);
                     MessageListener.nestsReports.sendMessage(author.getAsMention() + " reported: \"" + report + "\"").queue();
@@ -429,8 +494,14 @@ public class MessageListener extends ListenerAdapter
                     author.getPrivateChannel().sendMessage(message2).queue();
                 }
                 break;
-            }
         }
+    }
+
+    private boolean isAdmin(User author) {
+        for (Role role : guild.getMember(author).getRoles()) {
+            if(role.getId().equals(config.getAdminRole())) return true;
+        }
+        return false;
     }
 
     private void alertPublic(final Message message, final ArrayList<String> userIDs) {
@@ -439,7 +510,7 @@ public class MessageListener extends ListenerAdapter
                 continue;
             }
             if (DBManager.countPokemon(userID) > 3) {
-                final User user = MessageListener.cbrSightings.getMemberById(userID).getUser();
+                final User user = MessageListener.guild.getMemberById(userID).getUser();
                 if (!user.hasPrivateChannel()) {
                     user.openPrivateChannel().complete();
                 }
@@ -451,7 +522,7 @@ public class MessageListener extends ListenerAdapter
                 final MessageBuilder builder = new MessageBuilder();
                 builder.setEmbed(message.getEmbeds().get(0));
                 System.out.println("Notifying user: " + userID);
-                final User user2 = MessageListener.cbrSightings.getMemberById(userID).getUser();
+                final User user2 = MessageListener.guild.getMemberById(userID).getUser();
                 if (!user2.hasPrivateChannel()) {
                     user2.openPrivateChannel().complete();
                 }
@@ -461,7 +532,7 @@ public class MessageListener extends ListenerAdapter
     }
 
     public static boolean isSupporter(final String userID) {
-        final Member member = MessageListener.cbrSightings.getMemberById(userID);
+        final Member member = MessageListener.guild.getMemberById(userID);
 
         for (final Role role : member.getRoles()) {
             if(config.getSupporterRoles().contains(role.getId())) return true;
@@ -481,7 +552,7 @@ public class MessageListener extends ListenerAdapter
         }
 
         if (config.nestsEnabled() && msg.startsWith("!nest")) {
-            channel.sendMessage(author.getAsMention() + " I only accept nest commands in the " + MessageListener.cbrSightings.getTextChannelsByName("nests", true).get(0).getAsMention() + " channel or via PM").queue();
+            channel.sendMessage(author.getAsMention() + " I only accept nest commands in the " + MessageListener.guild.getTextChannelsByName("nests", true).get(0).getAsMention() + " channel or via PM").queue();
             return;
         }
 
@@ -516,7 +587,7 @@ public class MessageListener extends ListenerAdapter
                     "!delpokemon pokemon\n" +
                     "!clearpokemon <pokemon list>\n" +
                     "!clearlocation <location list>\n" +
-                    (config.statsEnabled() ? "!countpokemon <pokemon list> <integer> <unit of time>\n" : "") +
+                    (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
                     "!reset\n" +
                     "!settings\n" +
                     (config.useGeofences() ? "!channellist or !channels\n" : "") +
@@ -540,35 +611,36 @@ public class MessageListener extends ListenerAdapter
         else {
             final String cmdStr = (String)userCommand.getArg(0).getParams()[0];
 
+            if(cmdStr.equals("!stats")){
+
+                Pokemon[] pokemons = userCommand.buildPokemon();
+
+                String str = author.getAsMention() + ", here's what I found:\n\n";
+
+                for (Pokemon pokemon : pokemons) {
+
+                    core.TimeUnit timeUnit = (core.TimeUnit) userCommand.getArg(ArgType.TimeUnit).getParams()[0];
+
+                    int intervalLength = (int) userCommand.getArg(ArgType.Int).getParams()[0];
+
+                    int count = DBManager.countSpawns(pokemon.getID(),timeUnit,intervalLength);
+
+                    str+= String.format("  %s %s%s have been seen in the last %s %s%n%n",
+                            count,
+                            pokemon.name,
+                            count == 1 ? "" : "s",
+                            intervalLength,
+                            timeUnit.toString().toLowerCase());
+
+                }
+
+                channel.sendMessage(str).queue();
+
+                return;
+            }
+
             if (cmdStr.contains("pokemon")) {
                 final Pokemon[] pokemons = userCommand.buildPokemon();
-
-
-                if(cmdStr.equals("!countpokemon")){
-
-                    String str = author.getAsMention() + ", here's what I found:\n\n";
-
-                    for (Pokemon pokemon : pokemons) {
-
-                        core.TimeUnit timeUnit = (core.TimeUnit) userCommand.getArg(ArgType.TimeUnit).getParams()[0];
-
-                        int intervalLength = (int) userCommand.getArg(ArgType.Int).getParams()[0];
-
-                        int count = DBManager.countSpawns(pokemon.getID(),timeUnit,intervalLength);
-
-                        str+= String.format("  %s %s%s have been seen in the last %s %s%n%n",
-                                count,
-                                pokemon.name,
-                                count == 1 ? "" : "s",
-                                intervalLength,
-                                timeUnit);
-
-                    }
-
-                    channel.sendMessage(str).queue();
-
-                    return;
-                }
 
                 if (cmdStr.equals("!addpokemon")) {
                     if (!isSupporter(author.getId()) && DBManager.countPokemon(author.getId()) + pokemons.length > 3) {

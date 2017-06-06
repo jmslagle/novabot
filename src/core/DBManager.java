@@ -2,6 +2,7 @@ package core;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import maps.GeocodedLocation;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static core.MessageListener.config;
+import static core.MessageListener.loadConfig;
 
 public class DBManager
 {
@@ -23,7 +25,15 @@ public class DBManager
     public static void main(final String[] args) {
 //        MessageListener.main(null);
 
-        System.out.println(getCurrentTime());
+        MessageListener.testing = true;
+
+        loadConfig();
+
+        novabotdbConnect();
+
+        System.out.println(getGeocodedLocation(-35.405055,149.1270075).getProperties().toString());
+
+//        System.out.println(getCurrentTime());
 //        MessageListener.main(null);
 
 //        System.out.println("Connecting to db");
@@ -387,6 +397,82 @@ public class DBManager
         return new Timestamp(new Date().getTime());
     }
 
+    public static void setGeocodedLocation(final double lat, final double lon, GeocodedLocation location) {
+
+        System.out.println("inserting location");
+        System.out.println(location.getProperties());
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement("" +
+                     "INSERT INTO geocoding " +
+                     "VALUES (?,?,?,?,?,?,?,?,?,?)"))
+        {
+            statement.setDouble(1, lat);
+            statement.setDouble(2, lon);
+            statement.setString(3, location.getProperties().get("city"));
+            statement.setString(4, location.getProperties().get("street_num"));
+            statement.setString(5, location.getProperties().get("street"));
+            statement.setString(6, location.getProperties().get("state"));
+            statement.setString(7, location.getProperties().get("postal"));
+            statement.setString(8, location.getProperties().get("neighbourhood"));
+            statement.setString(9, location.getProperties().get("sublocality"));
+            statement.setString(10, location.getProperties().get("country"));
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static GeocodedLocation getGeocodedLocation(final double lat, final double lon) {
+        GeocodedLocation geocodedLocation = null;
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement("" +
+                     "SELECT suburb,street_num,street,state,postal,neighbourhood,sublocality,country " +
+                     "FROM geocoding " +
+                     "WHERE lat = ? AND lon = ?"))
+        {
+            statement.setDouble(1, lat);
+            statement.setDouble(2, lon);
+            final ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+
+                geocodedLocation = new GeocodedLocation();
+
+                String city = rs.getString(1);
+                geocodedLocation.set("city",city);
+
+                String streetNum = rs.getString(2);
+                geocodedLocation.set("street_num",streetNum);
+
+                String street = rs.getString(3);
+                geocodedLocation.set("street",street);
+
+                String state = rs.getString(4);
+                geocodedLocation.set("state",state);
+
+                String postal = rs.getString(5);
+                geocodedLocation.set("postal",postal);
+
+                String neighbourhood = rs.getString(6);
+                geocodedLocation.set("neighbourhood",neighbourhood);
+
+                String sublocality = rs.getString(7);
+                geocodedLocation.set("sublocality",sublocality);
+
+                String country = rs.getString(8);
+                geocodedLocation.set("country",country);
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return geocodedLocation;
+    }
+
     public static String getSuburb(final double lat, final double lon) {
         String suburb = null;
 
@@ -450,10 +536,12 @@ public class DBManager
              PreparedStatement statement = connection.prepareStatement(
                  "SELECT COUNT(*) " +
                      "FROM pokemon " +
-                     "WHERE pokemon_id = ? AND disappear_time > NOW() - INTERVAL ? "+intervalType.toString()))
+                     "WHERE pokemon_id = ? AND disappear_time > CONVERT_TZ(NOW() - INTERVAL ? "+intervalType.toDbString() + ",?,'UTC')"))
         {
-            statement.setDouble(1, id);
+            statement.setInt(1, id);
             statement.setDouble(2, intervalLength);
+            statement.setString(3,config.getTimeZone());
+            System.out.println(statement);
             statement.executeQuery();
 
             ResultSet rs = statement.getResultSet();
