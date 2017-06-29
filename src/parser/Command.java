@@ -17,21 +17,24 @@ public class Command
         this.allowDuplicateArgs = false;
     }
 
-    public void setValidArgTypes(final HashSet<ArgType> validArgTypes) {
+    public Command setValidArgTypes(final HashSet<ArgType> validArgTypes) {
         this.validArgTypes = validArgTypes;
+        return this;
     }
 
-    public void setRequiredArgTypes(final HashSet<ArgType> requiredArgTypes) {
+    public Command setRequiredArgTypes(final HashSet<ArgType> requiredArgTypes) {
         this.requiredArgTypes = requiredArgTypes;
+        return this;
     }
 
     public HashSet<ArgType> getValidArgTypes() {
         return this.validArgTypes;
     }
 
-    public void setArgRange(final int min, final int max) {
+    public Command setArgRange(final int min, final int max) {
         this.minArgs = min;
         this.maxArgs = max;
+        return this;
     }
 
     public HashSet<ArgType> getRequiredArgTypes() {

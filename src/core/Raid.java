@@ -17,4 +17,9 @@ public class Raid {
         this.bossId = bossId;
         this.location = location;
     }
+
+    @Override
+    public String toString() {
+        return String.format("RAID: %s,%s,%s",level,bossId,location);
+    }
 }

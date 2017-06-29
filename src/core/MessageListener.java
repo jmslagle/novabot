@@ -724,6 +724,36 @@ public class MessageListener extends ListenerAdapter
                 return;
             }
 
+            if(cmdStr.contains("raid")){
+                Raid[] raids = userCommand.buildRaids();
+
+                switch(cmdStr){
+                    case "!addraid":
+                        if(!DBManager.containsUser(author.getId())){
+                            DBManager.addUser(author.getId());
+                        }
+
+                        for (Raid raid : raids) {
+                            novabotLog.log(DEBUG,"adding raid " + raid);
+                            DBManager.addRaid(author.getId(),raid);
+                        }
+
+                        String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+
+                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                        Location[] locations = {new Location(Region.All)};
+                        if (locationsArg != null) {
+                            locations = userCommand.getLocations();
+                        }
+                        message2 = message2 + " raids in " + Location.listToString(locations);
+                        channel.sendMessage(message2).queue();
+
+                        return;
+                    case "!delraid":
+                        return;
+                }
+            }
+
             if (cmdStr.contains("pokemon")) {
                 final Pokemon[] pokemons = userCommand.buildPokemon();
 

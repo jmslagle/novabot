@@ -366,7 +366,7 @@ public class DBManager
 
     public static void addRaid(final String userID, final Raid raid) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement =connection.prepareStatement("INSERT INTO raid VALUES (?,?,?,?,?)"))
+             PreparedStatement statement =connection.prepareStatement("INSERT INTO raid VALUES (?,?,?,?)"))
         {
             statement.setString(1, userID);
             statement.setInt(2, raid.level);

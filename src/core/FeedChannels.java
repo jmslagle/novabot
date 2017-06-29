@@ -13,7 +13,7 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 class FeedChannels
 {
-    private static ArrayList<FeedChannel> channels;
+    private static ArrayList<FeedChannel> channels = new ArrayList<>();
 
     private static SimpleLog feedChannelsLog = SimpleLog.getLog("FeedChannels");
 

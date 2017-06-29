@@ -233,7 +233,7 @@ public class Parser
         MessageListener.loadConfig();
         MessageListener.loadSuburbs();
         Geofencing.loadGeofences();
-        System.out.println(parseInput("!addpokemon adelaide dragonite",true).getArg(ArgType.Locations).getParams()[0]);
+        UserCommand command = parseInput("!addraid 2 lyneham",true);
     }
 
     static {
