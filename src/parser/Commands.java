@@ -25,12 +25,17 @@ class Commands
         addPokemon.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)));
         addPokemon.setArgRange(1, 3);
 
-        final Command addChannel = new Command();
-        addChannel.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
-        addChannel.setRequiredArgTypes(addChannel.getValidArgTypes());
-        addChannel.setArgRange(1, 1);
-
         final Command delPokemon = new Command();
+        delPokemon.setValidArgTypes(addPokemon.getValidArgTypes());
+        addPokemon.setRequiredArgTypes(addPokemon.getRequiredArgTypes());
+        delPokemon.setArgRange(1, 3);
+
+        final Command addRaid = new Command();
+        addPokemon.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Int)));
+        addPokemon.setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)));
+        addPokemon.setArgRange(1, 3);
+
+        final Command delRaid = new Command();
         delPokemon.setValidArgTypes(addPokemon.getValidArgTypes());
         addPokemon.setRequiredArgTypes(addPokemon.getRequiredArgTypes());
         delPokemon.setArgRange(1, 3);
@@ -44,6 +49,11 @@ class Commands
         clearLocation.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
         clearLocation.setRequiredArgTypes(clearLocation.getValidArgTypes());
         clearLocation.setArgRange(1, 1);
+
+        final Command addChannel = new Command();
+        addChannel.setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)));
+        addChannel.setRequiredArgTypes(addChannel.getValidArgTypes());
+        addChannel.setArgRange(1, 1);
 
         if(config.nestsEnabled()) {
             final Command nest = new Command();
@@ -61,9 +71,12 @@ class Commands
             Commands.commands.put("!stats", stats);
         }
 
+
         Commands.commands.put("!addpokemon", addPokemon);
-        Commands.commands.put("!addchannel", addChannel);
         Commands.commands.put("!delpokemon", delPokemon);
+        Commands.commands.put("!addraid", addRaid);
+        Commands.commands.put("!delraid", delRaid);
+        Commands.commands.put("!addchannel", addChannel);
         Commands.commands.put("!clearpokemon", clearPokemon);
         Commands.commands.put("!clearlocation", clearLocation);
     }

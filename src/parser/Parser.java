@@ -4,6 +4,7 @@ import core.Location;
 import core.MessageListener;
 import core.Pokemon;
 import core.TimeUnit;
+import maps.Geofencing;
 import nests.NestStatus;
 
 import java.util.ArrayList;
@@ -15,9 +16,9 @@ public class Parser
 {
     private static final Pattern PATTERN;
 
-    public static UserCommand parseInput(final String input) {
+    public static UserCommand parseInput(final String input, boolean supporter) {
         final UserCommand command = new UserCommand();
-        final Argument[] args = getArgs(input);
+        final Argument[] args = getArgs(input,supporter);
         final String firstArg = (String)args[0].getParams()[0];
         command.setArgs(args);
         if (!Commands.isCommandWithArgs(firstArg)) {
@@ -51,6 +52,25 @@ public class Parser
             command.addException(InputError.BlacklistedPokemon);
             return command;
         }
+        for (Argument arg : args) {
+            if(arg.getType() == ArgType.Locations){
+                for (Object o : arg.getParams()) {
+                    Location l = (Location) o;
+
+                    ArrayList<String> unusable = new ArrayList<>();
+
+                    if(!l.usable){
+                        unusable.add(l.getSuburb());
+                    }
+                    if(unusable.size() > 0) {
+                        arg.setMalformed(unusable);
+                        command.addException(InputError.UnusableLocation);
+                        return command;
+                    }
+                }
+            }
+        }
+
         for (final Argument arg : args) {
             if (!cmd.validArgTypes.contains(arg.getType())) {
                 command.addException(InputError.InvalidArg);
@@ -60,23 +80,23 @@ public class Parser
         return command;
     }
 
-    private static Argument[] getArgs(final String input) {
+    private static Argument[] getArgs(final String input, boolean supporter) {
         final ArrayList<Argument> args = new ArrayList<Argument>();
         final Matcher matcher = Parser.PATTERN.matcher(input);
         while (matcher.find()) {
             final String group = matcher.group();
             if (group.charAt(0) == '<') {
-                args.add(parseList(group));
+                args.add(parseList(group,supporter));
             }
             else {
-                args.add(getArg(group));
+                args.add(getArg(group, supporter));
             }
         }
         final Argument[] arguments = new Argument[args.size()];
         return args.toArray(arguments);
     }
 
-    private static Argument getArg(final String s) {
+    private static Argument getArg(final String s, boolean supporter) {
         final Argument argument = new Argument();
         if (Commands.isCommandWithArgs(s.trim())) {
             argument.setType(ArgType.CommandStr);
@@ -88,7 +108,7 @@ public class Parser
         }
         else {
             final Location location;
-            if ((location = Location.fromString(s.trim())) != null) {
+            if ((location = Location.fromString(s.trim(),supporter)) != null) {
                 argument.setType(ArgType.Locations);
                 argument.setParams(new Object[] { location });
             }
@@ -136,7 +156,7 @@ public class Parser
         }
     }
 
-    private static Argument parseList(final String group) {
+    private static Argument parseList(final String group, boolean supporter) {
         final Argument argument = new Argument();
         final String toSplit = group.substring(1, group.length() - 1);
         final String[] strings = toSplit.split(",");
@@ -144,7 +164,7 @@ public class Parser
         System.arraycopy(strings, 0, args, 0, strings.length);
         final ArrayList<String> malformed = new ArrayList<String>();
         for (int i = 0; i < strings.length; ++i) {
-            args[i] = Location.fromString(strings[i].trim());
+            args[i] = Location.fromString(strings[i].trim(), supporter);
             if (args[i] == null) {
                 malformed.add(strings[i].trim());
             }
@@ -212,7 +232,8 @@ public class Parser
     public static void main(String[] args) {
         MessageListener.loadConfig();
         MessageListener.loadSuburbs();
-        getArgs("!countpokemon dragonite 4.5 hour");
+        Geofencing.loadGeofences();
+        System.out.println(parseInput("!addpokemon adelaide dragonite",true).getArg(ArgType.Locations).getParams()[0]);
     }
 
     static {

@@ -1,6 +1,6 @@
 package core;
 
-import maps.Geofencing;
+import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -14,16 +14,18 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import static core.MessageListener.*;
-import static core.MessageListener.config;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static maps.Geofencing.getGeofence;
+import static maps.Geofencing.loadGeofences;
 
 public class PokeSpawn
 {
     private static final String STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap?";
+    public FeedChannel feedChannel;
     private int level;
     private String imageUrl;
     private Timestamp disappearTime;
@@ -36,6 +38,7 @@ public class PokeSpawn
     public int id;
     private String suburb;
     Region region;
+    private ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
     float iv;
     private String move_1;
     private String move_2;
@@ -48,7 +51,7 @@ public class PokeSpawn
 
     private HashMap<String,String> pokeProperties = new HashMap<>();
 
-    private static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
+    public static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
 
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
         this.imageUrl = null;
@@ -64,25 +67,63 @@ public class PokeSpawn
         this.move_2 = move_2;
     }
 
+
     public static void main(final String[] args) {
         System.out.println(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Australia/Adelaide")));
 
         testing = true;
         loadConfig();
+        loadGeofences();
         System.out.println(config.getNbIp());
         System.out.println(config.getNbUser());
 
         DBManager.novabotdbConnect();
 
-        PokeSpawn spawn = new PokeSpawn(149, -35.0, 149.0, new Timestamp(DBManager.getCurrentTime().getTime() + 6000), 1, 1, 1, "Dragon Tail", "Outrage", 13.0f, 13.0f, 3, 0, 2142,0.743 );
+//        PokeSpawn spawn = new PokeSpawn(149, -35.214385, 149.0405493, new Timestamp(DBManager.getCurrentTime().getTime() + 6000), 1, 1, 1, "Dragon Tail", "Outrage", 13.0f, 13.0f, 3, 0, 2142,0.743 );
+        PokeSpawn spawn = new PokeSpawn(149,
+                -35.214385,
+                149.0405493,
+                new Timestamp(DBManager.getCurrentTime().getTime() + 6000),
+                0,
+                0,
+                0,
+                "unkn",
+                "unkn",
+                0,
+                0,
+                0,
+                0,
+                0,
+                0);
 
-
-        System.out.println(config.formatStr(spawn.pokeProperties,config.getTitleFormatting()));
-        System.out.println(config.formatStr(spawn.pokeProperties,config.getBodyFormatting()));
-        System.out.println(spawn.getAppleMapsLink());
+        System.out.println(spawn.pokeProperties.get("geofence"));
+        System.out.println(spawn.encountered());
+//        System.out.println(config.formatStr(spawn.pokeProperties,config.getTitleFormatting()));
+//        if(spawn.encountered()){
+//            System.out.println(config.formatStr(spawn.pokeProperties,config.getEncounterBodyFormatting()));
+//        }else {
+//            System.out.println(config.formatStr(spawn.pokeProperties, config.getBodyFormatting()));
+//        }
 //        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,0.743 ).hashCode());
 //        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,.743 ).hashCode());
     }
+
+    public PokeSpawn(int id, FeedChannel feedChannel, String suburb, float pokeIV, String move_1, String move_2, String form, int cp) {
+        this.imageUrl = null;
+        this.disappearTime = null;
+        this.form = null;
+        this.suburb = null;
+        this.feedChannel = feedChannel;
+        this.id = id;
+        this.suburb = suburb;
+        this.pokeProperties.put("city",suburb);
+        this.iv = pokeIV;
+        this.move_2 = move_2;
+        this.move_1 = move_1;
+        this.form = form;
+        this.cp = cp;
+    }
+
 
     public PokeSpawn(final int id, final double lat, final double lon, final Timestamp disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
         this.imageUrl = null;
@@ -114,6 +155,10 @@ public class PokeSpawn
         ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach((key,value)->{
             pokeProperties.put(key,value);
         });
+
+        this.geofenceIdentifiers = getGeofence(lat,lon);
+
+        pokeProperties.put("geofence", GeofenceIdentifier.listToString(geofenceIdentifiers));
 
         pokeProperties.put("gmaps",getGmapsLink());
 
@@ -200,12 +245,12 @@ public class PokeSpawn
 //        return this.suburb = ReverseGeocoder.getSuburb(this.lat, this.lon);
     }
 
-    public Region getRegion() {
-        if (this.region == null) {
-            return this.region = Geofencing.getRegion(this.lat, this.lon);
-        }
-        return this.region;
-    }
+//    public Region getRegion() {
+//        if (this.region == null) {
+//            return this.region = Geofencing.getRegion(this.lat, this.lon);
+//        }
+//        return this.region;
+//    }
 
     @Override
     public String toString() {
@@ -230,7 +275,7 @@ public class PokeSpawn
         String time = String.format("%02d:%02d",
                 MILLISECONDS.toMinutes(Math.abs(diff)),
                 MILLISECONDS.toSeconds(Math.abs(diff)) -
-                        MINUTES.toSeconds(MILLISECONDS.toMinutes(Math.abs(diff)))
+                        (MILLISECONDS.toMinutes(Math.abs(diff)) * 60)
         );
 
         if(diff < 0){
@@ -244,16 +289,22 @@ public class PokeSpawn
         final MessageBuilder messageBuilder = new MessageBuilder();
         final EmbedBuilder embedBuilder = new EmbedBuilder();
         embedBuilder.setColor(getColor());
-        embedBuilder.setTitle(config.formatStr(pokeProperties,config.getTitleFormatting()),config.formatStr(pokeProperties,config.getTitleUrl()));
-        embedBuilder.setDescription(config.formatStr(pokeProperties,config.getBodyFormatting()));
+        embedBuilder.setTitle(config.formatStr(pokeProperties,config.getTitleFormatting("pokemon")),config.formatStr(pokeProperties,config.getTitleUrl("pokemon")));
+        embedBuilder.setDescription(config.formatStr(pokeProperties,(encountered()) ? config.getEncounterBodyFormatting() : config.getBodyFormatting("pokemon")));
         embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
-        if(config.showMap()) {
+        if(config.showMap("pokemon")) {
             embedBuilder.setImage(this.getImage());
         }
         embedBuilder.setFooter(config.getFooterText(), null);
         embedBuilder.setTimestamp(Instant.now());
         messageBuilder.setEmbed(embedBuilder.build());
         return messageBuilder.build();
+    }
+
+    private boolean encountered() {
+
+        return iv != 0 || !move_1.equals("unkn") || !move_2.equals("unkn") || cp > 0;
+
     }
 
     private Color getColor() {
@@ -297,12 +348,12 @@ public class PokeSpawn
     private String getImage() {
 
         if (this.imageUrl == null) {
-            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom(), config.getMapWidth(), config.getMapHeight(), this.lat, this.lon, getNextKey());
+            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom("pokemon"), config.getMapWidth("pokemon"), config.getMapHeight("pokemon"), this.lat, this.lon, getNextKey());
         }
         return this.imageUrl;
     }
 
-    private static String getNextKey() {
+    public static String getNextKey() {
         if (PokeSpawn.lastKey == config.getKeys().size() - 1) {
             PokeSpawn.lastKey = 0;
             return config.getKeys().get(PokeSpawn.lastKey);
@@ -355,5 +406,9 @@ public class PokeSpawn
 
     public String getAppleMapsLink() {
         return String.format("http://maps.apple.com/maps?daddr=%s,%s&z=10&t=s&dirflg=w", this.lat, this.lon);
+    }
+
+    public ArrayList<GeofenceIdentifier> getGeofenceIds() {
+        return geofenceIdentifiers;
     }
 }

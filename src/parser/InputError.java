@@ -1,10 +1,18 @@
 package parser;
 
-import java.util.*;
+import core.Location;
+import core.Reason;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import static core.MessageListener.config;
 
 public enum InputError
 {
     InvalidArg,
+    UnusableLocation,
     BlacklistedPokemon,
     TooManyArgs,
     NotEnoughArgs,
@@ -19,6 +27,44 @@ public enum InputError
                 String str = "That command can only accept ";
                 final HashSet<ArgType> argTypes = Commands.get((String)userCommand.getArg(0).getParams()[0]).validArgTypes;
                 str = str + ArgType.setToString(argTypes) + "";
+                return str;
+            }
+            case UnusableLocation: {
+                String str = "You specified one or more locations unusable by your access level.\n\n";
+
+                Argument argument = userCommand.getArg(ArgType.Locations);
+
+                HashMap<Reason,ArrayList<Location>> unusableMap = new HashMap<>();
+
+                for (Object o : argument.getParams()) {
+                    Location location = (Location) o;
+
+                    if(!location.usable){
+                        if(!unusableMap.containsKey(location.reason)){
+                            unusableMap.put(location.reason,new ArrayList<>());
+                        }
+                        unusableMap.get(location.reason).add(location);
+                    }
+                }
+
+                for (Reason reason : unusableMap.keySet()) {
+                    str += String.format("**%s:**%n",reason);
+
+                    for (Location location : unusableMap.get(reason)) {
+                        str += String.format("  %s%n",location.getSuburb());
+                    }
+
+                    str += "\n";
+                }
+
+                if(unusableMap.containsKey(Reason.SupporterAttemptedPublic)){
+                    str += "Instead of using Discord channels for notifications, supporters have direct access to ALL pokemon spawns," +
+                            " and instead can subscribe to all spawns or filter them based on suburb";
+
+                    if(config.useGeofences()) str += " or geofences";
+
+                    str += ".";
+                }
                 return str;
             }
             case BlacklistedPokemon: {
@@ -86,4 +132,5 @@ public enum InputError
         }
         return error;
     }
+
 }

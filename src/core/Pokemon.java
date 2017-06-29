@@ -313,7 +313,7 @@ public class Pokemon
     }
 
     public int getID() {
-        System.out.println("getting id of " + this.name);
+//        System.out.println("getting id of " + this.name);
         return nameToID(this.name);
     }
 

@@ -1,7 +1,7 @@
 package notifier;
 
-import net.dv8tion.jda.core.entities.*;
-import core.*;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.User;
 
 class UserNotifier implements Runnable
 {
@@ -15,12 +15,9 @@ class UserNotifier implements Runnable
 
     @Override
     public void run() {
-        if (MessageListener.guild.getMember(user).getRoles().contains("Admin")) {
-            return;
-        }
         if (!user.hasPrivateChannel()) {
             user.openPrivateChannel().complete();
         }
-        user.getPrivateChannel().sendMessage(message).queue();
+        user.openPrivateChannel().queue(success -> success.sendMessage(message).queue());
     }
 }

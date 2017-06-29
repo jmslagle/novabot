@@ -4,7 +4,12 @@ import java.util.*;
 
 public class UserPref
 {
-    private final HashMap<String, Set<Pokemon>> pokemonPrefs;
+    private HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<String, Set<Pokemon>>();
+    private boolean supporter;
+
+    public UserPref(boolean supporter){
+        this.supporter = supporter;
+    }
 
     public UserPref(final String userID) {
         this.pokemonPrefs = new HashMap<String, Set<Pokemon>>();
@@ -26,12 +31,14 @@ public class UserPref
     public String allPokemonToString() {
         String str = "";
         for (String locname : this.pokemonPrefs.keySet()) {
-            final String location = locname;
-            if (Region.fromString(location) != null) {
-                locname = Region.fromString(location).toWords();
+            Location location = Location.fromString(locname, supporter);
+
+            String locStr = locname;
+            if (location != null) {
+                locStr = location.toWords();
             }
             str = str + "**" + locname + "**:\n";
-            for (final Pokemon pokemon : this.pokemonPrefs.get(location)) {
+            for (final Pokemon pokemon : this.pokemonPrefs.get(locStr)) {
                 str = str + "    " + pokemon.name;
                 if (pokemon.miniv > 0.0f || pokemon.maxiv < 100.0f) {
                     if (pokemon.maxiv < 100.0f) {

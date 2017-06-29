@@ -10,6 +10,7 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import core.Pokemon;
 import core.Region;
+import net.dv8tion.jda.core.utils.SimpleLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,9 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
+import static net.dv8tion.jda.core.utils.SimpleLog.Level.WARNING;
 
 public class NestSheetManager
 {
@@ -27,6 +31,8 @@ public class NestSheetManager
     private static final JacksonFactory JSON_FACTORY;
     private static HttpTransport HTTP_TRANSPORT;
     private static final List<String> SCOPES;
+
+    private static SimpleLog nestsLog = SimpleLog.getLog("nests");
 
     public static void main(final String[] args) {
         final String spreadsheetId = "1Scx_49MhfziXhugkW1SK-6X4gDZ7pA-EMSL-WlV17CM";
@@ -40,7 +46,7 @@ public class NestSheetManager
             response = NestSheetManager.service.spreadsheets().values().get("1Scx_49MhfziXhugkW1SK-6X4gDZ7pA-EMSL-WlV17CM", range).execute();
             final List<List<Object>> values = response.getValues();
             if (values == null || values.size() == 0) {
-                System.out.println("No data found.");
+                nestsLog.log(WARNING,"No data found.");
             }
             else {
                 for (final List<Object> value : values) {
@@ -51,7 +57,7 @@ public class NestSheetManager
                     final NestStatus status = NestStatus.fromString(value.get(5).toString().toLowerCase());
                     for (final Pokemon pokemon : nestSearch.getPokemon()) {
                         if (poke.name == null) {
-                            System.out.println("ouchi");
+                            nestsLog.log(WARNING,"ouchi");
                         }
                         if (poke.name.equals(pokemon.name)) {
                             for (final NestStatus s : nestSearch.getStatuses()) {
@@ -64,9 +70,9 @@ public class NestSheetManager
                                             status,
                                             poke,
                                             (String) value.get(9)));
-                                    System.out.print("Found: ");
-                                    System.out.println(value);
-                                    System.out.println(nests.get(nests.size() - 1));
+                                    nestsLog.log(INFO,"Found: ");
+                                    nestsLog.log(INFO,value);
+                                    nestsLog.log(INFO,nests.get(nests.size() - 1));
                                 }
                             }
                         }
@@ -121,7 +127,7 @@ public class NestSheetManager
     }
 
     public static ArrayList<Nest> getNestsByStatus(final NestStatus[] statuses) {
-        System.out.println("Searching for nests");
+        nestsLog.log(INFO,"Searching for nests");
         final String range = "Data_Entry!B2:K";
         final ArrayList<Nest> nests = new ArrayList<Nest>();
         ValueRange response = null;
@@ -129,7 +135,7 @@ public class NestSheetManager
             response = NestSheetManager.service.spreadsheets().values().get("1Scx_49MhfziXhugkW1SK-6X4gDZ7pA-EMSL-WlV17CM", range).execute();
             final List<List<Object>> values = response.getValues();
             if (values == null || values.size() == 0) {
-                System.out.println("No data found.");
+                nestsLog.log(WARNING,"No data found.");
             }
             else {
                 for (final List<Object> value : values) {
@@ -149,9 +155,9 @@ public class NestSheetManager
                             NestStatus.fromString((String) value.get(5)),
                             poke,
                             (String) value.get(9)));
-                    System.out.print("Found: ");
-                    System.out.println(value);
-                    System.out.println(nests.get(nests.size() - 1));
+                    nestsLog.log(INFO,"Found: ");
+                    nestsLog.log(INFO,value);
+                    nestsLog.log(INFO,nests.get(nests.size() - 1));
                 }
             }
         }

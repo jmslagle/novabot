@@ -1,5 +1,7 @@
 package core;
 
+import maps.GeofenceIdentifier;
+import maps.Geofencing;
 import org.ini4j.Ini;
 
 import java.io.File;
@@ -39,7 +41,9 @@ public class Config {
     private String roleLogId;
     private String userUpdatesId;
 
-    private long pollingRate;
+    private long pokePollingRate;
+    private long raidPollingRate;
+
 
     private String rmUser;
     private String rmPass;
@@ -53,16 +57,24 @@ public class Config {
     private String nbPort;
     private String nbDbName;
 
-    private String bodyFormatting;
-    private String titleFormatting;
-    private String titleUrl;
+    private HashMap<String,String> bodyFormatting = new HashMap<>();
+    private String encounterBodyFormatting;
+    private HashMap<String,String> titleFormatting = new HashMap<>();
+    private HashMap<String,String> titleUrl = new HashMap<>();
 
-    private String mapZoom = "15";
-    private String mapWidth = "255";
-    private String mapHeight = "225";
+    private HashMap<String,String> mapZoom = new HashMap<>();
+    private HashMap<String,String> mapWidth = new HashMap<>();
+    private HashMap<String,String> mapHeight = new HashMap<>();
 
-    private boolean showMap = true;
+    private HashMap<String,Boolean> showMap = new HashMap<>();
 
+    private boolean useChannels;
+    private boolean useRmDb;
+
+    private boolean raidsEnabled;
+    private boolean pokemonEnabled;
+
+    private HashMap<GeofenceIdentifier,String> geofencedChannelIds = new HashMap<>();
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -79,7 +91,17 @@ public class Config {
 
         geofences = Boolean.parseBoolean(config.get("geofences"));
 
-        pollingRate = Long.parseLong(config.get("dbPollingRate"));
+        useChannels = Boolean.parseBoolean(config.get("channels"));
+
+        useRmDb = Boolean.parseBoolean(config.get("useRmDb"));
+
+        raidsEnabled = Boolean.parseBoolean(config.get("raids"));
+
+        pokemonEnabled = Boolean.parseBoolean(config.get("pokemon"));
+
+        pokePollingRate = Long.parseLong(config.get("pokePollingRate"));
+
+        raidPollingRate = Long.parseLong(config.get("raidPollingRate"));
 
         nests = Boolean.parseBoolean(config.get("nests"));
 
@@ -121,20 +143,61 @@ public class Config {
 
         GMAPS_KEYS = loadKeys(gkeys);
 
-        Ini.Section formatting = formattingIni.get("formatting");
-        titleFormatting = formatting.get("title");
-        titleUrl = formatting.get("titleUrl");
-        bodyFormatting = formatting.get("body");
+        String[] formatKeys = new String[] {"pokemon","raidEgg","raidBoss"};
 
-        showMap = Boolean.parseBoolean(formatting.get("showMap"));
+        for (String formatKey : formatKeys) {
+            Ini.Section format = formattingIni.get(formatKey);
 
-        mapZoom = formatting.get("mapZoom");
-        mapWidth = formatting.get("mapWidth");
-        mapHeight = formatting.get("mapHeight");
+            titleFormatting.put(formatKey,format.get("title"));
+            titleUrl.put(formatKey,format.get("titleUrl"));
+            bodyFormatting.put(formatKey,format.get("body"));
+
+            if(formatKey.equals("pokemon")) {
+                encounterBodyFormatting = format.get("encounteredBody");
+            }
+
+            showMap.put(formatKey,Boolean.parseBoolean(format.get("showMap")));
+
+            mapZoom.put(formatKey,format.get("mapZoom"));
+            mapWidth.put(formatKey,format.get("mapWidth"));
+            mapHeight.put(formatKey,format.get("mapHeight"));
+        }
+
+        loadGeofenceChannels();
     }
 
-    public String getTitleUrl() {
-        return titleUrl;
+    public String getGeofenceChannelId(GeofenceIdentifier identifier){
+        return geofencedChannelIds.get(identifier);
+    }
+
+    private void loadGeofenceChannels() {
+
+        if(!Geofencing.loaded) Geofencing.loadGeofences();
+
+        File file = new File("raidalerts.txt");
+
+        try{
+            Scanner sc = new Scanner(file);
+
+            while(sc.hasNext()){
+                String line = sc.nextLine().toLowerCase();
+
+                String[] split = line.split("=");
+
+                GeofenceIdentifier geofenceIdentifier = GeofenceIdentifier.fromString(split[0].trim());
+
+                String channelId = split[1].trim();
+
+                geofencedChannelIds.put(geofenceIdentifier,channelId);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public String getTitleUrl(String formatKey) {
+        return titleUrl.get(formatKey);
     }
 
     private ArrayList<String> loadKeys(File gkeys) {
@@ -224,8 +287,8 @@ public class Config {
         return userUpdatesId;
     }
 
-    public long getPollingRate() {
-        return pollingRate;
+    public long getPokePollingRate() {
+        return pokePollingRate;
     }
 
     public boolean nestsEnabled() {
@@ -290,31 +353,55 @@ public class Config {
         return str[0];
     }
 
-    public String getTitleFormatting() {
-        return titleFormatting;
+    public String getTitleFormatting(String formatKey) {
+        return titleFormatting.get(formatKey);
     }
 
-    public String getBodyFormatting() {
-        return bodyFormatting;
+    public String getBodyFormatting(String formatKey) {
+        return bodyFormatting.get(formatKey);
     }
 
-    public String getMapZoom() {
-        return mapZoom;
+    public String getEncounterBodyFormatting() {
+        return encounterBodyFormatting;
     }
 
-    public String getMapWidth() {
-        return mapWidth;
+    public String getMapZoom(String formatKey) {
+        return mapZoom.get(formatKey);
     }
 
-    public String getMapHeight() {
-        return mapHeight;
+    public String getMapWidth(String formatKey) {
+        return mapWidth.get(formatKey);
     }
 
-    public boolean showMap() {
-        return showMap;
+    public String getMapHeight(String formatKey) {
+        return mapHeight.get(formatKey);
+    }
+
+    public boolean showMap(String formatKey) {
+        return showMap.get(formatKey);
     }
 
     public String getAdminRole() {
         return adminRole;
+    }
+
+    public boolean useChannels() {
+        return useChannels;
+    }
+
+    public boolean useRmDb() {
+        return useRmDb;
+    }
+
+    public long getRaidPollingRate() {
+        return raidPollingRate;
+    }
+
+    public boolean raidsEnabled() {
+        return raidsEnabled;
+    }
+
+    public boolean pokemonEnabled() {
+        return pokemonEnabled;
     }
 }

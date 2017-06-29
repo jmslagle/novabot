@@ -13,4 +13,4 @@ CREATE TABLE pokemon
   min_iv FLOAT DEFAULT '0',
   CONSTRAINT pokemon_users_id_fk FOREIGN KEY (user_id) REFERENCES users (id)
 );
-CREATE UNIQUE INDEX pokemon_user_id_id_channel_max_iv_min_iv_pk ON pokemon (user_id, id, channel, max_iv, min_iv);
+CREATE UNIQUE INDEX pokemon_user_id_id_channel_max_iv_min_iv_pk ON pokemon (user_id, id, location, max_iv, min_iv);
