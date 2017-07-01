@@ -1,5 +1,6 @@
 package core;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
 import org.ini4j.Ini;
@@ -72,6 +73,7 @@ public class Config {
     private boolean useRmDb;
 
     private boolean raidsEnabled;
+    private boolean raidChannelsEnabled;
     private boolean pokemonEnabled;
 
     private HashMap<GeofenceIdentifier,String> geofencedChannelIds = new HashMap<>();
@@ -96,6 +98,8 @@ public class Config {
         useRmDb = Boolean.parseBoolean(config.get("useRmDb"));
 
         raidsEnabled = Boolean.parseBoolean(config.get("raids"));
+
+        raidChannelsEnabled = Boolean.parseBoolean(config.get("raidChannels"));
 
         pokemonEnabled = Boolean.parseBoolean(config.get("pokemon"));
 
@@ -184,11 +188,14 @@ public class Config {
 
                 String[] split = line.split("=");
 
-                GeofenceIdentifier geofenceIdentifier = GeofenceIdentifier.fromString(split[0].trim());
+                ArrayList<GeofenceIdentifier> geofenceIdentifiers = GeofenceIdentifier.fromString(split[0].trim());
 
                 String channelId = split[1].trim();
 
-                geofencedChannelIds.put(geofenceIdentifier,channelId);
+                for (GeofenceIdentifier geofenceIdentifier : geofenceIdentifiers) {
+                    geofencedChannelIds.put(geofenceIdentifier,channelId);
+                }
+
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -404,4 +411,9 @@ public class Config {
     public boolean pokemonEnabled() {
         return pokemonEnabled;
     }
+
+    public boolean isRaidChannelsEnabled() {
+        return raidChannelsEnabled;
+    }
+
 }

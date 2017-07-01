@@ -1,5 +1,6 @@
 package maps;
 
+import core.Location;
 import core.Util;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import org.opengts.util.GeoPoint;
@@ -33,9 +34,11 @@ public class Geofencing
     public static void main(final String[] args) {
         loadGeofences();
 
-        geofencesMap.keySet().forEach(System.out::println);
+        System.out.println(new Location(GeofenceIdentifier.fromString("woden-weston")).toDbString());
 
-        System.out.println(getGeofence(-35.214385, 149.0405493));
+//        geofencesMap.keySet().forEach(System.out::println);
+
+//        System.out.println(getGeofence(-35.214385, 149.0405493));
 
 //        System.out.println(getFeedChannel(-35.214385, 149.0405493));
     }

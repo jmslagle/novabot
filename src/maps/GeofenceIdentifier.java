@@ -35,7 +35,7 @@ public class GeofenceIdentifier {
         String str = "";
 
         for (int i = 0; i < geofenceIdentifiers.size(); i++) {
-            str += geofenceIdentifiers.get(0).name;
+            str += geofenceIdentifiers.get(i).name;
 
             if(i != geofenceIdentifiers.size()-1){
                  str += ", ";
@@ -44,16 +44,18 @@ public class GeofenceIdentifier {
         return str;
     }
 
-    public static GeofenceIdentifier fromString(String str) {
+    public static ArrayList<GeofenceIdentifier> fromString(String str) {
 
         if(Geofencing.geofencesMap.size() == 0){
             Geofencing.loadGeofences();
         }
 
+        ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
+
         for (GeofenceIdentifier identifier : Geofencing.geofencesMap.keySet()) {
-            if(str.equals(identifier.name) || identifier.aliases.contains(str)) return identifier;
+            if(str.equals(identifier.name) || identifier.aliases.contains(str)) geofenceIdentifiers.add(identifier);
         }
 
-        return null;
+        return geofenceIdentifiers;
     }
 }

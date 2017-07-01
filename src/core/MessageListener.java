@@ -668,6 +668,10 @@ public class MessageListener extends ListenerAdapter
                     "!addpokemon pokemon\n" +
                     "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
                     "!delpokemon pokemon\n" +
+                    "!addraid pokemon\n" +
+                    "!addraid <pokemon list> <location list>\n" +
+                    "!delraid pokemon\n" +
+                    "!delraid <pokemon list> <location list>\n" +
                     "!clearpokemon <pokemon list>\n" +
                     "!clearlocation <location list>\n" +
                     "!pause\n" +
@@ -697,7 +701,6 @@ public class MessageListener extends ListenerAdapter
             final String cmdStr = (String)userCommand.getArg(0).getParams()[0];
 
             if(cmdStr.equals("!stats")){
-
                 Pokemon[] pokemons = userCommand.buildPokemon();
 
                 String str = author.getAsMention() + ", here's what I found:\n\n";
@@ -727,30 +730,68 @@ public class MessageListener extends ListenerAdapter
             if(cmdStr.contains("raid")){
                 Raid[] raids = userCommand.buildRaids();
 
-                switch(cmdStr){
-                    case "!addraid":
-                        if(!DBManager.containsUser(author.getId())){
-                            DBManager.addUser(author.getId());
-                        }
+                ArrayList<String> nonRaidBosses = new ArrayList<>();
 
-                        for (Raid raid : raids) {
-                            novabotLog.log(DEBUG,"adding raid " + raid);
-                            DBManager.addRaid(author.getId(),raid);
-                        }
+                for (Pokemon pokemon : userCommand.getUniquePokemon()) {
+                    if(!Raid.POSSIBLE_BOSSES.contains(pokemon.getID())){
+                        nonRaidBosses.add(Pokemon.idToName(pokemon.getID()));
+                    }
+                }
 
-                        String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+                if(nonRaidBosses.size() != 0){
+                    String message = author.getAsMention() + " I had a problem reading your input.\n\n" +
+                            "The following pokemon you entered are not possible raid bosses:\n\n";
 
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " raids in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
+                    for (String nonRaidBoss : nonRaidBosses) {
+                        message += String.format("  %s%n", nonRaidBoss);
+                    }
 
-                        return;
-                    case "!delraid":
-                        return;
+                    channel.sendMessage(message).queue();
+                    return;
+                }
+
+                if(cmdStr.equals("!addraid")){
+                    if(!DBManager.containsUser(author.getId())){
+                        DBManager.addUser(author.getId());
+                    }
+
+                    for (Raid raid : raids) {
+                        novabotLog.log(DEBUG,"adding raid " + raid);
+                        DBManager.addRaid(author.getId(),raid);
+                    }
+
+                    String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {new Location(Region.All)};
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 = message2 + " raids in " + Location.listToString(locations);
+                    channel.sendMessage(message2).queue();
+
+                    return;
+                }else if(cmdStr.equals("!delraid")){
+                    if(!DBManager.containsUser(author.getId())){
+                        DBManager.addUser(author.getId());
+                    }
+
+                    for (Raid raid : raids) {
+                        novabotLog.log(DEBUG,"deleting raid " + raid);
+                        DBManager.deleteRaid(author.getId(),raid);
+                    }
+
+                    String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {new Location(Region.All)};
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 = message2 + " raids in " + Location.listToString(locations);
+                    channel.sendMessage(message2).queue();
+
+                    return;
                 }
             }
 
@@ -780,7 +821,7 @@ public class MessageListener extends ListenerAdapter
                         }
                         message2 = message2 + " in " + Location.listToString(locations);
                         channel.sendMessage(message2).queue();
-                        break;
+                        return;
                     }
                     case "!delpokemon": {
                         for (final Pokemon pokemon : pokemons) {
@@ -796,19 +837,19 @@ public class MessageListener extends ListenerAdapter
                         }
                         message2 = message2 + " in " + Location.listToString(locations);
                         channel.sendMessage(message2).queue();
-                        break;
+                        return;
                     }
                     case "!clearpokemon": {
                         DBManager.clearPokemon(author.getId(), new ArrayList<>(Arrays.asList(pokemons)));
                         final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any channels";
                         channel.sendMessage(message2).queue();
-                        break;
+                        return;
                     }
                 }
             }
             else if (cmdStr.equals("!clearlocation")) {
                 final Location[] locations2 = userCommand.getLocations();
-                DBManager.clearLocations(author.getId(), locations2);
+                DBManager.clearLocationsPokemon(author.getId(), locations2);
                 final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
                 channel.sendMessage(message2).queue();
             }

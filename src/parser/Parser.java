@@ -1,14 +1,13 @@
 package parser;
 
-import core.Location;
-import core.MessageListener;
-import core.Pokemon;
-import core.TimeUnit;
+import core.*;
+import maps.GeofenceIdentifier;
 import maps.Geofencing;
 import nests.NestStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -110,7 +109,16 @@ public class Parser
             final Location location;
             if ((location = Location.fromString(s.trim(),supporter)) != null) {
                 argument.setType(ArgType.Locations);
-                argument.setParams(new Object[] { location });
+
+                ArrayList<Location> locations = new ArrayList<>(Arrays.asList(location));
+
+                if(location.locationType == LocationType.Geofence){
+                    for (GeofenceIdentifier geofenceIdentifier : location.geofenceIdentifiers) {
+                        locations.add(new Location(geofenceIdentifier));
+                    }
+                }
+
+                argument.setParams(locations.toArray());
             }
             else if (NestStatus.fromString(s.trim()) != null) {
                 argument.setType(ArgType.Status);
@@ -160,45 +168,57 @@ public class Parser
         final Argument argument = new Argument();
         final String toSplit = group.substring(1, group.length() - 1);
         final String[] strings = toSplit.split(",");
-        final Object[] args = new Object[strings.length];
-        System.arraycopy(strings, 0, args, 0, strings.length);
+        final ArrayList<Object> args = new ArrayList<>();
         final ArrayList<String> malformed = new ArrayList<String>();
         for (int i = 0; i < strings.length; ++i) {
-            args[i] = Location.fromString(strings[i].trim(), supporter);
-            if (args[i] == null) {
+            Location loc = Location.fromString(strings[i].trim(), supporter);
+
+            if (loc == null) {
                 malformed.add(strings[i].trim());
+                args.add(loc);
+                continue;
             }
+
+            if(loc.locationType == LocationType.Geofence){
+                for (GeofenceIdentifier geofenceIdentifier : loc.geofenceIdentifiers) {
+                    args.add(new Location(geofenceIdentifier));
+                }
+            }
+
         }
-        if (allNull(args)) {
+        if (allNull(args.toArray())) {
+            args.clear();
             malformed.clear();
             for (int i = 0; i < strings.length; ++i) {
                 final Pokemon pokemon = new Pokemon(strings[i].trim());
                 if (pokemon.name == null) {
                     malformed.add(strings[i].trim());
                 }
-                args[i] = pokemon.name;
+                args.add(pokemon.name);
             }
-            if (!allNull(args)) {
+            if (!allNull(args.toArray())) {
                 argument.setType(ArgType.Pokemon);
             }
             else {
+                args.clear();
                 malformed.clear();
-                if (args.length == 1 || args.length == 2) {
+                if (args.size() == 1 || args.size() == 2) {
                     for (int i = 0; i < strings.length; ++i) {
-                        args[i] = getFloat(strings[i].trim());
+                        args.add(getFloat(strings[i].trim()));
                     }
-                    if (!allNull(args)) {
+                    if (!allNull(new ArrayList[]{args})) {
                         argument.setType(ArgType.Float);
                     }
                     else {
                         malformed.clear();
                         for (int i = 0; i < strings.length; ++i) {
-                            args[i] = NestStatus.fromString(strings[i].trim());
-                            if (args[i] == null) {
+                            NestStatus status = NestStatus.fromString(strings[i].trim());
+                            args.add(status);
+                            if (status == null) {
                                 malformed.add(strings[i].trim());
                             }
                         }
-                        if (!allNull(args)) {
+                        if (!allNull(args.toArray())) {
                             argument.setType(ArgType.Status);
                         }
                     }
@@ -209,12 +229,12 @@ public class Parser
             argument.setType(ArgType.Locations);
         }
         if (argument.getType() != null) {
-            argument.setParams(args);
+            argument.setParams(args.toArray());
             argument.setMalformed(malformed);
         }
         else {
             argument.setType(ArgType.Unknown);
-            argument.setParams(args);
+            argument.setParams(args.toArray());
             argument.setMalformed(new ArrayList<String>(Arrays.asList(strings)));
         }
         return argument;
@@ -233,7 +253,8 @@ public class Parser
         MessageListener.loadConfig();
         MessageListener.loadSuburbs();
         Geofencing.loadGeofences();
-        UserCommand command = parseInput("!addraid 2 lyneham",true);
+        UserCommand command = parseInput("!addraid <tyranitar,lapras> gungahlin",true);
+        System.out.println(command);
     }
 
     static {

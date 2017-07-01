@@ -1,5 +1,6 @@
 package notifier;
 
+import core.DBManager;
 import core.RaidSpawn;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
@@ -48,12 +49,20 @@ public class RaidNotificationSender implements Runnable {
             return;
         }
         for (final RaidSpawn raidSpawn : this.currentRaids) {
-            notificationLog.log(INFO,"Checking if anyone wants: " + raidSpawn);
+            notificationLog.log(INFO,"Checking " + raidSpawn);
 
-            if(raidSpawn.properties.get("time_left_start").startsWith("-") && raidSpawn.bossId == 0) {
-                notificationLog.log(INFO,"Raid started but no boss Id, not posting");
+            if (raidSpawn.properties.get("time_left_start").startsWith("-") && raidSpawn.bossId == 0) {
+                notificationLog.log(INFO, "Raid started but no boss Id, not posting");
                 continue;
             }
+
+            if (raidSpawn.bossId != 0) {
+                notificationLog.log(INFO, "Checking if anyone wants: " + raidSpawn);
+
+                DBManager.getUserIDsToNotify(raidSpawn).forEach(id -> notifyUser(id, raidSpawn.buildMessage()));
+            }
+
+            if(!config.isRaidChannelsEnabled()) continue;
 
             for (GeofenceIdentifier identifier : raidSpawn.getGeofences()) {
                 String id = config.getGeofenceChannelId(identifier);

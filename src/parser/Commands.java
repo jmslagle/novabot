@@ -32,7 +32,7 @@ class Commands
                 .setArgRange(1, 3);
 
         final Command addRaid = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Int)))
+                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations)))
                 .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
                 .setArgRange(1, 3);
 

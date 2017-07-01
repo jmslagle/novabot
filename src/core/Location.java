@@ -3,17 +3,19 @@ package core;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
 
+import java.util.ArrayList;
+
 import static core.MessageListener.config;
 
 public class Location
 {
     private static final Location ALL = new Location(Region.All);
     private static final Location UNUSABLE = new Location();
+    public ArrayList<GeofenceIdentifier> geofenceIdentifiers;
     private Region region;
-    private LocationType locationType;
+    public LocationType locationType;
     private FeedChannel channel;
     private String suburb;
-    private GeofenceIdentifier geofenceIdentifier;
     public boolean usable = true;
     public Reason reason;
 
@@ -29,7 +31,8 @@ public class Location
 
     public Location(final GeofenceIdentifier geofenceIdentifier) {
         this.locationType = LocationType.Geofence;
-        this.geofenceIdentifier = geofenceIdentifier;
+        this.geofenceIdentifiers = new ArrayList<>();
+        this.geofenceIdentifiers.add(geofenceIdentifier);
     }
 
     public Location(Region region) {
@@ -39,6 +42,11 @@ public class Location
 
     public Location() {
 
+    }
+
+    public Location(ArrayList<GeofenceIdentifier> identifiers) {
+        this.locationType = LocationType.Geofence;
+        this.geofenceIdentifiers = identifiers;
     }
 
     public static void main(final String[] args) {
@@ -64,7 +72,7 @@ public class Location
             case Suburb:
                 return this.suburb;
             case Geofence:
-                return this.geofenceIdentifier.name;
+                return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
         }
 
         return this.region.toString();
@@ -103,10 +111,10 @@ public class Location
         }
 
         if(config.useGeofences()) {
-            GeofenceIdentifier identifier = GeofenceIdentifier.fromString(str);
+            ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
 
-            if (identifier != null) {
-                return new Location(identifier);
+            if (identifiers.size() != 0) {
+                return new Location(identifiers);
             }
         }
 
@@ -139,7 +147,7 @@ public class Location
             case Channel:
                 return this.channel.getName();
             case Geofence:
-                return this.geofenceIdentifier.name;
+                return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
             case Region:
                 return this.region.toString().toLowerCase();
         }
@@ -157,10 +165,10 @@ public class Location
         }
 
         if(config.useGeofences()){
-            GeofenceIdentifier identifier = GeofenceIdentifier.fromString(str);
+            ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
 
-            if(identifier != null){
-                return new Location(identifier);
+            if(identifiers.size() !=  0){
+                return new Location(identifiers);
             }
         }
 
@@ -191,7 +199,7 @@ public class Location
             case Suburb:
                 return this.suburb;
             case Geofence:
-                return this.geofenceIdentifier.name;
+                return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
         }
 
         return this.region.toString();

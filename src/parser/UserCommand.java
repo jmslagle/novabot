@@ -201,7 +201,6 @@ public class UserCommand
 
     public Raid[] buildRaids() {
         Location[] locations = { new Location(Region.All) };
-        int minLevel = 0;
         String[] bossNames = new String[0];
         for (final Argument arg : this.args) {
             switch (arg.getType()) {
@@ -211,24 +210,13 @@ public class UserCommand
                 case Pokemon:
                     bossNames = this.toStrings(arg.getParams());
                     break;
-                case Int:
-                    minLevel = ((Integer)arg.getParams()[0]);
-                    break;
             }
         }
 
         final ArrayList<Raid> raids = new ArrayList<>();
         for (final String bossName : bossNames) {
             for (final Location location : locations) {
-                Raid raid = new Raid(0,Pokemon.nameToID(bossName),location);
-                System.out.println(raid);
-                raids.add(raid);
-            }
-        }
-
-        if(minLevel != 0){
-            for (Location location : locations) {
-                Raid raid = new Raid(minLevel,0,location);
+                Raid raid = new Raid(Pokemon.nameToID(bossName),location);
                 System.out.println(raid);
                 raids.add(raid);
             }

@@ -45,6 +45,7 @@ public class RaidSpawn {
     public HashMap<String,String> properties = new HashMap<>();
     private String imageUrl;
     private String formatKey;
+    private Message builtMessage = null;
 
     public static void main(String[] args) {
 
@@ -175,6 +176,8 @@ public class RaidSpawn {
     }
 
     public Message buildMessage() {
+        if(builtMessage != null) return builtMessage;
+
         final MessageBuilder messageBuilder = new MessageBuilder();
         final EmbedBuilder embedBuilder = new EmbedBuilder();
         embedBuilder.setColor(getColor());
@@ -195,7 +198,9 @@ public class RaidSpawn {
         embedBuilder.setFooter(config.getFooterText(), null);
         embedBuilder.setTimestamp(Instant.now());
         messageBuilder.setEmbed(embedBuilder.build());
-        return messageBuilder.build();
+
+        this.builtMessage = messageBuilder.build();
+        return builtMessage;
     }
 
     private String getStartTime() {
@@ -243,5 +248,13 @@ public class RaidSpawn {
 
     public ArrayList<GeofenceIdentifier> getGeofences() {
         return geofenceIdentifiers;
+    }
+
+    public ArrayList<GeofenceIdentifier> getGeofenceIds() {
+        return geofenceIdentifiers;
+    }
+
+    public String getSuburb() {
+        return properties.get("city");
     }
 }
