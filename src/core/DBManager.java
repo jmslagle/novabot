@@ -4,6 +4,8 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import maps.GeocodedLocation;
 import net.dv8tion.jda.core.utils.SimpleLog;
+import raids.Raid;
+import raids.RaidSpawn;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ public class DBManager
 
     private static RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
-    private static HashMap<String,RaidSpawn> knownRaids = new HashMap<>();
+    private static HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
 
     static SimpleLog dbLog = SimpleLog.getLog("DB");
     private static String blacklistQMarks;
@@ -42,10 +44,10 @@ public class DBManager
         novabotdbConnect();
 
         RaidSpawn spawn = new RaidSpawn("gym",
-                "123",-35.34200996278955,149.05508042811897,
+                "123",-35.265134,149.122796,
                 new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
                 new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-                248,
+                123,
                 11003,
                 "fire",
                 "fire blast",
@@ -199,6 +201,8 @@ public class DBManager
                 dbLog.log(DEBUG, String.format("%s raid has ended, removing from known raids so we can find new raids on this gym",gymId));
                 toRemove.add(gymId);
                 dbLog.log(DEBUG, "Queued for removal " + raid);
+
+                lobbyManager.endLobby(raid.getLobbyCode());
             }
         });
 
@@ -428,7 +432,7 @@ public class DBManager
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement   statement = connection.createStatement())
         {
-            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString));
+            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND boss_id IN %s;", "'" + id + "'", idsString));
         }
         catch (SQLException e) {
             e.printStackTrace();
@@ -453,7 +457,7 @@ public class DBManager
                     "SELECT DISTINCT(user_id) " +
                             "FROM raid " +
                             "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
-                            "AND LOWER(location) IN (%s?,'All') " +
+                            "AND LOWER(location) IN (%s?,'all') " +
                             "AND boss_id=?;",geofenceQMarks
             );
 
@@ -462,10 +466,10 @@ public class DBManager
         )
         {
             for (int i = 0; i < geofences; i++) {
-                statement.setString(i+1,raidSpawn.getGeofenceIds().get(i).name);
+                statement.setString(i+1,raidSpawn.getGeofenceIds().get(i).name.toLowerCase());
             }
 
-            statement.setString(geofences + 1, raidSpawn.getSuburb());
+            statement.setString(geofences + 1, raidSpawn.getSuburb().toLowerCase());
             statement.setInt(geofences + 2, raidSpawn.bossId);
             dbLog.log(DEBUG,statement);
             final ResultSet rs = statement.executeQuery();
@@ -547,6 +551,22 @@ public class DBManager
     }
 
     public static void resetUser(final String id) {
+        resetRaids(id);
+        resetPokemon(id);
+    }
+
+    public static void resetRaids(String id) {
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
+            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id = %s;", id));
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void resetPokemon(String id) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement())
         {
@@ -578,7 +598,7 @@ public class DBManager
                     "SELECT DISTINCT(user_id) " +
                             "FROM pokemon " +
                             "WHERE (SELECT paused FROM users WHERE users.id = pokemon.user_id) = FALSE " +
-                            "AND ((LOWER(location) IN (%s?,'All')) " +
+                            "AND ((LOWER(location) IN (%s?,'all')) " +
                             "AND (id=? OR id=?) " +
                             "AND (min_iv <= ?) " +
                             "AND (max_iv >= ?));",geofenceQMarks
@@ -588,7 +608,7 @@ public class DBManager
                     "SELECT DISTINCT(user_id) " +
                             "FROM pokemon " +
                             "WHERE (SELECT paused FROM users WHERE users.id = pokemon.user_id) = FALSE " +
-                            "AND ((LOWER(location) IN (%s?,?,'All')) " +
+                            "AND ((LOWER(location) IN (%s?,?,'all')) " +
                             "AND (id=? OR id=?) " +
                             "AND (min_iv <= ?) " +
                             "AND (max_iv >= ?));",geofenceQMarks
@@ -600,15 +620,15 @@ public class DBManager
             )
         {
             for (int i = 0; i < geofences; i++) {
-                statement.setString(i+1,pokeSpawn.getGeofenceIds().get(i).name);
+                statement.setString(i+1,pokeSpawn.getGeofenceIds().get(i).name.toLowerCase());
             }
 
             if(pokeSpawn.feedChannel != null){
-                statement.setString(geofences + 1,pokeSpawn.feedChannel.getName());
+                statement.setString(geofences + 1,pokeSpawn.feedChannel.getName().toLowerCase());
                 geofences++;
             }
 
-            statement.setString(geofences + 1, pokeSpawn.getSuburb());
+            statement.setString(geofences + 1, pokeSpawn.getSuburb().toLowerCase());
             statement.setInt(geofences + 2, pokeSpawn.id);
             statement.setInt(geofences + 3, (pokeSpawn.form != null) ? 201 : pokeSpawn.id);
             statement.setDouble(geofences + 4, pokeSpawn.iv);
@@ -632,20 +652,49 @@ public class DBManager
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement())
         {
-            statement.executeQuery(String.format("SELECT * FROM pokemon WHERE user_id=%s", "'" + id + "'"));
-            final ResultSet rs = statement.getResultSet();
+            statement.executeQuery(String.format("SELECT id,location,max_iv,min_iv FROM pokemon WHERE user_id=%s", "'" + id + "'"));
+            ResultSet rs = statement.getResultSet();
+
             while (rs.next()) {
-                final int pokemon_id = rs.getInt(2);
-                final Location location = Location.fromDbString(rs.getString(3).toLowerCase(),isSupporter(id));
-                final float max_iv = rs.getFloat(4);
-                final float min_iv = rs.getFloat(5);
-                userPref.addPokemon(new Pokemon(pokemon_id, location, min_iv, max_iv), new Location[] { location });
+                final int pokemon_id = rs.getInt(1);
+                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(),isSupporter(id));
+                final float max_iv = rs.getFloat(3);
+                final float min_iv = rs.getFloat(4);
+                userPref.addPokemon(new Pokemon(pokemon_id, location, min_iv, max_iv));
+            }
+
+            statement.executeQuery(String.format("SELECT boss_id,location FROM raid WHERE user_id='%s'", id));
+
+            rs = statement.getResultSet();
+
+            while (rs.next()) {
+                final int bossId = rs.getInt(1);
+                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(),isSupporter(id));
+                userPref.addRaid(new Raid(bossId, location));
             }
         }
         catch (SQLException e) {
             e.printStackTrace();
         }
         return userPref;
+    }
+
+    public static int countRaids(final String id) {
+        int raids = 0;
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement =  connection.createStatement())
+        {
+            statement.executeQuery(String.format("SELECT count(boss_id) FROM raid WHERE user_id='%s';",id));
+            final ResultSet rs = statement.getResultSet();
+            if (rs.next()) {
+                raids = rs.getInt(1);
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return raids;
     }
 
     public static int countPokemon(final String id) {
@@ -784,6 +833,29 @@ public class DBManager
         }
     }
 
+
+    public static void clearLocationsRaids(String id, Location[] locations) {
+        String locationsString = "(";
+        for (int i = 0; i < locations.length; ++i) {
+            if (i == locations.length - 1) {
+                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "'";
+            }
+            else {
+                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "',";
+            }
+        }
+        locationsString += ")";
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             Statement statement = connection.createStatement())
+        {
+            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString));
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void clearLocationsPokemon(final String id, final Location[] locations) {
         String locationsString = "(";
         for (int i = 0; i < locations.length; ++i) {
@@ -862,4 +934,5 @@ public class DBManager
             e.printStackTrace();
         }
     }
+
 }

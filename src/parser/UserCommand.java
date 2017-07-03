@@ -3,6 +3,7 @@ package parser;
 import core.*;
 import nests.NestSearch;
 import nests.NestStatus;
+import raids.Raid;
 
 import java.util.ArrayList;
 import java.util.HashMap;

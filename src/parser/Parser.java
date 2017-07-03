@@ -7,7 +7,6 @@ import nests.NestStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -110,7 +109,7 @@ public class Parser
             if ((location = Location.fromString(s.trim(),supporter)) != null) {
                 argument.setType(ArgType.Locations);
 
-                ArrayList<Location> locations = new ArrayList<>(Arrays.asList(location));
+                ArrayList<Location> locations = new ArrayList<>();
 
                 if(location.locationType == LocationType.Geofence){
                     for (GeofenceIdentifier geofenceIdentifier : location.geofenceIdentifiers) {
@@ -118,6 +117,9 @@ public class Parser
                     }
                 }
 
+                if(locations.size() == 0){
+                    locations.add(location);
+                }
                 argument.setParams(locations.toArray());
             }
             else if (NestStatus.fromString(s.trim()) != null) {
@@ -183,6 +185,8 @@ public class Parser
                 for (GeofenceIdentifier geofenceIdentifier : loc.geofenceIdentifiers) {
                     args.add(new Location(geofenceIdentifier));
                 }
+            }else{
+                args.add(loc);
             }
 
         }
@@ -251,10 +255,19 @@ public class Parser
 
     public static void main(String[] args) {
         MessageListener.loadConfig();
+
+        if(MessageListener.config.useChannels()){
+            FeedChannels.loadChannels();
+        }
+
+        if(MessageListener.config.useGeofences()){
+            Geofencing.loadGeofences();
+        }
+
         MessageListener.loadSuburbs();
-        Geofencing.loadGeofences();
-        UserCommand command = parseInput("!addraid <tyranitar,lapras> gungahlin",true);
-        System.out.println(command);
+        System.out.println(Location.fromString("turner",true));
+        UserCommand command = parseInput("!addpokemon <aerodactyl, chansey, miltank> <turner>",false);
+        System.out.println(command.getExceptions());
     }
 
     static {

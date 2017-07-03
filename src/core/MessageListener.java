@@ -14,6 +14,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -22,6 +23,10 @@ import notifier.PokeNotifier;
 import notifier.RaidNotifier;
 import org.ini4j.Ini;
 import parser.*;
+import raids.LobbyManager;
+import raids.Raid;
+import raids.RaidLobby;
+import raids.RaidSpawn;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
@@ -50,6 +55,7 @@ public class MessageListener extends ListenerAdapter
     private final String helpStr = "My commands are: \n```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n!addpokemon pokemon\n!delpokemon <pokemon list> <miniv,maxiv> <location list>\n!delpokemon pokemon\n!clearpokemon <pokemon list>\n!clearlocation <location list>\n!reset\n!settings\n!help\n!channellist or !channels```";
     private static MessageChannel userUpdatesLog;
 
+    public static final String WHITE_GREEN_CHECK = "\u2705";
 
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -59,7 +65,9 @@ public class MessageListener extends ListenerAdapter
     HashMap<Long, Message> messageMap = new HashMap<Long, Message>();
 
     static SimpleLog novabotLog = SimpleLog.getLog("novabot");
-    private static JDA jda;
+    public static JDA jda;
+
+    public static LobbyManager lobbyManager;
 
     public static void main(final String[] args) {
         testing = false;
@@ -68,6 +76,7 @@ public class MessageListener extends ListenerAdapter
 
         loadConfig();
         loadSuburbs();
+
 
         if(config.useChannels()){
             FeedChannels.loadChannels();
@@ -120,7 +129,6 @@ public class MessageListener extends ListenerAdapter
 //                }
             }
 
-
             if(config.loggingEnabled()) {
                 MessageListener.roleLog = MessageListener.guild.getTextChannelById(config.getRoleLogId());
                 MessageListener.userUpdatesLog = MessageListener.guild.getTextChannelById(config.getUserUpdatesId());
@@ -144,6 +152,25 @@ public class MessageListener extends ListenerAdapter
             ex2.printStackTrace();
         }
 
+        if(config.isRaidOrganisationEnabled()) {
+            lobbyManager = new LobbyManager();
+
+            RaidSpawn raidSpawn = new RaidSpawn("gym",
+                    "123", -35.34200996278955, 149.05508042811897,
+                    new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+                    new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+                    6,
+                    11003,
+                    "fire",
+                    "fire blast",
+                    2);
+
+            raidSpawn.setGroupId(1);
+
+            lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
+            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
+        }
+
         novabotLog.log(INFO,"connected");
     }
 
@@ -161,6 +188,29 @@ public class MessageListener extends ListenerAdapter
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onMessageReactionAdd(MessageReactionAddEvent event) {
+        if(!config.isRaidOrganisationEnabled()) return;
+
+        if(event.getUser().isBot()) return;
+
+        if(!event.getReactionEmote().getName().equals(WHITE_GREEN_CHECK)) return;
+
+        Message message = event.getChannel().getMessageById(event.getMessageId()).complete();
+
+        if(message.getEmbeds().size() == 0 || !message.getAuthor().isBot()) return;
+
+        novabotLog.log(DEBUG,"white green check reaction added to a bot message that contains an embed!");
+
+        String description = message.getEmbeds().get(0).getDescription();
+
+        String lobbyCode = description.substring(description.indexOf("!joinraid") + 10,description.indexOf("` in any")).trim();
+
+        novabotLog.log(INFO,"Message clicked was for lobbcode " + lobbyCode);
+
+        lobbyManager.getLobby(lobbyCode).joinLobby(event.getUser().getId());
     }
 
     @Override
@@ -281,10 +331,12 @@ public class MessageListener extends ListenerAdapter
             final TextChannel textChannel = event.getTextChannel();
             MessageListener.guild = guild;
 
-            if (channel.getId().equals(config.getUserUpdatesId())){
+            if(config.isRaidOrganisationEnabled() && lobbyManager.isLobbyChannel(channel.getId())){
+                parseRaidLobbyMsg(author, msg,textChannel);
+            }else if (channel.getId().equals(config.getUserUpdatesId())){
                 this.parseModMsg(message,textChannel);
             }else if(channel.getId().equals(config.getCommandChannelId())){
-                this.parseMsg(msg.toLowerCase(), author, textChannel);
+                this.parseMsg(msg.toLowerCase().trim(), author, textChannel);
             }else if (config.nestsEnabled() && channel.getName().equals(MessageListener.testing ? "nests-testing" : "nests")) {
                 this.parseNestMsg(msg.toLowerCase().trim(), author, channel, event.getChannelType());
             }
@@ -326,7 +378,7 @@ public class MessageListener extends ListenerAdapter
             }
             if (!msg.startsWith("!nest") && !msg.startsWith("!map")) {
                 if (!msg.startsWith("fb")) {
-                    this.parseMsg(msg.toLowerCase(), author, privateChannel);
+                    this.parseMsg(msg.toLowerCase().trim(), author, privateChannel);
                 }
             }
         }
@@ -334,6 +386,16 @@ public class MessageListener extends ListenerAdapter
             final Group group = event.getGroup();
             final String groupName = (group.getName() != null) ? group.getName() : "";
             novabotLog.log(INFO,String.format("[GRP: %s]<%s>: %s\n", groupName, author.getName(), msg));
+        }
+    }
+
+    private void parseRaidLobbyMsg(User author, String msg, TextChannel textChannel) {
+        if(!msg.startsWith("!")) return;
+
+        RaidLobby lobby = lobbyManager.getLobbyByChannelId(textChannel.getId());
+
+        if(msg.equals("!leave")){
+            lobby.leaveLobby(author.getId());
         }
     }
 
@@ -574,12 +636,21 @@ public class MessageListener extends ListenerAdapter
                     user.openPrivateChannel().complete();
                 }
                 user.openPrivateChannel().queue(success ->
-                        success.sendMessage(String.format("Hi %s, I noticed recently you have lost your supporter status. As a result I have cleared your settings, however as a non-supporter you can add up to 3 pokemon to your settings", user.getAsMention())).queue()
+                        success.sendMessage(String.format("Hi %s, I noticed recently you have lost your supporter status. As a result I have cleared your settings, however as a non-supporter you can add up to 3 pokemon and 3 raids to your settings", user.getAsMention())).queue()
                 );
                 DBManager.resetUser(userID);
                 MessageListener.roleLog.sendMessage(String.format("%s has lost supporter status with more than 3 pokemon in their settings. Their settings have been reset and they have been PMed", user.getAsMention())).queue();
-            }
-            else {
+            }else if(DBManager.countRaids(userID) > 3) {
+                final User user = MessageListener.guild.getMemberById(userID).getUser();
+                if (!user.hasPrivateChannel()) {
+                    user.openPrivateChannel().complete();
+                }
+                user.openPrivateChannel().queue(success ->
+                        success.sendMessage(String.format("Hi %s, I noticed recently you have lost your supporter status. As a result I have cleared your settings, however as a non-supporter you can add up to 3 pokemon and 3 raids to your settings", user.getAsMention())).queue()
+                );
+                DBManager.resetUser(userID);
+                MessageListener.roleLog.sendMessage(String.format("%s has lost supporter status with more than 3 raids in their settings. Their settings have been reset and they have been PMed", user.getAsMention())).queue();
+            }else {
                 final MessageBuilder builder = new MessageBuilder();
                 builder.setEmbed(message.getEmbeds().get(0));
                 novabotLog.log(DEBUG,String.format("Notifying user: %s%n", userID));
@@ -639,11 +710,39 @@ public class MessageListener extends ListenerAdapter
             return;
         }
 
+        if(msg.startsWith("!joinraid")){
+            String groupCode = msg.substring(msg.indexOf("raid ") + 5).trim();
+
+            RaidLobby lobby = lobbyManager.getLobby(groupCode);
+
+            if(lobby == null){
+                channel.sendMessageFormat("%s sorry, there are no active raid lobbies with the lobby code `%s`",author,groupCode).queue();
+                return;
+            }
+        }
+
         if (msg.equals("!settings")) {
             final UserPref userPref = DBManager.getUserPref(author.getId());
             novabotLog.log(DEBUG,"!settings");
             if (userPref == null || userPref.isEmpty()) {
-                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon command.").queue();
+                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
+            }
+            else {
+                String toSend = author.getAsMention() + ", you are currently set to receive notifications for:\n\n";
+                toSend += userPref.allSettingsToString();
+                final MessageBuilder builder = new MessageBuilder();
+                builder.append(toSend);
+                final Queue<Message> messages = builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE);
+                for (final Message message : messages) {
+                    channel.sendMessage(message).queue();
+                }
+            }
+            return;
+        }else if (msg.equals("!pokemonsettings")){
+            final UserPref userPref = DBManager.getUserPref(author.getId());
+            novabotLog.log(DEBUG,"!pokemonsettings");
+            if (userPref == null || userPref.isEmpty()) {
+                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
             }
             else {
                 String toSend = author.getAsMention() + ", you are currently set to receive notifications for:\n\n";
@@ -656,10 +755,35 @@ public class MessageListener extends ListenerAdapter
                 }
             }
             return;
+        }else if(msg.equals("!raidsettings")){
+            final UserPref userPref = DBManager.getUserPref(author.getId());
+            novabotLog.log(DEBUG,"!raidsettings");
+            if (userPref == null || userPref.isEmpty()) {
+                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
+            }
+            else {
+                String toSend = author.getAsMention() + ", you are currently set to raid receive notifications for:\n\n";
+                toSend += userPref.allRaidsToString();
+                final MessageBuilder builder = new MessageBuilder();
+                builder.append(toSend);
+                final Queue<Message> messages = builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE);
+                for (final Message message : messages) {
+                    channel.sendMessage(message).queue();
+                }
+            }
+            return;
         }
         else if (msg.equals("!reset")) {
             DBManager.resetUser(author.getId());
-            channel.sendMessage(author.getAsMention() + ", your notification settings have been reset").queue();
+            channel.sendMessage(author.getAsMention() + ", all your notification settings have been reset").queue();
+            return;
+        }else if(msg.equals("!resetpokemon")){
+            DBManager.resetPokemon(author.getId());
+            channel.sendMessage(author.getAsMention() + ", your pokemon notification settings have been reset").queue();
+            return;
+        }else if(msg.equals("!resetraids")){
+            DBManager.resetRaids(author.getId());
+            channel.sendMessage(author.getAsMention() + ", your raid notification settings have been reset").queue();
             return;
         }
         else if (msg.equals("!help")) {
@@ -668,23 +792,35 @@ public class MessageListener extends ListenerAdapter
                     "!addpokemon pokemon\n" +
                     "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
                     "!delpokemon pokemon\n" +
+                    "!clearpokemon <pokemon list>\n" +
+                    "!clearpokelocation <location list>\n" +
+                    "!pokemonsettings\n" +
+                    "!resetpokemon\n" +
                     "!addraid pokemon\n" +
                     "!addraid <pokemon list> <location list>\n" +
                     "!delraid pokemon\n" +
                     "!delraid <pokemon list> <location list>\n" +
-                    "!clearpokemon <pokemon list>\n" +
+                    "!clearraid <pokemon list>\n" +
+                    "!clearraidlocation <location list>\n" +
+                    "!raidsettings\n" +
+                    "!resetraids\n" +
                     "!clearlocation <location list>\n" +
+                    "!joinraid <lobby code>\n" +
                     "!pause\n" +
                     "!unpause\n" +
                     (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
                     "!reset\n" +
                     "!settings\n" +
-                    (config.useGeofences() ? "!channellist or !channels\n" : "") +
+                    (config.useChannels() ? "!channellist or !channels\n" : "") +
+                    (config.useGeofences() ? "!regionlist or !regions\n" : "") +
                     "!help```").queue();
             return;
         }
-        else if (config.useGeofences() &&(msg.equals("!channellist") || msg.equals("!channels"))) {
-            channel.sendMessage("Accepted channels are:\n\nall\nwodenweston = woden-weston = woden-weston-region = woden-weston-supporter\ngungahlin = gungahlin-region = gungahlin-supporter\ninnernorth = inner-north = inner-north-region = inner-north-supporter\nbelconnen = belconnen-region = belconnen-supporter\ninnersouth = inner-south = inner-south-region = inner-south-supporter\ntuggeranong = tuggeranong-region = tuggeranong-supporter\nqueanbeyan = queanbeyan-region = queanbeyan-supporter\nlegacy = legacyrare = legacy-rare = legacy-rare-supporter\nlarvitar = larvitarcandy = larvitar-candy = larvitar-candy-supporter\ndratini = dratinicandy = dratini-candy = dratini-candy-supporter\nmareep = mareepcandy = mareep-candy = mareep-candy-supporter\nultrarare = ultra-rare = ultra-rare-supporter\n100iv = 100-iv = 100% = 100-iv-supporter\nsnorlax = snorlax-supporter\nevent\n0iv = 0-iv = 0% = 0-iv-supporter\ndexfiller = dex-filler\nbigfishlittlerat = big-fish-little-rat = big-fish-little-rat-cardboard-box\n").queue();
+        else if (config.useChannels() &&(msg.equals("!channellist") || msg.equals("!channels"))) {
+            channel.sendMessageFormat("%s, accepted channels are: ```%s```",author,FeedChannels.getListMessage()).queue();
+            return;
+        }else if (config.useGeofences() &&(msg.equals("!regionlist") || msg.equals("!regions"))) {
+            channel.sendMessageFormat("%s, accepted regions are: ```%s```",author,Geofencing.getListMessage()).queue();
             return;
         }
 
@@ -751,6 +887,11 @@ public class MessageListener extends ListenerAdapter
                 }
 
                 if(cmdStr.equals("!addraid")){
+                    if (!isSupporter(author.getId()) && DBManager.countRaids(author.getId()) + raids.length > 3) {
+                        channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 raid notifications set up. What you tried to add would put you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
+                        return;
+                    }
+
                     if(!DBManager.containsUser(author.getId())){
                         DBManager.addUser(author.getId());
                     }
@@ -792,6 +933,21 @@ public class MessageListener extends ListenerAdapter
                     channel.sendMessage(message2).queue();
 
                     return;
+                }else if(cmdStr.equals("!clearraid")){
+                    if(!DBManager.containsUser(author.getId())){
+                        DBManager.addUser(author.getId());
+                    }
+                    novabotLog.log(DEBUG,"clearing raids " + raids);
+                    DBManager.clearRaid(author.getId(),new ArrayList<>(Arrays.asList(raids)));
+
+                    String message2 = String.format("%s you will no longer be notified of %s in any location", author.getAsMention(), Pokemon.listToString(userCommand.getUniquePokemon()));
+                    channel.sendMessage(message2).queue();
+                    return;
+                }else if(cmdStr.equals("!clearraidlocation")){
+                    final Location[] locations2 = userCommand.getLocations();
+                    DBManager.clearLocationsRaids(author.getId(), locations2);
+                    final String message2 = author.getAsMention() + " you will no longer be notified of any raids in " + Location.listToString(locations2);
+                    channel.sendMessage(message2).queue();
                 }
             }
 
@@ -845,12 +1001,18 @@ public class MessageListener extends ListenerAdapter
                         channel.sendMessage(message2).queue();
                         return;
                     }
+                    case "!clearpokelocation": {
+                        final Location[] locations2 = userCommand.getLocations();
+                        DBManager.clearLocationsPokemon(author.getId(), locations2);
+                        final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
+                        channel.sendMessage(message2).queue();
+                    }
                 }
-            }
-            else if (cmdStr.equals("!clearlocation")) {
+            }else if(cmdStr.equals("!clearlocation")){
                 final Location[] locations2 = userCommand.getLocations();
                 DBManager.clearLocationsPokemon(author.getId(), locations2);
-                final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
+                DBManager.clearLocationsRaids(author.getId(), locations2);
+                final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon or raids in " + Location.listToString(locations2);
                 channel.sendMessage(message2).queue();
             }
         }
@@ -858,24 +1020,5 @@ public class MessageListener extends ListenerAdapter
 
     static {
         MessageListener.testing = false;
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Innernorth, "inner-north"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Innersouth, "inner-south"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.GungahlinRegion, "gungahlin"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.BelconnenRegion, "belconnen"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.TuggeranongRegion, "tuggeranong"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Wodenweston, "woden-weston"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.QueanbeyanRegion, "queanbeyan"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Legacyrare, "legacy-rare"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Ultrarare, "ultra-rare"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Hundrediv, "100-iv"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.DratiniCandy, "dratini-candy"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.LarvitarCandy, "larvitar-candy"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.MareepCandy, "mareep-candy"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.SnorlaxCandy, "snorlax"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Event, "event"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Zeroiv, "0-iv"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.Hundrediv, "dex-filler"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.UnownAlphabet, "unown-alphabet"));
-//        MessageListener.feedChannels.add(new FeedChannel(Region.BigFishLittleRat, "big-fish-little-rat"));
     }
 }

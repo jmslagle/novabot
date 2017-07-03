@@ -32,4 +32,16 @@ class FeedChannel
             return String.format("#%s",channel.getName());
         }
     }
+
+    public String getAliasList() {
+        String str = "";
+
+        for (int i = 0; i < aliases.size(); i++) {
+            str += aliases.get(i);
+            if(i != aliases.size() - 1){
+                str += ", ";
+            }
+        }
+        return str;
+    }
 }

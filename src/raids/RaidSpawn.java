@@ -1,5 +1,8 @@
-package core;
+package raids;
 
+import core.DBManager;
+import core.Pokemon;
+import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
 import net.dv8tion.jda.core.*;
@@ -32,8 +35,8 @@ public class RaidSpawn {
     final String name;
     final double lat;
     final double lon;
-    final Timestamp raidEnd;
-    final Timestamp battleStart;
+    public final Timestamp raidEnd;
+    public final Timestamp battleStart;
     public final int bossId;
     final int bossCp;
     final String move_1;
@@ -46,6 +49,8 @@ public class RaidSpawn {
     private String imageUrl;
     private String formatKey;
     private Message builtMessage = null;
+
+    private int groupId;
 
     public static void main(String[] args) {
 
@@ -63,12 +68,15 @@ public class RaidSpawn {
                 "fire blast",
                 2);
 
-//        Message message = spawn.buildMessage();
-//        System.out.println(message.getEmbeds().get(0).getTitle());
-//        System.out.println(message.getEmbeds().get(0).getDescription());
+        spawn.setGroupId(1);
+//        System.out.println(spawn.getLobbyCode());
+
+        Message message = spawn.buildMessage();
+        System.out.println(message.getEmbeds().get(0).getTitle());
+        System.out.println(message.getEmbeds().get(0).getDescription());
 
 
-        System.out.println(spawn.properties.get("geofence"));
+//        System.out.println(spawn.properties.get("geofence"));
         JDA jda = null;
         try {
             jda = new JDABuilder(AccountType.BOT)
@@ -80,13 +88,7 @@ public class RaidSpawn {
             e.printStackTrace();
         }
 
-        for (GeofenceIdentifier identifier : spawn.getGeofences()) {
-            String id = config.getGeofenceChannelId(identifier);
-
-            if(id != null){
-                jda.getTextChannelById(id).sendMessage(spawn.buildMessage()).queue();
-            }
-        }
+        jda.getUserById("107730875596169216").openPrivateChannel().queue(success -> success.sendMessage(message).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue()));
     }
 
     public RaidSpawn(String name, String gymId, double lat, double lon, Timestamp raidEnd, Timestamp battleStart, int bossId, int bossCp,String move_1, String move_2, int raidLevel) {
@@ -132,6 +134,7 @@ public class RaidSpawn {
         this.raidLevel = raidLevel;
         properties.put("level", String.valueOf(raidLevel));
 
+        properties.put("lobbycode","unkn");
     }
 
     private String getAppleMapsLink() {
@@ -256,5 +259,15 @@ public class RaidSpawn {
 
     public String getSuburb() {
         return properties.get("city");
+    }
+
+    public void setGroupId(int id) {
+        this.groupId = id;
+
+        properties.put("lobbycode", getLobbyCode());
+    }
+
+    public String getLobbyCode(){
+        return String.format("%04d",groupId);
     }
 }

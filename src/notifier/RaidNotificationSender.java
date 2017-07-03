@@ -1,7 +1,8 @@
 package notifier;
 
 import core.DBManager;
-import core.RaidSpawn;
+import core.MessageListener;
+import raids.RaidSpawn;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
@@ -10,6 +11,7 @@ import net.dv8tion.jda.core.utils.SimpleLog;
 
 import java.util.ArrayList;
 
+import static core.MessageListener.WHITE_GREEN_CHECK;
 import static core.MessageListener.config;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
@@ -25,6 +27,8 @@ public class RaidNotificationSender implements Runnable {
     private final boolean testing;
     private static boolean firstRun = true;
 
+    public static int nextId = 1;
+
     public RaidNotificationSender(JDA jda, ArrayList<RaidSpawn> currentRaids, boolean testing) {
         this.jda = jda;
         this.currentRaids = currentRaids;
@@ -34,7 +38,7 @@ public class RaidNotificationSender implements Runnable {
 
     private void notifyUser(final String userID, final Message message) {
         final User user = this.jda.getUserById(userID);
-        final Thread thread = new Thread(new UserNotifier(user, message));
+        final Thread thread = new Thread(new UserNotifier(user, message, true));
         thread.start();
 //
 //        UserNotifier notifier = new UserNotifier(user,message);
@@ -56,6 +60,14 @@ public class RaidNotificationSender implements Runnable {
                 continue;
             }
 
+            if(config.isRaidOrganisationEnabled()) {
+                raidSpawn.setGroupId(nextId);
+
+                MessageListener.lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
+
+                nextId++;
+            }
+
             if (raidSpawn.bossId != 0) {
                 notificationLog.log(INFO, "Checking if anyone wants: " + raidSpawn);
 
@@ -68,7 +80,11 @@ public class RaidNotificationSender implements Runnable {
                 String id = config.getGeofenceChannelId(identifier);
 
                 if(id != null){
-                    jda.getTextChannelById(id).sendMessage(raidSpawn.buildMessage()).queue();
+                    jda.getTextChannelById(id).sendMessage(raidSpawn.buildMessage()).queue(m -> {
+                        if(config.isRaidOrganisationEnabled()) {
+                            m.addReaction(WHITE_GREEN_CHECK).queue();
+                        }
+                    });
                 }
             }
 

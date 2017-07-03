@@ -1,6 +1,5 @@
 package core;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
 import org.ini4j.Ini;
@@ -76,7 +75,10 @@ public class Config {
     private boolean raidChannelsEnabled;
     private boolean pokemonEnabled;
 
+    private boolean raidOrganisationEnabled;
+
     private HashMap<GeofenceIdentifier,String> geofencedChannelIds = new HashMap<>();
+    private String novabotRoleId;
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -98,6 +100,8 @@ public class Config {
         useRmDb = Boolean.parseBoolean(config.get("useRmDb"));
 
         raidsEnabled = Boolean.parseBoolean(config.get("raids"));
+
+        raidOrganisationEnabled = Boolean.parseBoolean(config.get("raidOrganisation"));
 
         raidChannelsEnabled = Boolean.parseBoolean(config.get("raidChannels"));
 
@@ -130,6 +134,8 @@ public class Config {
         startupMessage = Boolean.parseBoolean(config.get("startupMessage"));
 
         adminRole = config.get("adminRole");
+
+        novabotRoleId = config.get("novabotRole");
 
         Ini.Section rocketmapDb = ini.get("rocketmap db");
         rmUser = rocketmapDb.get("user");
@@ -167,7 +173,9 @@ public class Config {
             mapHeight.put(formatKey,format.get("mapHeight"));
         }
 
-        loadGeofenceChannels();
+        if(raidsEnabled()) {
+            loadGeofenceChannels();
+        }
     }
 
     public String getGeofenceChannelId(GeofenceIdentifier identifier){
@@ -414,6 +422,14 @@ public class Config {
 
     public boolean isRaidChannelsEnabled() {
         return raidChannelsEnabled;
+    }
+
+    public String novabotRole() {
+        return novabotRoleId;
+    }
+
+    public boolean isRaidOrganisationEnabled() {
+        return raidOrganisationEnabled;
     }
 
 }

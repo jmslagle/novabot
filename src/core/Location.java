@@ -98,18 +98,6 @@ public class Location
 
         if(str.equalsIgnoreCase("all")) return new Location(Region.All);
 
-        final FeedChannel channel = FeedChannels.fromString(str);
-
-        if(config.useChannels() && !config.isSupporterOnly() && !supporter) {
-            if (channel != null) {
-                return new Location(channel);
-            }
-        }else if(config.useChannels() && !config.isSupporterOnly() && supporter){
-            if(channel != null){
-                return Location.UNUSABLE(Reason.SupporterAttemptedPublic,str,LocationType.Channel);
-            }
-        }
-
         if(config.useGeofences()) {
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
 
@@ -119,6 +107,20 @@ public class Location
         }
 
 
+        if(config.useChannels()){
+            final FeedChannel channel = FeedChannels.fromString(str);
+
+            if(!config.isSupporterOnly() && !supporter) {
+                if (channel != null) {
+                    return new Location(channel);
+                }
+            }else if(!config.isSupporterOnly() && supporter){
+                if(channel != null){
+                    return Location.UNUSABLE(Reason.SupporterAttemptedPublic,str,LocationType.Channel);
+                }
+            }
+
+        }
         if (MessageListener.suburbs.isSuburb(str)) {
             return new Location(str);
         }
@@ -157,18 +159,18 @@ public class Location
     public static Location fromDbString(String str, boolean supporter) {
         if(str.equals("all")) return Location.ALL;
 
-        if(config.useChannels()) {
-            final FeedChannel channel = FeedChannels.fromString(str);
-            if (channel != null) {
-                return new Location(channel);
-            }
-        }
-
-        if(config.useGeofences()){
+        if(config.useGeofences() && supporter){
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
 
             if(identifiers.size() !=  0){
                 return new Location(identifiers);
+            }
+        }
+
+        if(config.useChannels()) {
+            final FeedChannel channel = FeedChannels.fromString(str);
+            if (channel != null) {
+                return new Location(channel);
             }
         }
 

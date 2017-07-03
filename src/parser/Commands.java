@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import static core.MessageListener.config;
-import static core.MessageListener.loadConfig;
 
 class Commands
 {
@@ -79,6 +78,9 @@ class Commands
         Commands.commands.put("!delraid", delRaid);
         Commands.commands.put("!addchannel", addChannel);
         Commands.commands.put("!clearpokemon", clearPokemon);
+        Commands.commands.put("!clearraid", clearPokemon);
+        Commands.commands.put("!clearpokelocation", clearLocation);
+        Commands.commands.put("!clearraidlocation", clearLocation);
         Commands.commands.put("!clearlocation", clearLocation);
     }
 

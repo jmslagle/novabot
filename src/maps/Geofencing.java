@@ -130,4 +130,14 @@ public class Geofencing
 //        Geofencing.geofences.put(Geofencing.weston, Region.Wodenweston);
 //        Geofencing.geofences.put(Geofencing.woden, Region.Wodenweston);
     }
+
+    public static String getListMessage() {
+        String str = "";
+
+        for (GeofenceIdentifier identifier : geofencesMap.keySet()) {
+            str += String.format("  %s, aliases: %s%n",identifier.name,identifier.getAliasList());
+        }
+
+        return str;
+    }
 }

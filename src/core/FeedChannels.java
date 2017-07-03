@@ -11,7 +11,7 @@ import java.util.Scanner;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
-class FeedChannels
+public class FeedChannels
 {
     private static ArrayList<FeedChannel> channels = new ArrayList<>();
 
@@ -86,5 +86,15 @@ class FeedChannels
         }
         feedChannelsLog.log(INFO, "Done");
         feedChannelsLog.log(INFO, channels);
+    }
+
+    public static String getListMessage() {
+        String str = "";
+
+        for (FeedChannel channel : channels) {
+            str += String.format("  %s, aliases: %s%n",channel.getName(),channel.getAliasList());
+        }
+
+        return str;
     }
 }

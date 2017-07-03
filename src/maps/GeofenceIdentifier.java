@@ -2,6 +2,8 @@ package maps;
 
 import java.util.ArrayList;
 
+import static core.MessageListener.config;
+
 /**
  * Created by Owner on 19/05/2017.
  */
@@ -46,7 +48,7 @@ public class GeofenceIdentifier {
 
     public static ArrayList<GeofenceIdentifier> fromString(String str) {
 
-        if(Geofencing.geofencesMap.size() == 0){
+        if(Geofencing.geofencesMap.size() == 0 && config.useGeofences()){
             Geofencing.loadGeofences();
         }
 
@@ -57,5 +59,17 @@ public class GeofenceIdentifier {
         }
 
         return geofenceIdentifiers;
+    }
+
+    public String getAliasList() {
+        String str = "";
+
+        for (int i = 0; i < aliases.size(); i++) {
+            str += aliases.get(i);
+            if(i != aliases.size() - 1){
+                str += ", ";
+            }
+        }
+        return str;
     }
 }

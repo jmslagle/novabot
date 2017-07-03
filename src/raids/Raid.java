@@ -1,4 +1,6 @@
-package core;
+package raids;
+
+import core.Location;
 
 import java.util.Arrays;
 import java.util.HashSet;
