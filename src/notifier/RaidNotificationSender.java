@@ -60,6 +60,10 @@ public class RaidNotificationSender implements Runnable {
                 continue;
             }
 
+            if (raidSpawn.raidEnd.after(DBManager.getCurrentTime())){
+                continue;
+            }
+
             if(config.isRaidOrganisationEnabled()) {
                 raidSpawn.setGroupId(nextId);
 

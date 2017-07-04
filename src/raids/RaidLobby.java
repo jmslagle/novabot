@@ -26,9 +26,9 @@ public class RaidLobby {
     String roleId = null;
     String channelId = null;
 
-    String lobbyCode;
+    public String lobbyCode;
 
-    RaidSpawn spawn;
+    public RaidSpawn spawn;
 
     HashSet<String> memberIds = new HashSet<>();
 
@@ -81,7 +81,7 @@ public class RaidLobby {
             shutDownService = null;
         }
 
-        channel.sendMessageFormat("Welcome %s to the raid lobby!\nThere are now %s users in the lobby",member,memberIds.size()).queue();
+        channel.sendMessageFormat("Welcome %s to the raid lobby!\nThere are now %s users in the lobby.",member,memberIds.size()).queue();
         channel.sendMessage(getStatusMessage()).queue();
     }
 
@@ -103,7 +103,7 @@ public class RaidLobby {
         }
     }
 
-    private TextChannel getChannel() {
+    public TextChannel getChannel() {
         return guild.getTextChannelById(channelId);
     }
 
@@ -136,10 +136,58 @@ public class RaidLobby {
                 spawn.properties.get("city"),
                 lobbyCode));
 
+        embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
+
+        embedBuilder.addField("Lobby Members", String.valueOf(memberCount()),false);
+        embedBuilder.addField("Address",String.format("%s %s, %s",
+                spawn.properties.get("street_num"),
+                spawn.properties.get("street"),
+                spawn.properties.get("city")
+                ),false);
+        embedBuilder.addField("Gym Name",spawn.properties.get("gym_name"),false);
+        embedBuilder.addField("Raid End Time",String.format("%s (%s)",
+                spawn.properties.get("24h_end"),
+                spawn.timeLeft(spawn.raidEnd)),
+                false);
+        embedBuilder.addField("Boss Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
+        embedBuilder.addField("Weak To",Raid.getBossWeaknessEmotes(spawn.bossId),true);
+        embedBuilder.addField("Strong Against",Raid.getBossStrengthsEmote(spawn.bossId),true);
+
+        embedBuilder.setThumbnail(spawn.getIcon());
+        embedBuilder.setImage(spawn.getImage());
+
+        MessageBuilder messageBuilder = new MessageBuilder().setEmbed(embedBuilder.build());
+
+        return messageBuilder.build();
+    }
+
+    public Message getBossInfoMessage() {
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+
+        embedBuilder.setTitle(String.format("%s - Level %s raid",spawn.properties.get("pkmn"),spawn.properties.get("level")));
+        embedBuilder.addField("CP",spawn.properties.get("cp"),false);
+        embedBuilder.addField("Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
+        embedBuilder.addField("Weak To",Raid.getBossWeaknessEmotes(spawn.bossId),true);
+        embedBuilder.addField("Strong Against",Raid.getBossStrengthsEmote(spawn.bossId),true);
+
         embedBuilder.setThumbnail(spawn.getIcon());
 
         MessageBuilder messageBuilder = new MessageBuilder().setEmbed(embedBuilder.build());
 
         return messageBuilder.build();
+    }
+
+    public String getTeamMessage() {
+        String str = String.format("There are %s users in this raid team:\n\n", memberCount());
+
+        for (String memberId : memberIds) {
+            str += String.format("  %s%n",guild.getMemberById(memberId).getEffectiveName());
+        }
+
+        return str;
+    }
+
+    public boolean containsUser(String id) {
+        return memberIds.contains(id);
     }
 }

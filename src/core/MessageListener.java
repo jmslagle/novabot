@@ -129,6 +129,8 @@ public class MessageListener extends ListenerAdapter
 //                }
             }
 
+            guild.getMember(jda.getSelfUser()).getRoles().forEach(System.out::println);
+
             if(config.loggingEnabled()) {
                 MessageListener.roleLog = MessageListener.guild.getTextChannelById(config.getRoleLogId());
                 MessageListener.userUpdatesLog = MessageListener.guild.getTextChannelById(config.getUserUpdatesId());
@@ -210,7 +212,15 @@ public class MessageListener extends ListenerAdapter
 
         novabotLog.log(INFO,"Message clicked was for lobbcode " + lobbyCode);
 
-        lobbyManager.getLobby(lobbyCode).joinLobby(event.getUser().getId());
+        RaidLobby lobby = lobbyManager.getLobby(lobbyCode);
+
+        if(!lobby.containsUser(event.getUser().getId())) {
+
+            lobby.joinLobby(event.getUser().getId());
+
+            event.getChannel().sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.", event.getMember(), lobby.getChannel(), lobby.memberCount()).queue();
+
+        }
     }
 
     @Override
@@ -394,8 +404,53 @@ public class MessageListener extends ListenerAdapter
 
         RaidLobby lobby = lobbyManager.getLobbyByChannelId(textChannel.getId());
 
+        if(msg.equals("!help")){
+            textChannel.sendMessage("My raid lobby commands are: " +
+                    "```" +
+                    "!leave\n" +
+                    "!map\n" +
+                    "!timeleft\n" +
+                    "!status\n" +
+                    "!boss\n" +
+                    "!team\n" +
+                    "!code\n" +
+                    "```").queue();
+            return;
+        }
+
         if(msg.equals("!leave")){
             lobby.leaveLobby(author.getId());
+            return;
+        }
+
+        if(msg.equals("!map")){
+            textChannel.sendMessage(lobby.spawn.properties.get("gmaps")).queue();
+            return;
+        }
+
+        if(msg.equals("!timeleft")){
+            textChannel.sendMessageFormat("Raid ends at %s (%s remaining)",lobby.spawn.getDisappearTime(),lobby.spawn.timeLeft(lobby.spawn.raidEnd)).queue();
+            return;
+        }
+
+        if(msg.equals("!status")){
+            textChannel.sendMessage(lobby.getStatusMessage()).queue();
+            return;
+        }
+
+        if(msg.equals("!boss")){
+            textChannel.sendMessage(lobby.getBossInfoMessage()).queue();
+            return;
+        }
+
+        if(msg.equals("!team")){
+            textChannel.sendMessage(lobby.getTeamMessage()).queue();
+            return;
+        }
+
+        if(msg.equals("!code")){
+            textChannel.sendMessageFormat("This lobby can be joined using the command `!joinraid %s`",lobby.lobbyCode).queue();
+            return;
         }
     }
 
@@ -718,6 +773,14 @@ public class MessageListener extends ListenerAdapter
             if(lobby == null){
                 channel.sendMessageFormat("%s sorry, there are no active raid lobbies with the lobby code `%s`",author,groupCode).queue();
                 return;
+            }else{
+                if(lobby.containsUser(author.getId())){
+                    channel.sendMessageFormat("%s you are already in that raid lobby!",author).queue();
+                    return;
+                }
+
+                lobby.joinLobby(author.getId());
+                channel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
             }
         }
 
@@ -809,6 +872,7 @@ public class MessageListener extends ListenerAdapter
                     "!pause\n" +
                     "!unpause\n" +
                     (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
+                    (config.isRaidOrganisationEnabled() ? "!joinraid <lobby code>\n" : "") +
                     "!reset\n" +
                     "!settings\n" +
                     (config.useChannels() ? "!channellist or !channels\n" : "") +

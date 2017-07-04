@@ -145,7 +145,7 @@ public class RaidSpawn {
         return String.format("https://www.google.com/maps?q=loc:%s,%s", this.lat, this.lon);
     }
 
-    private String timeLeft(Timestamp untilTime) {
+    public String timeLeft(Timestamp untilTime) {
         Timestamp currentTime = DBManager.getCurrentTime();
 
         long diff = untilTime.getTime() - currentTime.getTime();
@@ -210,11 +210,11 @@ public class RaidSpawn {
         return printFormat.format(battleStart);
     }
 
-    private String getDisappearTime() {
+    public String getDisappearTime() {
         return printFormat.format(raidEnd);
     }
 
-    private String getImage() {
+    public String getImage() {
         if (this.imageUrl == null) {
             return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom(formatKey), config.getMapWidth(formatKey), config.getMapHeight(formatKey), this.lat, this.lon, getNextKey());
         }
