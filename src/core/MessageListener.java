@@ -23,6 +23,8 @@ import notifier.PokeNotifier;
 import notifier.RaidNotifier;
 import org.ini4j.Ini;
 import parser.*;
+import pokemon.PokeSpawn;
+import pokemon.Pokemon;
 import raids.LobbyManager;
 import raids.Raid;
 import raids.RaidLobby;
@@ -34,8 +36,6 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.*;
@@ -140,12 +140,12 @@ public class MessageListener extends ListenerAdapter
             }
 
             if(!testing && config.useRmDb() && config.pokemonEnabled()) {
-                final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+                final ScheduledExecutor executor = new ScheduledExecutor(1);
                 executor.scheduleAtFixedRate(new PokeNotifier(jda, testing), 0L, config.getPokePollingRate(), TimeUnit.SECONDS);
             }
 
             if(!testing && config.useRmDb() && config.raidsEnabled()){
-                ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+                ScheduledExecutor executorService = new ScheduledExecutor(1);
                 executorService.scheduleAtFixedRate(new RaidNotifier(jda,testing),0,config.getRaidPollingRate(),TimeUnit.SECONDS);
             }
         }
@@ -263,9 +263,14 @@ public class MessageListener extends ListenerAdapter
         final User user = event.getMember().getUser();
         String roleStr = "";
         for (final Role role : event.getRoles()) {
+            if(lobbyManager.isLobbyRoleId(role.getId())) continue;
+
             roleStr = roleStr + role.getName() + " ";
         }
-        MessageListener.roleLog.sendMessage(user.getAsMention() + " had " + roleStr + "role(s) added").queue();
+
+        if(roleStr.length() != 0) {
+            MessageListener.roleLog.sendMessage(user.getAsMention() + " had " + roleStr + "role(s) added").queue();
+        }
     }
 
     @Override
@@ -417,7 +422,7 @@ public class MessageListener extends ListenerAdapter
                     "!map\n" +
                     "!timeleft\n" +
                     "!status\n" +
-                    "!boss\n" +
+                    (lobby.spawn.bossId != 0 ? "!boss\n" : "") +
                     "!team\n" +
                     "!code\n" +
                     "```").queue();
@@ -445,7 +450,12 @@ public class MessageListener extends ListenerAdapter
         }
 
         if(msg.equals("!boss")){
-            textChannel.sendMessage(lobby.getBossInfoMessage()).queue();
+            if(lobby.spawn.bossId == 0){
+                textChannel.sendMessage(String.format("The boss hasn't spawned yet. It will appear at %s",
+                        lobby.spawn.properties.get("24h_start"))).queue();
+            }else {
+                textChannel.sendMessage(lobby.getBossInfoMessage()).queue();
+            }
             return;
         }
 

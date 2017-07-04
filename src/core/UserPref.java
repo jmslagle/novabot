@@ -1,5 +1,6 @@
 package core;
 
+import pokemon.Pokemon;
 import raids.Raid;
 
 import java.util.HashMap;

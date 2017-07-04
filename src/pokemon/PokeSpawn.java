@@ -1,5 +1,9 @@
-package core;
+package pokemon;
 
+import core.DBManager;
+import core.FeedChannel;
+import core.Region;
+import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
 import net.dv8tion.jda.core.EmbedBuilder;
@@ -37,9 +41,9 @@ public class PokeSpawn
     public String form;
     public int id;
     private String suburb;
-    Region region;
+    public Region region;
     private ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
-    float iv;
+    public float iv;
     private String move_1;
     private String move_2;
     private static final DecimalFormat df;

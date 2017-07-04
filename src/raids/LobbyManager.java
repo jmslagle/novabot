@@ -1,6 +1,7 @@
 package raids;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Owner on 2/07/2017.
@@ -40,6 +41,26 @@ public class LobbyManager {
     }
 
     public void endLobby(String lobbyCode) {
-        getLobby(lobbyCode).end();
+        RaidLobby lobby = getLobby(lobbyCode);
+
+        if(lobby != null) {
+            getLobby(lobbyCode).end();
+        }
+    }
+
+    public RaidLobby getLobbyByGymId(String gymId) {
+        for (Map.Entry<String, RaidLobby> raidLobbyEntry : activeLobbies.entrySet()) {
+            if(raidLobbyEntry.getValue().spawn.gymId.equals(gymId)){
+                return raidLobbyEntry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public boolean isLobbyRoleId(String id) {
+        for (RaidLobby lobby : activeLobbies.values()) {
+            if(lobby.roleId.equals(id)) return true;
+        }
+        return false;
     }
 }

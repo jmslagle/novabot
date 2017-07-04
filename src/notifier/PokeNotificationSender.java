@@ -2,8 +2,8 @@ package notifier;
 
 import core.DBManager;
 import core.MessageListener;
-import core.PokeSpawn;
-import core.Pokemon;
+import pokemon.PokeSpawn;
+import pokemon.Pokemon;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;

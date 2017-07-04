@@ -1,6 +1,7 @@
 package nests;
 
 import core.*;
+import pokemon.Pokemon;
 
 public class Nest
 {

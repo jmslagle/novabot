@@ -2,6 +2,7 @@ package notifier;
 
 import core.DBManager;
 import core.MessageListener;
+import raids.RaidLobby;
 import raids.RaidSpawn;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 import static core.MessageListener.WHITE_GREEN_CHECK;
 import static core.MessageListener.config;
+import static core.MessageListener.lobbyManager;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 /**
@@ -66,13 +68,21 @@ public class RaidNotificationSender implements Runnable {
             }
 
             if(config.isRaidOrganisationEnabled()) {
-                raidSpawn.setLobbyCode(nextId);
+                RaidLobby lobbyFromId = lobbyManager.getLobbyByGymId(raidSpawn.gymId);
 
-                MessageListener.lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
+                if(lobbyFromId != null && lobbyFromId.spawn.bossId == 0){
+                    notificationLog.log(INFO,"Raid already has a lobby, but the egg has now hatched, updating lobby");
+                    lobbyFromId.spawn = raidSpawn;
+                    lobbyFromId.alertEggHatched();
+                }else {
+                    raidSpawn.setLobbyCode(nextId);
 
-                nextId++;
+                    MessageListener.lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
 
-                if(raidSpawn.raidLevel == 4 && raidSpawn.bossId != 0){
+                    nextId++;
+                }
+
+                if(raidSpawn.raidLevel == 4){
                     jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(
                             m -> m.addReaction(WHITE_GREEN_CHECK).queue()
                     );

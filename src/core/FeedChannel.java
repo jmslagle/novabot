@@ -4,7 +4,7 @@ import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.util.ArrayList;
 
-class FeedChannel
+public class FeedChannel
 {
     public String channelId;
     public TextChannel channel = null;

@@ -4,6 +4,7 @@ import core.*;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
 import nests.NestStatus;
+import pokemon.Pokemon;
 
 import java.util.ArrayList;
 import java.util.Arrays;

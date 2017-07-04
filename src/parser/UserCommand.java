@@ -3,6 +3,7 @@ package parser;
 import core.*;
 import nests.NestSearch;
 import nests.NestStatus;
+import pokemon.Pokemon;
 import raids.Raid;
 
 import java.util.ArrayList;
@@ -150,8 +151,13 @@ public class UserCommand
     }
 
     public Pokemon[] getUniquePokemon() {
+        Argument pokemonArg = getArg(ArgType.Pokemon);
+        if(pokemonArg == null) {
+            return new Pokemon[] {};
+        }
+
         String[] pokeNames = new String[0];
-        pokeNames = this.toStrings(this.getArg(ArgType.Pokemon).getParams());
+        pokeNames = this.toStrings(pokemonArg.getParams());
         final Pokemon[] pokemons = new Pokemon[pokeNames.length];
         for (int i = 0; i < pokeNames.length; ++i) {
             pokemons[i] = new Pokemon(pokeNames[i]);

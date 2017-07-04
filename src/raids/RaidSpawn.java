@@ -1,7 +1,7 @@
 package raids;
 
 import core.DBManager;
-import core.Pokemon;
+import pokemon.Pokemon;
 import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static core.MessageListener.*;
-import static core.PokeSpawn.getNextKey;
-import static core.PokeSpawn.printFormat;
+import static pokemon.PokeSpawn.getNextKey;
+import static pokemon.PokeSpawn.printFormat;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static maps.Geofencing.getGeofence;
 import static maps.Geofencing.loadGeofences;
@@ -42,7 +42,7 @@ public class RaidSpawn {
     final String move_1;
     final String move_2;
     public final int raidLevel;
-    final String gymId;
+    public final String gymId;
     private final ArrayList<GeofenceIdentifier> geofenceIdentifiers;
 
     public HashMap<String,String> properties = new HashMap<>();

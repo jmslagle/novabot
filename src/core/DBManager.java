@@ -4,6 +4,9 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import maps.GeocodedLocation;
 import net.dv8tion.jda.core.utils.SimpleLog;
+import pokemon.PokeMove;
+import pokemon.PokeSpawn;
+import pokemon.Pokemon;
 import raids.Raid;
 import raids.RaidSpawn;
 

@@ -1,4 +1,7 @@
-package core;
+package pokemon;
+
+import core.Location;
+import core.Region;
 
 import java.util.*;
 
@@ -6,8 +9,8 @@ public class Pokemon
 {
     private static final ArrayList<String> VALID_NAMES;
     public final String name;
-    float miniv;
-    float maxiv;
+    public float miniv;
+    public float maxiv;
     private Location location;
 
     public Pokemon(final String name) {
@@ -307,7 +310,7 @@ public class Pokemon
 
     @Override
     public boolean equals(final Object obj) {
-        assert obj.getClass().getName().equals("core.Pokemon");
+        assert obj.getClass().getName().equals("pokemon.Pokemon");
         final Pokemon poke = (Pokemon)obj;
         return poke.name.equals(this.name);
     }

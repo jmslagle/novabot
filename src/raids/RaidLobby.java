@@ -105,6 +105,8 @@ public class RaidLobby {
     }
 
     public void end() {
+        if(channelId == null || roleId == null) return;
+
         if(memberCount() == 0){
             getChannel().sendMessage("There are no users in the lobby, it will be closed in 5 minutes").queue();
         }else{
@@ -128,45 +130,69 @@ public class RaidLobby {
     public Message getStatusMessage(){
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
-        embedBuilder.setTitle(String.format("Raid status for %s in %s - Lobby %s",
-                spawn.properties.get("pkmn"),
-                spawn.properties.get("city"),
-                lobbyCode));
+        if(spawn.bossId != 0) {
+            embedBuilder.setTitle(String.format("Raid status for %s in %s - Lobby %s",
+                    spawn.properties.get("pkmn"),
+                    spawn.properties.get("city"),
+                    lobbyCode));
 
-        embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
+            embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
 
-        embedBuilder.addField("Lobby Members", String.valueOf(memberCount()),false);
-        embedBuilder.addField("Address",String.format("%s %s, %s",
-                spawn.properties.get("street_num"),
-                spawn.properties.get("street"),
-                spawn.properties.get("city")
-                ),false);
-        embedBuilder.addField("Gym Name",spawn.properties.get("gym_name"),false);
-        embedBuilder.addField("Raid End Time",String.format("%s (%s)",
-                spawn.properties.get("24h_end"),
-                spawn.timeLeft(spawn.raidEnd)),
-                false);
-        embedBuilder.addField("Boss Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
+            embedBuilder.addField("Lobby Members", String.valueOf(memberCount()), false);
+            embedBuilder.addField("Address", String.format("%s %s, %s",
+                    spawn.properties.get("street_num"),
+                    spawn.properties.get("street"),
+                    spawn.properties.get("city")
+            ), false);
+            embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Raid End Time", String.format("%s (%s)",
+                    spawn.properties.get("24h_end"),
+                    spawn.timeLeft(spawn.raidEnd)),
+                    false);
+            embedBuilder.addField("Boss Moveset", String.format("%s - %s", spawn.move_1, spawn.move_2), false);
 
-        String weaknessEmoteStr = "";
+            String weaknessEmoteStr = "";
 
-        for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
-            Emote emote = Raid.emotes.get(s);
-            weaknessEmoteStr += emote.getAsMention();
+            for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
+                Emote emote = Raid.emotes.get(s);
+                weaknessEmoteStr += emote.getAsMention();
+            }
+
+            embedBuilder.addField("Weak To", weaknessEmoteStr, true);
+
+            String strengthEmoteStr = "";
+
+            for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
+                strengthEmoteStr += Raid.emotes.get(s).getAsMention();
+            }
+
+            embedBuilder.addField("Strong Against", strengthEmoteStr, true);
+
+            embedBuilder.setThumbnail(spawn.getIcon());
+            embedBuilder.setImage(spawn.getImage());
+        }else{
+            embedBuilder.setTitle(String.format("Raid status for %s 4 egg in %s - Lobby %s",
+                    spawn.properties.get("level"),
+                    spawn.properties.get("city"),
+                    lobbyCode));
+
+            embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
+
+            embedBuilder.addField("Lobby Members", String.valueOf(memberCount()), false);
+            embedBuilder.addField("Address", String.format("%s %s, %s",
+                    spawn.properties.get("street_num"),
+                    spawn.properties.get("street"),
+                    spawn.properties.get("city")
+            ), false);
+            embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Raid Start Time", String.format("%s (%s)",
+                    spawn.properties.get("24h_start"),
+                    spawn.timeLeft(spawn.raidEnd)),
+                    false);
+
+            embedBuilder.setThumbnail(spawn.getIcon());
+            embedBuilder.setImage(spawn.getImage());
         }
-
-        embedBuilder.addField("Weak To",weaknessEmoteStr,true);
-
-        String strengthEmoteStr = "";
-
-        for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
-            strengthEmoteStr += Raid.emotes.get(s).getAsMention();
-        }
-
-        embedBuilder.addField("Strong Against",strengthEmoteStr,true);
-
-        embedBuilder.setThumbnail(spawn.getIcon());
-        embedBuilder.setImage(spawn.getImage());
 
         MessageBuilder messageBuilder = new MessageBuilder().setEmbed(embedBuilder.build());
 
@@ -214,5 +240,10 @@ public class RaidLobby {
 
     public boolean containsUser(String id) {
         return memberIds.contains(id);
+    }
+
+    public void alertEggHatched() {
+        getChannel().sendMessageFormat("%s the raid egg has hatched into a %s!",getRole(),spawn.properties.get("pkmn")).queue();
+        getChannel().sendMessage(getStatusMessage()).queue();
     }
 }

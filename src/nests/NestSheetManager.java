@@ -8,7 +8,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import core.Pokemon;
+import pokemon.Pokemon;
 import core.Region;
 import net.dv8tion.jda.core.utils.SimpleLog;
 
