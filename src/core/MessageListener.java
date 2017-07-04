@@ -26,7 +26,6 @@ import parser.*;
 import raids.LobbyManager;
 import raids.Raid;
 import raids.RaidLobby;
-import raids.RaidSpawn;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
@@ -157,21 +156,23 @@ public class MessageListener extends ListenerAdapter
         if(config.isRaidOrganisationEnabled()) {
             lobbyManager = new LobbyManager();
 
-            RaidSpawn raidSpawn = new RaidSpawn("gym",
-                    "123", -35.34200996278955, 149.05508042811897,
-                    new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-                    new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-                    6,
-                    11003,
-                    "fire",
-                    "fire blast",
-                    2);
-
-            raidSpawn.setGroupId(1);
-
-            lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
-            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
+//            RaidSpawn raidSpawn = new RaidSpawn("gym",
+//                    "123", -35.34200996278955, 149.05508042811897,
+//                    new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+//                    new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+//                    6,
+//                    11003,
+//                    "fire",
+//                    "fire blast",
+//                    2);
+//
+//            raidSpawn.setLobbyCode(1);
+//
+//            lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
+//            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
         }
+
+        Raid.loadEmotes();
 
         novabotLog.log(INFO,"connected");
     }
@@ -213,6 +214,11 @@ public class MessageListener extends ListenerAdapter
         novabotLog.log(INFO,"Message clicked was for lobbcode " + lobbyCode);
 
         RaidLobby lobby = lobbyManager.getLobby(lobbyCode);
+
+        if(lobby == null) {
+            event.getChannel().sendMessageFormat("%s, that lobby has ended and cannot be joined.",event.getMember()).queue();
+            return;
+        }
 
         if(!lobby.containsUser(event.getUser().getId())) {
 
@@ -868,7 +874,6 @@ public class MessageListener extends ListenerAdapter
                     "!raidsettings\n" +
                     "!resetraids\n" +
                     "!clearlocation <location list>\n" +
-                    "!joinraid <lobby code>\n" +
                     "!pause\n" +
                     "!unpause\n" +
                     (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
@@ -888,7 +893,13 @@ public class MessageListener extends ListenerAdapter
             return;
         }
 
-        final UserCommand userCommand = Parser.parseInput(msg,isSupporter(author.getId()));
+        UserCommand userCommand;
+
+        if(msg.startsWith("!addraid") || msg.startsWith("!delraid") || msg.startsWith("!clearraidlocation")) {
+            userCommand  = Parser.parseInput(msg,true);
+        }else {
+            userCommand  = Parser.parseInput(msg, isSupporter(author.getId()));
+        }
         final ArrayList<InputError> exceptions = userCommand.getExceptions();
 
         if (exceptions.size() > 0) {

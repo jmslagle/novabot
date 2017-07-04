@@ -60,23 +60,30 @@ public class RaidNotificationSender implements Runnable {
                 continue;
             }
 
-            if (raidSpawn.raidEnd.after(DBManager.getCurrentTime())){
+            if (raidSpawn.raidEnd.before(DBManager.getCurrentTime())){
+                notificationLog.log(INFO,"Raid already ended, not posting");
                 continue;
             }
 
             if(config.isRaidOrganisationEnabled()) {
-                raidSpawn.setGroupId(nextId);
+                raidSpawn.setLobbyCode(nextId);
 
                 MessageListener.lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
 
                 nextId++;
+
+                if(raidSpawn.raidLevel == 4 && raidSpawn.bossId != 0){
+                    jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(
+                            m -> m.addReaction(WHITE_GREEN_CHECK).queue()
+                    );
+                }
             }
 
-            if (raidSpawn.bossId != 0) {
-                notificationLog.log(INFO, "Checking if anyone wants: " + raidSpawn);
-
-                DBManager.getUserIDsToNotify(raidSpawn).forEach(id -> notifyUser(id, raidSpawn.buildMessage()));
-            }
+            //if (raidSpawn.bossId != 0) {
+             //   notificationLog.log(INFO, "Checking if anyone wants: " + raidSpawn);
+//
+  //              DBManager.getUserIDsToNotify(raidSpawn).forEach(id -> notifyUser(id, raidSpawn.buildMessage()));
+    //        }
 
             if(!config.isRaidChannelsEnabled()) continue;
 

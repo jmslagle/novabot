@@ -4,10 +4,7 @@ import core.DBManager;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.utils.SimpleLog;
 
 import java.util.HashSet;
@@ -59,7 +56,7 @@ public class RaidLobby {
 
             channel.createPermissionOverride(guild.getPublicRole()).setDeny(Permission.MESSAGE_READ).queue();
 
-            channel.createPermissionOverride(role).setAllow(Permission.MESSAGE_READ).queue();
+            channel.createPermissionOverride(role).setAllow(Permission.MESSAGE_READ,Permission.MESSAGE_WRITE, Permission.MESSAGE_HISTORY).queue();
             channel.createPermissionOverride(guild.getRoleById(config.novabotRole())).setAllow(Permission.MESSAGE_READ,Permission.MESSAGE_WRITE).complete();
 
             raidLobbyLog.log(INFO,String.format("First join for lobbyCode %s, created channel",lobbyCode));
@@ -150,8 +147,23 @@ public class RaidLobby {
                 spawn.timeLeft(spawn.raidEnd)),
                 false);
         embedBuilder.addField("Boss Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
-        embedBuilder.addField("Weak To",Raid.getBossWeaknessEmotes(spawn.bossId),true);
-        embedBuilder.addField("Strong Against",Raid.getBossStrengthsEmote(spawn.bossId),true);
+
+        String weaknessEmoteStr = "";
+
+        for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
+            Emote emote = Raid.emotes.get(s);
+            weaknessEmoteStr += emote.getAsMention();
+        }
+
+        embedBuilder.addField("Weak To",weaknessEmoteStr,true);
+
+        String strengthEmoteStr = "";
+
+        for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
+            strengthEmoteStr += Raid.emotes.get(s).getAsMention();
+        }
+
+        embedBuilder.addField("Strong Against",strengthEmoteStr,true);
 
         embedBuilder.setThumbnail(spawn.getIcon());
         embedBuilder.setImage(spawn.getImage());
@@ -167,8 +179,21 @@ public class RaidLobby {
         embedBuilder.setTitle(String.format("%s - Level %s raid",spawn.properties.get("pkmn"),spawn.properties.get("level")));
         embedBuilder.addField("CP",spawn.properties.get("cp"),false);
         embedBuilder.addField("Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
-        embedBuilder.addField("Weak To",Raid.getBossWeaknessEmotes(spawn.bossId),true);
-        embedBuilder.addField("Strong Against",Raid.getBossStrengthsEmote(spawn.bossId),true);
+        String weaknessEmoteStr = "";
+
+        for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
+            weaknessEmoteStr += Raid.emotes.get(s).getAsMention();
+        }
+
+        embedBuilder.addField("Weak To",weaknessEmoteStr,true);
+
+        String strengthEmoteStr = "";
+
+        for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
+            strengthEmoteStr += Raid.emotes.get(s).getAsMention();
+        }
+
+        embedBuilder.addField("Strong Against",strengthEmoteStr,true);
 
         embedBuilder.setThumbnail(spawn.getIcon());
 

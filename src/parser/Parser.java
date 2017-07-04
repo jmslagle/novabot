@@ -266,7 +266,7 @@ public class Parser
 
         MessageListener.loadSuburbs();
         System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!addraid <tyranitar, snorlax, lapras, machamp> <bruce, gungahlin-region>",false);
+        UserCommand command = parseInput("!addraid <snorlax, tyranitar> phillip",true);
         System.out.println(command.getExceptions());
     }
 

@@ -41,7 +41,7 @@ public class RaidSpawn {
     final int bossCp;
     final String move_1;
     final String move_2;
-    final int raidLevel;
+    public final int raidLevel;
     final String gymId;
     private final ArrayList<GeofenceIdentifier> geofenceIdentifiers;
 
@@ -68,7 +68,7 @@ public class RaidSpawn {
                 "fire blast",
                 2);
 
-        spawn.setGroupId(1);
+        spawn.setLobbyCode(1);
 //        System.out.println(spawn.getLobbyCode());
 
         Message message = spawn.buildMessage();
@@ -261,7 +261,7 @@ public class RaidSpawn {
         return properties.get("city");
     }
 
-    public void setGroupId(int id) {
+    public void setLobbyCode(int id) {
         this.groupId = id;
 
         properties.put("lobbycode", getLobbyCode());
