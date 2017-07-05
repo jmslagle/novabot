@@ -32,6 +32,7 @@ public class RaidLobby {
     static SimpleLog raidLobbyLog = SimpleLog.getLog("raid-lobbies");
 
     ScheduledExecutorService shutDownService = null;
+    public long nextTimeLeftUpdate = 15;
 
     public RaidLobby(RaidSpawn raidSpawn, String lobbyCode){
         this.spawn = raidSpawn;
@@ -48,7 +49,11 @@ public class RaidLobby {
 
             Role role = guild.getRoleById(roleId);
 
-            role.getManager().setName(String.format("raid-%s", lobbyCode)).queue(success -> role.getManager().setMentionable(true).queue());
+            role.getManagerUpdatable()
+                    .getNameField().setValue(String.format("raid-%s",lobbyCode))
+                    .getMentionableField().setValue(true)
+                    .update()
+                    .queue();
 
             channelId = guild.getController().createTextChannel(String.format("raid-lobby-%s", lobbyCode)).complete().getId();
 
@@ -108,9 +113,9 @@ public class RaidLobby {
         if(channelId == null || roleId == null) return;
 
         if(memberCount() == 0){
-            getChannel().sendMessage("There are no users in the lobby, it will be closed in 5 minutes").queue();
+            getChannel().sendMessage(String.format("There are no users in the lobby, it will be closed in %s minutes", delay)).queue();
         }else{
-            getChannel().sendMessageFormat("%s, the raid has ended and the raid lobby will be closed in 5 minutes",getRole()).queue();
+            getChannel().sendMessageFormat("%s, the raid has ended and the raid lobby will be closed in %s minutes",getRole(),delay).queue();
         }
 
         Runnable shutDownTask = () -> {
@@ -155,7 +160,9 @@ public class RaidLobby {
 
             for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
                 Emote emote = Raid.emotes.get(s);
-                weaknessEmoteStr += emote.getAsMention();
+                if(emote != null) {
+                    weaknessEmoteStr += emote.getAsMention();
+                }
             }
 
             embedBuilder.addField("Weak To", weaknessEmoteStr, true);
@@ -208,7 +215,8 @@ public class RaidLobby {
         String weaknessEmoteStr = "";
 
         for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
-            weaknessEmoteStr += Raid.emotes.get(s).getAsMention();
+            Emote emote = Raid.emotes.get(s);
+            weaknessEmoteStr += (emote == null ? "" :emote.getAsMention());
         }
 
         embedBuilder.addField("Weak To",weaknessEmoteStr,true);
@@ -243,8 +251,10 @@ public class RaidLobby {
     }
 
     public void alertEggHatched() {
-        getChannel().sendMessageFormat("%s the raid egg has hatched into a %s!",getRole(),spawn.properties.get("pkmn")).queue();
-        getChannel().sendMessage(getStatusMessage()).queue();
+        if(channelId != null) {
+            getChannel().sendMessageFormat("%s the raid egg has hatched into a %s!", getRole(), spawn.properties.get("pkmn")).queue();
+            getChannel().sendMessage(getStatusMessage()).queue();
+        }
     }
 
     public void alertRaidNearlyOver() {

@@ -31,6 +31,7 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -54,7 +55,7 @@ public class MessageListener extends ListenerAdapter
 
     public static final String WHITE_GREEN_CHECK = "\u2705";
 
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public static Config config;
     public static SuburbManager suburbs;
@@ -150,7 +151,7 @@ public class MessageListener extends ListenerAdapter
             if(config.isRaidOrganisationEnabled()){
                 lobbyManager = new LobbyManager();
                 ScheduledExecutor executor = new ScheduledExecutor(1);
-                executor.scheduleAtFixedRate(new LobbiesMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
+                executor.scheduleAtFixedRate(new LobbyMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
             }
         }
         catch (LoginException | InterruptedException | RateLimitedException ex2) {
@@ -178,6 +179,12 @@ public class MessageListener extends ListenerAdapter
 
         Raid.loadEmotes();
 
+        String formattedDate = guild.getMemberById(320368449383563265L)
+                .getJoinDate()
+                .toInstant()
+                .atZone(ZoneId.of(config.getTimeZone())).format(formatter);
+
+        System.out.println(formattedDate);
         novabotLog.log(INFO,"connected");
     }
 
@@ -286,7 +293,10 @@ public class MessageListener extends ListenerAdapter
         for (final Role role : event.getRoles()) {
             roleStr = roleStr + role.getName() + " ";
         }
-        MessageListener.roleLog.sendMessage(user.getAsMention() + " had " + roleStr + "role(s) removed").queue();
+
+        if(roleStr.length() != 0) {
+            MessageListener.roleLog.sendMessage(user.getAsMention() + " had " + roleStr + "role(s) removed").queue();
+        }
     }
 
     @Override
@@ -487,7 +497,7 @@ public class MessageListener extends ListenerAdapter
             List<User> mentionedUsers = msg.getMentionedUsers();
 
             for (User mentionedUser : mentionedUsers) {
-                Timestamp joinDate = DBManager.getJoinDate(mentionedUser.getId());
+                OffsetDateTime joinDate = guild.getMember(mentionedUser).getJoinDate();
                 String formattedDate = joinDate.toInstant().atZone(ZoneId.of(config.getTimeZone())).format(formatter);
 
                 response += String.format("  %s joined at %s", mentionedUser.getAsMention(),formattedDate);

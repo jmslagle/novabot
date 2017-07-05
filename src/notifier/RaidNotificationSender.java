@@ -72,6 +72,7 @@ public class RaidNotificationSender implements Runnable {
 
                 if(lobbyFromId != null && lobbyFromId.spawn.bossId == 0){
                     notificationLog.log(INFO,"Raid already has a lobby, but the egg has now hatched, updating lobby");
+                    raidSpawn.setLobbyCode(lobbyFromId.lobbyCode);
                     lobbyFromId.spawn = raidSpawn;
                     lobbyFromId.alertEggHatched();
                 }else {

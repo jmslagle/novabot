@@ -50,7 +50,7 @@ public class RaidSpawn {
     private String formatKey;
     private Message builtMessage = null;
 
-    private int groupId;
+    private int lobbyCode;
 
     public static void main(String[] args) {
 
@@ -152,14 +152,14 @@ public class RaidSpawn {
 
         String time;
         if(MILLISECONDS.toHours(diff) > 0){
-            time = String.format("%02d:%02d:%02d",MILLISECONDS.toHours(Math.abs(diff)),
+            time = String.format("%02dh %02dm %02ds",MILLISECONDS.toHours(Math.abs(diff)),
                     MILLISECONDS.toMinutes(Math.abs(diff)) -
                             (MILLISECONDS.toHours(Math.abs(diff)) * 60),
                     MILLISECONDS.toSeconds(Math.abs(diff)) -
                             MILLISECONDS.toMinutes(Math.abs(diff) * 60)
             );
         }else {
-            time = String.format("%02d:%02d",
+            time = String.format("%02dm %02ds",
                     MILLISECONDS.toMinutes(Math.abs(diff)),
                     MILLISECONDS.toSeconds(Math.abs(diff)) -
                             (MILLISECONDS.toMinutes(Math.abs(diff)) * 60)
@@ -262,12 +262,17 @@ public class RaidSpawn {
     }
 
     public void setLobbyCode(int id) {
-        this.groupId = id;
+        this.lobbyCode = id;
 
         properties.put("lobbycode", getLobbyCode());
     }
 
     public String getLobbyCode(){
-        return String.format("%04d",groupId);
+        return String.format("%04d", lobbyCode);
+    }
+
+    public void setLobbyCode(String lobbyCode) {
+        this.lobbyCode = Integer.parseInt(lobbyCode);
+        properties.put("lobbycode",getLobbyCode());
     }
 }

@@ -276,7 +276,7 @@ public class PokeSpawn
 
         long diff = this.disappearTime.getTime() - currentTime.getTime();
 
-        String time = String.format("%02d:%02d",
+        String time = String.format("%02dm %02ds",
                 MILLISECONDS.toMinutes(Math.abs(diff)),
                 MILLISECONDS.toSeconds(Math.abs(diff)) -
                         (MILLISECONDS.toMinutes(Math.abs(diff)) * 60)
