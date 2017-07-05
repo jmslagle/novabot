@@ -267,7 +267,8 @@ public class Parser
 
         MessageListener.loadSuburbs();
         System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!addraid <snorlax, tyranitar> phillip",true);
+        UserCommand command = parseInput("!clearraidlocation phillip",true);
+        command.buildPokemon();
         System.out.println(command.getExceptions());
     }
 

@@ -44,7 +44,7 @@ public class LobbyManager {
         RaidLobby lobby = getLobby(lobbyCode);
 
         if(lobby != null) {
-            getLobby(lobbyCode).end();
+            getLobby(lobbyCode).end(15);
         }
     }
 

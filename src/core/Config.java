@@ -2,6 +2,8 @@ package core;
 
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Role;
 import org.ini4j.Ini;
 
 import java.io.File;
@@ -79,6 +81,8 @@ public class Config {
 
     private HashMap<GeofenceIdentifier,String> geofencedChannelIds = new HashMap<>();
     private String novabotRoleId;
+
+    HashMap<String,NotificationLimit> roleLimits = new HashMap<>();
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -175,6 +179,40 @@ public class Config {
 
         if(raidsEnabled()) {
             loadGeofenceChannels();
+        }
+
+        if(!supporterOnly){
+            loadSupporterRoles();
+        }
+    }
+
+    private void loadSupporterRoles() {
+        File file = new File("supporterlevels.txt");
+
+        try {
+            Scanner sc = new Scanner(file);
+
+            while (sc.hasNext()) {
+                String line = sc.nextLine().toLowerCase();
+
+                String[] split = line.split("=");
+
+                String roleId = split[0].trim();
+
+                String limitStr = split[1].trim();
+
+                String[] limitSplit = limitStr.split(",");
+
+                String pokeLimitStr = limitSplit[0].substring(limitSplit[0].indexOf("[") + 1);
+                int pokeLimit = pokeLimitStr.equals("n") ? -1 : Integer.parseInt(pokeLimitStr);
+
+                String raidLimitStr = limitSplit[1].substring(0,limitSplit[1].indexOf("]"));
+                int raidLimit = raidLimitStr.equals("n") ? -1 :Integer.parseInt(raidLimitStr);
+
+                roleLimits.put(roleId,new NotificationLimit(pokeLimit,raidLimit));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -432,4 +470,13 @@ public class Config {
         return raidOrganisationEnabled;
     }
 
+    public NotificationLimit getNotificationLimit(Member member) {
+        for (Role role : member.getRoles()) {
+            NotificationLimit notificationLimit = roleLimits.get(role.getId());
+            if(notificationLimit != null){
+                return notificationLimit;
+            }
+        }
+        return null;
+    }
 }

@@ -48,7 +48,7 @@ public class RaidLobby {
 
             Role role = guild.getRoleById(roleId);
 
-            role.getManager().setName(String.format("raid-%s", lobbyCode)).queue();
+            role.getManager().setName(String.format("raid-%s", lobbyCode)).queue(success -> role.getManager().setMentionable(true).queue());
 
             channelId = guild.getController().createTextChannel(String.format("raid-lobby-%s", lobbyCode)).complete().getId();
 
@@ -96,7 +96,7 @@ public class RaidLobby {
         getChannel().sendMessageFormat("%s left the lobby, there are now %s users in the lobby.",guild.getMemberById(id),memberCount()).queue();
 
         if(memberCount() == 0){
-            end();
+            end(10);
         }
     }
 
@@ -104,7 +104,7 @@ public class RaidLobby {
         return guild.getTextChannelById(channelId);
     }
 
-    public void end() {
+    public void end(int delay) {
         if(channelId == null || roleId == null) return;
 
         if(memberCount() == 0){
@@ -123,7 +123,7 @@ public class RaidLobby {
 
         shutDownService = Executors.newSingleThreadScheduledExecutor();
 
-        shutDownService.schedule(shutDownTask, 5, TimeUnit.MINUTES);
+        shutDownService.schedule(shutDownTask, delay, TimeUnit.MINUTES);
         shutDownService.shutdown();
     }
 
@@ -171,7 +171,7 @@ public class RaidLobby {
             embedBuilder.setThumbnail(spawn.getIcon());
             embedBuilder.setImage(spawn.getImage());
         }else{
-            embedBuilder.setTitle(String.format("Raid status for %s 4 egg in %s - Lobby %s",
+            embedBuilder.setTitle(String.format("Raid status for level %s egg in %s - Lobby %s",
                     spawn.properties.get("level"),
                     spawn.properties.get("city"),
                     lobbyCode));
@@ -187,7 +187,7 @@ public class RaidLobby {
             embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
             embedBuilder.addField("Raid Start Time", String.format("%s (%s)",
                     spawn.properties.get("24h_start"),
-                    spawn.timeLeft(spawn.raidEnd)),
+                    spawn.timeLeft(spawn.battleStart)),
                     false);
 
             embedBuilder.setThumbnail(spawn.getIcon());
@@ -245,5 +245,9 @@ public class RaidLobby {
     public void alertEggHatched() {
         getChannel().sendMessageFormat("%s the raid egg has hatched into a %s!",getRole(),spawn.properties.get("pkmn")).queue();
         getChannel().sendMessage(getStatusMessage()).queue();
+    }
+
+    public void alertRaidNearlyOver() {
+        getChannel().sendMessageFormat("%s the raid is going to end in %s!",getRole(),spawn.timeLeft(spawn.raidEnd)).queue();
     }
 }

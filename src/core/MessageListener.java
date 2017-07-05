@@ -25,9 +25,7 @@ import org.ini4j.Ini;
 import parser.*;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
-import raids.LobbyManager;
-import raids.Raid;
-import raids.RaidLobby;
+import raids.*;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
@@ -148,29 +146,35 @@ public class MessageListener extends ListenerAdapter
                 ScheduledExecutor executorService = new ScheduledExecutor(1);
                 executorService.scheduleAtFixedRate(new RaidNotifier(jda,testing),0,config.getRaidPollingRate(),TimeUnit.SECONDS);
             }
+
+            if(config.isRaidOrganisationEnabled()){
+                lobbyManager = new LobbyManager();
+                ScheduledExecutor executor = new ScheduledExecutor(1);
+                executor.scheduleAtFixedRate(new LobbiesMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
+            }
         }
         catch (LoginException | InterruptedException | RateLimitedException ex2) {
             ex2.printStackTrace();
         }
 
-        if(config.isRaidOrganisationEnabled()) {
-            lobbyManager = new LobbyManager();
-
+//        if(config.isRaidOrganisationEnabled()) {
+//            lobbyManager = new LobbyManager();
+//
 //            RaidSpawn raidSpawn = new RaidSpawn("gym",
 //                    "123", -35.34200996278955, 149.05508042811897,
 //                    new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
 //                    new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-//                    6,
-//                    11003,
-//                    "fire",
-//                    "fire blast",
+//                    0,
+//                    0,
+//                    "",
+//                    "",
 //                    2);
 //
 //            raidSpawn.setLobbyCode(1);
 //
 //            lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
 //            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
-        }
+//        }
 
         Raid.loadEmotes();
 
@@ -440,7 +444,12 @@ public class MessageListener extends ListenerAdapter
         }
 
         if(msg.equals("!timeleft")){
-            textChannel.sendMessageFormat("Raid ends at %s (%s remaining)",lobby.spawn.getDisappearTime(),lobby.spawn.timeLeft(lobby.spawn.raidEnd)).queue();
+
+            if(lobby.spawn.bossId != 0) {
+                textChannel.sendMessageFormat("Raid ends at %s (%s remaining)", lobby.spawn.getDisappearTime(), lobby.spawn.timeLeft(lobby.spawn.raidEnd)).queue();
+            }else {
+                textChannel.sendMessageFormat("Raid starts at %s (%s remaining)", lobby.spawn.getStartTime(), lobby.spawn.timeLeft(lobby.spawn.battleStart)).queue();
+            }
             return;
         }
 
@@ -867,6 +876,7 @@ public class MessageListener extends ListenerAdapter
         }
         else if (msg.equals("!help")) {
             channel.sendMessage("My commands are: \n" +
+                    "**Pokemon Commands:**\n" +
                     "```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
                     "!addpokemon pokemon\n" +
                     "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
@@ -874,17 +884,19 @@ public class MessageListener extends ListenerAdapter
                     "!clearpokemon <pokemon list>\n" +
                     "!clearpokelocation <location list>\n" +
                     "!pokemonsettings\n" +
-                    "!resetpokemon\n" +
-                    "!addraid pokemon\n" +
+                    "!resetpokemon```\n" +
+                    "**Raid Commands:**\n" +
+                    "```!addraid pokemon\n" +
                     "!addraid <pokemon list> <location list>\n" +
                     "!delraid pokemon\n" +
                     "!delraid <pokemon list> <location list>\n" +
                     "!clearraid <pokemon list>\n" +
                     "!clearraidlocation <location list>\n" +
                     "!raidsettings\n" +
-                    "!resetraids\n" +
+                    "!resetraids```" +
+                    "**Other Commands:**\n" +
                     "!clearlocation <location list>\n" +
-                    "!pause\n" +
+                    "```!pause\n" +
                     "!unpause\n" +
                     (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
                     (config.isRaidOrganisationEnabled() ? "!joinraid <lobby code>\n" : "") +
@@ -973,7 +985,15 @@ public class MessageListener extends ListenerAdapter
 
                 if(cmdStr.equals("!addraid")){
                     if (!isSupporter(author.getId()) && DBManager.countRaids(author.getId()) + raids.length > 3) {
-                        channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 raid notifications set up. What you tried to add would put you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
+                        channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 raid notifications set up. " +
+                                "What you tried to add would put you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
+                        return;
+                    }
+
+                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+                    if(limit.raidLimit != -1 && DBManager.countRaids(author.getId()) + raids.length > limit.raidLimit) {
+                        channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s raid notifications set up. " +
+                                "What you tried to add would take you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
                         return;
                     }
 
@@ -1045,6 +1065,14 @@ public class MessageListener extends ListenerAdapter
                             channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 pokemon notifications set up. What you tried to add would put you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
                             return;
                         }
+
+                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+                        if(limit.pokemonLimit != -1 && DBManager.countPokemon(author.getId()) + pokemons.length > limit.pokemonLimit) {
+                            channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s pokemon notifications set up. " +
+                                    "What you tried to add would take you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
+                            return;
+                        }
+
                         if (!DBManager.containsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }

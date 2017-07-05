@@ -206,7 +206,7 @@ public class RaidSpawn {
         return builtMessage;
     }
 
-    private String getStartTime() {
+    public String getStartTime() {
         return printFormat.format(battleStart);
     }
 

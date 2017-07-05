@@ -204,8 +204,6 @@ public class DBManager
                 dbLog.log(DEBUG, String.format("%s raid has ended, removing from known raids so we can find new raids on this gym",gymId));
                 toRemove.add(gymId);
                 dbLog.log(DEBUG, "Queued for removal " + raid);
-
-                lobbyManager.endLobby(raid.getLobbyCode());
             }
         });
 

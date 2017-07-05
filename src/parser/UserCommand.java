@@ -143,6 +143,7 @@ public class UserCommand
 
     public Argument getArg(final ArgType argType) {
         for (final Argument arg : this.args) {
+            if(arg == null) continue;
             if (arg.getType() == argType) {
                 return arg;
             }
