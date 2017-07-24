@@ -20,40 +20,67 @@ class Commands
 
     static {
         commands = new HashMap<String, Command>();
-        final Command addPokemon = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Float, ArgType.Int)))
-                .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
-                .setArgRange(1, 3);
-
-        final Command delPokemon = new Command()
-                .setValidArgTypes(addPokemon.getValidArgTypes())
-                .setRequiredArgTypes(addPokemon.getRequiredArgTypes())
-                .setArgRange(1, 3);
-
-        final Command addRaid = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations)))
-                .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
-                .setArgRange(1, 3);
-
-        final Command delRaid = new Command()
-                .setValidArgTypes(addRaid.getValidArgTypes())
-                .setRequiredArgTypes(addRaid.getRequiredArgTypes())
-                .setArgRange(1, 3);
-
-        final Command clearPokemon = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                .setArgRange(1, 1);
-
         final Command clearLocation = new Command()
                 .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
                 .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
                 .setArgRange(1, 1);
 
-        final Command addChannel = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
-                .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
-                .setArgRange(1, 1);
+        Commands.commands.put("!clearlocation", clearLocation);
+
+        if(config.pokemonEnabled()) {
+            final Command addPokemon = new Command()
+                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Float, ArgType.Int)))
+                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
+                    .setArgRange(1, 3);
+
+            final Command delPokemon = new Command()
+                    .setValidArgTypes(addPokemon.getValidArgTypes())
+                    .setRequiredArgTypes(addPokemon.getRequiredArgTypes())
+                    .setArgRange(1, 3);
+
+            final Command clearPokemon = new Command()
+                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setArgRange(1, 1);
+
+
+            Commands.commands.put("!addpokemon", addPokemon);
+            Commands.commands.put("!delpokemon", delPokemon);
+            Commands.commands.put("!clearpokemon", clearPokemon);
+            Commands.commands.put("!clearpokelocation", clearLocation);
+        }
+
+        if(config.raidsEnabled()){
+            final Command addRaid = new Command()
+                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations)))
+                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
+                    .setArgRange(1, 3);
+
+            final Command delRaid = new Command()
+                    .setValidArgTypes(addRaid.getValidArgTypes())
+                    .setRequiredArgTypes(addRaid.getRequiredArgTypes())
+                    .setArgRange(1, 3);
+
+            Command clearRaid = new Command()
+                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setArgRange(1, 1);
+
+            Commands.commands.put("!addraid", addRaid);
+            Commands.commands.put("!delraid", delRaid);
+            Commands.commands.put("!clearraid", clearRaid);
+            Commands.commands.put("!clearraidlocation", clearLocation);
+        }
+
+
+        if(config.useChannels()) {
+            final Command addChannel = new Command()
+                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
+                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
+                    .setArgRange(1, 1);
+
+            Commands.commands.put("!addchannel", addChannel);
+        }
 
         if(config.nestsEnabled()) {
             final Command nest = new Command()
@@ -70,18 +97,6 @@ class Commands
                     .setArgRange(1, 3);
             Commands.commands.put("!stats", stats);
         }
-
-
-        Commands.commands.put("!addpokemon", addPokemon);
-        Commands.commands.put("!delpokemon", delPokemon);
-        Commands.commands.put("!addraid", addRaid);
-        Commands.commands.put("!delraid", delRaid);
-        Commands.commands.put("!addchannel", addChannel);
-        Commands.commands.put("!clearpokemon", clearPokemon);
-        Commands.commands.put("!clearraid", clearPokemon);
-        Commands.commands.put("!clearpokelocation", clearLocation);
-        Commands.commands.put("!clearraidlocation", clearLocation);
-        Commands.commands.put("!clearlocation", clearLocation);
     }
 
 }

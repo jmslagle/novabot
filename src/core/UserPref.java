@@ -9,8 +9,8 @@ import java.util.Set;
 
 public class UserPref
 {
-    private HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<>();
-    private HashMap<String, Set<Raid>> raidPrefs = new HashMap<>();
+    public HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<>();
+    public HashMap<String, Set<Raid>> raidPrefs = new HashMap<>();
     private boolean supporter;
 
     public UserPref(boolean supporter){
@@ -101,17 +101,6 @@ public class UserPref
         return str;
     }
 
-    public boolean isEmpty() {
-        final boolean[] empty = { true };
-        this.pokemonPrefs.forEach((region, pokemons) -> {
-            if (pokemons.size() > 0) {
-                empty[0] = false;
-            }
-            return;
-        });
-        return empty[0];
-    }
-
     public String allSettingsToString() {
         HashMap<String,Set<String>> prefMap = new HashMap<>();
 
@@ -163,4 +152,27 @@ public class UserPref
         }
         return str;
     }
+
+    public boolean isRaidEmpty() {
+        final boolean[] empty = { true };
+        raidPrefs.forEach((loc, obj) -> {
+            if (obj.size() > 0) {
+                empty[0] = false;
+            }
+            return;
+        });
+        return empty[0];
+    }
+
+    public boolean isPokeEmpty() {
+        final boolean[] empty = { true };
+        pokemonPrefs.forEach((loc, obj) -> {
+            if (obj.size() > 0) {
+                empty[0] = false;
+            }
+            return;
+        });
+        return empty[0];
+    }
+
 }

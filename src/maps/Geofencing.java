@@ -53,7 +53,11 @@ public class Geofencing
             ArrayList<GeoPoint> points = new ArrayList<>();
 
             while(in.hasNext()){
-                String line = in.nextLine();
+                String line = in.nextLine().toLowerCase();
+
+                if(line == null || line.length() == 0){
+                    return;
+                }
 
                 if(line.charAt(0) == '['){
                     if(name != null && !points.isEmpty()) {

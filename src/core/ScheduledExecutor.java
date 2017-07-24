@@ -4,6 +4,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static core.MessageListener.jda;
+
 /**
  * Fuck that East Coast shit!
  *
@@ -44,6 +46,7 @@ public class ScheduledExecutor extends ScheduledThreadPoolExecutor {
                 theRunnable.run();
             } catch (Exception e) {
                 // LOG IT HERE!!!
+                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(String.valueOf(e)));
                 System.err.println("error in executing: " + theRunnable + ". It will no longer be run!");
                 e.printStackTrace();
 

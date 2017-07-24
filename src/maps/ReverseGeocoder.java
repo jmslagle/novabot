@@ -23,7 +23,8 @@ public class ReverseGeocoder {
 
         DBManager.novabotdbConnect();
 
-        DBManager.setGeocodedLocation(-35.405055,149.1270075,geocodedLocation(-35.405055, 149.1270075));
+        geocodedLocation(-43.4939774,172.7176463);
+//        DBManager.setGeocodedLocation(-35.405055,149.1270075,geocodedLocation(-35.405055, 149.1270075));
     }
 
     public static GeocodedLocation geocodedLocation(double lat, double lon){

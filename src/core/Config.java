@@ -9,15 +9,16 @@ import org.ini4j.Ini;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
+
+import static core.MessageListener.guild;
 
 /**
  * Created by Owner on 13/05/2017.
  */
 public class Config {
 
+    private NotificationLimit nonSupporterLimit;
     Ini ini;
 
     ArrayList<String> GMAPS_KEYS = new ArrayList<>();
@@ -32,6 +33,7 @@ public class Config {
     private boolean stats;
     private boolean startupMessage;
     private boolean supporterOnly;
+    private boolean countLocationsInLimits;
 
     private String timeZone;
 
@@ -83,6 +85,7 @@ public class Config {
     private String novabotRoleId;
 
     HashMap<String,NotificationLimit> roleLimits = new HashMap<>();
+    private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -118,6 +121,10 @@ public class Config {
         nests = Boolean.parseBoolean(config.get("nests"));
 
         supporterOnly = Boolean.parseBoolean(config.get("supporterOnly"));
+
+        nonSupporterLimit = NotificationLimit.fromString(config.get("nonSupporterLimit"));
+
+        countLocationsInLimits = Boolean.parseBoolean(config.get("countLocationsInLimits"));
 
         supporterRoles = Util.parseList(config.get("supporterRoles"));
 
@@ -181,9 +188,41 @@ public class Config {
             loadGeofenceChannels();
         }
 
+        if(raidOrganisationEnabled){
+            loadRaidChats();
+        }
+
         if(!supporterOnly){
             loadSupporterRoles();
         }
+    }
+
+    private void loadRaidChats() {
+        if(!Geofencing.loaded) Geofencing.loadGeofences();
+
+        File file = new File("raidchats.txt");
+
+        try{
+            Scanner sc = new Scanner(file);
+
+            while(sc.hasNext()){
+                String line = sc.nextLine().toLowerCase();
+
+                String[] split = line.split("=");
+
+                ArrayList<GeofenceIdentifier> geofenceIdentifiers = GeofenceIdentifier.fromString(split[0].trim());
+
+                String channelId = split[1].trim();
+
+                for (GeofenceIdentifier geofenceIdentifier : geofenceIdentifiers) {
+                    raidChats.put(geofenceIdentifier,channelId);
+                }
+
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void loadSupporterRoles() {
@@ -199,17 +238,7 @@ public class Config {
 
                 String roleId = split[0].trim();
 
-                String limitStr = split[1].trim();
-
-                String[] limitSplit = limitStr.split(",");
-
-                String pokeLimitStr = limitSplit[0].substring(limitSplit[0].indexOf("[") + 1);
-                int pokeLimit = pokeLimitStr.equals("n") ? -1 : Integer.parseInt(pokeLimitStr);
-
-                String raidLimitStr = limitSplit[1].substring(0,limitSplit[1].indexOf("]"));
-                int raidLimit = raidLimitStr.equals("n") ? -1 :Integer.parseInt(raidLimitStr);
-
-                roleLimits.put(roleId,new NotificationLimit(pokeLimit,raidLimit));
+                roleLimits.put(roleId,NotificationLimit.fromString(line));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -478,5 +507,60 @@ public class Config {
             }
         }
         return null;
+    }
+
+    public ArrayList<GeofenceIdentifier> getRaidChatGeofences(String id) {
+        ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
+
+        for (Map.Entry<GeofenceIdentifier, String> entry : raidChats.entrySet()) {
+            if(entry.getValue().equals(id)){
+                geofenceIdentifiers.add(entry.getKey());
+            }
+        }
+
+        return geofenceIdentifiers;
+    }
+
+    public String raidChatsList() {
+        String str = "";
+
+        for (String s : geofencedChannelIds.values()) {
+            str += String.format("  %s%n",guild.getTextChannelById(s).getAsMention());
+        }
+
+        return str;
+    }
+
+    public String[] getRaidChats(ArrayList<GeofenceIdentifier> geofences) {
+        HashSet<String> chatIds = new HashSet<>();
+
+        for (Map.Entry<GeofenceIdentifier, String> entry : raidChats.entrySet()) {
+            boolean added = false;
+            for (GeofenceIdentifier geofence : geofences) {
+                if(added) break;
+                if(entry.getKey().equals(geofence)){
+                    chatIds.add(entry.getValue());
+                    added = true;
+                }
+            }
+        }
+
+        String[] chatIdStrings = new String[chatIds.size()];
+        return chatIds.toArray(chatIdStrings);
+    }
+
+    public boolean countLocationsInLimits() {
+        return countLocationsInLimits;
+    }
+
+    public NotificationLimit getNonSupporterLimit() {
+        return nonSupporterLimit;
+    }
+
+    public boolean isRaidChannel(String id) {
+        for (String s : raidChats.values()) {
+            if(id.equals(s)) return true;
+        }
+        return false;
     }
 }

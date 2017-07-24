@@ -10,3 +10,4 @@
 275428334215626764 = [n,n]//gold & silver
 276737079226925056 = [n,n]//ruby & sapphire
 276738161785176075 = [n,n]//diamond & pearl
+274467121315053569 = [n,n]//moderator

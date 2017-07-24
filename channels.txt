@@ -4,6 +4,7 @@
 271827572386562050 = [belconnen-region,belconnenregion]
 271802221224525836 = [woden-weston-region,wodenwestonregion]
 271802248189837313 = [tuggeranong-region,tuggeranong]
+285439247744368640 = [queanbeyan-region,queanbeyan]
 287376190434705409 = [100-iv,100iv,hundrediv]
 300098060602703883 = [0-iv,0iv,zeroiv]
 285467455290212353 = [dratini-candy,dratinicandy]

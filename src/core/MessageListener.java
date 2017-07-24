@@ -20,17 +20,20 @@ import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import notifier.PokeNotifier;
+import notifier.RaidNotificationSender;
 import notifier.RaidNotifier;
 import org.ini4j.Ini;
 import parser.*;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
-import raids.*;
+import raids.LobbyManager;
+import raids.LobbyMonitor;
+import raids.Raid;
+import raids.RaidLobby;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -68,9 +71,9 @@ public class MessageListener extends ListenerAdapter
     public static LobbyManager lobbyManager;
 
     public static void main(final String[] args) {
-        testing = false;
+        testing = true;
 
-        DBManager.dbLog.setLevel(DEBUG);
+//        DBManager.dbLog.setLevel(DEBUG);
 
         loadConfig();
         loadSuburbs();
@@ -148,10 +151,92 @@ public class MessageListener extends ListenerAdapter
                 executorService.scheduleAtFixedRate(new RaidNotifier(jda,testing),0,config.getRaidPollingRate(),TimeUnit.SECONDS);
             }
 
+
             if(config.isRaidOrganisationEnabled()){
                 lobbyManager = new LobbyManager();
+//                lobbyManager.addLobbies(DBManager.getActiveLobbies());
+                RaidNotificationSender.nextId = DBManager.highestRaidLobbyId() + 1;
                 ScheduledExecutor executor = new ScheduledExecutor(1);
                 executor.scheduleAtFixedRate(new LobbyMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
+            }
+
+            if(testing) {
+//                RaidSpawn spawn = new RaidSpawn("Australian Croatian Club",
+//                        "1", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+//                        1,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(1);
+//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+//                Message message = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//
+//                spawn = new RaidSpawn("O'Connor 2",
+//                        "2", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 404000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 5000000),
+//                        2,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(2);
+//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+//                Message message2 = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message2).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//
+//                spawn = new RaidSpawn("Bridge 2007",
+//                        "3", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+//                        3,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(3);
+//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+//                Message message3 = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message3).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//
+//                spawn = new RaidSpawn("O'Connor Wetlands",
+//                        "4", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 509000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6003000),
+//                        4,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(4);
+//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+//                Message message4 = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message4).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//
+//                spawn = new RaidSpawn("Heatwave",
+//                        "5", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 500000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6105000),
+//                        5,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(5);
+//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+//                Message message5 = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message5).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+
+//                DBManager.knownRaids.put(spawn.gymId, spawn);
             }
         }
         catch (LoginException | InterruptedException | RateLimitedException ex2) {
@@ -160,18 +245,18 @@ public class MessageListener extends ListenerAdapter
 
 //        if(config.isRaidOrganisationEnabled()) {
 //            lobbyManager = new LobbyManager();
-//
+////
 //            RaidSpawn raidSpawn = new RaidSpawn("gym",
 //                    "123", -35.34200996278955, 149.05508042811897,
+//                    new Timestamp(DBManager.getCurrentTime().getTime() + 600000),
 //                    new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-//                    new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-//                    0,
-//                    0,
-//                    "",
-//                    "",
-//                    2);
-//
-//            raidSpawn.setLobbyCode(1);
+//                    248,
+//                    1234,
+//                    "disco",
+//                    "twist",
+//                    4);
+////
+//            raidSpawn.setLobbyCode(2);
 //
 //            lobbyManager.newRaid(raidSpawn.getLobbyCode(), raidSpawn);
 //            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
@@ -179,12 +264,13 @@ public class MessageListener extends ListenerAdapter
 
         Raid.loadEmotes();
 
-        String formattedDate = guild.getMemberById(320368449383563265L)
-                .getJoinDate()
-                .toInstant()
-                .atZone(ZoneId.of(config.getTimeZone())).format(formatter);
 
-        System.out.println(formattedDate);
+
+
+//        jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(spawn.buildMessage()).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//
+//        DBManager.knownRaids.put(spawn.gymId,spawn);
+
         novabotLog.log(INFO,"connected");
     }
 
@@ -235,8 +321,13 @@ public class MessageListener extends ListenerAdapter
 
             lobby.joinLobby(event.getUser().getId());
 
-            event.getChannel().sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.", event.getMember(), lobby.getChannel(), lobby.memberCount()).queue();
+            if(event.getChannelType() == ChannelType.PRIVATE) {
+                event.getChannel().sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.", event.getUser(), lobby.getChannel(), lobby.memberCount()).queue();
+            }
 
+            for (String channelId : config.getRaidChats(lobby.spawn.getGeofences())) {
+                guild.getTextChannelById(channelId).sendMessageFormat("%s joined lobby %s and has been placed in %s. There are now %s users in the lobby.",guild.getMember(event.getUser()),lobbyCode,lobby.getChannel(),lobby.memberCount()).queue();
+            }
         }
     }
 
@@ -366,10 +457,13 @@ public class MessageListener extends ListenerAdapter
             final TextChannel textChannel = event.getTextChannel();
             MessageListener.guild = guild;
 
-            if(config.isRaidOrganisationEnabled() && lobbyManager.isLobbyChannel(channel.getId())){
-                parseRaidLobbyMsg(author, msg,textChannel);
-            }else if (channel.getId().equals(config.getUserUpdatesId())){
-                this.parseModMsg(message,textChannel);
+            if(config.isRaidOrganisationEnabled() && lobbyManager.isLobbyChannel(channel.getId())) {
+                parseRaidLobbyMsg(author, msg, textChannel);
+            }else if(config.isRaidOrganisationEnabled() && config.isRaidChannel(channel.getId())){
+                parseRaidChatMsg(author,msg,textChannel);
+            }else if (channel.getId().equals(config.getUserUpdatesId())) {
+                this.parseModMsg(message, textChannel);
+//            }else if(config){
             }else if(channel.getId().equals(config.getCommandChannelId())){
                 this.parseMsg(msg.toLowerCase().trim(), author, textChannel);
             }else if (config.nestsEnabled() && channel.getName().equals(MessageListener.testing ? "nests-testing" : "nests")) {
@@ -421,6 +515,31 @@ public class MessageListener extends ListenerAdapter
             final Group group = event.getGroup();
             final String groupName = (group.getName() != null) ? group.getName() : "";
             novabotLog.log(INFO,String.format("[GRP: %s]<%s>: %s\n", groupName, author.getName(), msg));
+        }
+    }
+
+    private void parseRaidChatMsg(User author, String msg, TextChannel textChannel) {
+        if(!msg.startsWith("!") || author.isBot()) return;
+
+        if(msg.startsWith("!joinraid")){
+            String groupCode = msg.substring(msg.indexOf("raid ") + 5).trim();
+
+            RaidLobby lobby = lobbyManager.getLobby(groupCode);
+
+            if(lobby == null){
+                textChannel.sendMessageFormat("%s sorry, there are no active raid lobbies with the lobby code `%s`",author,groupCode).queue();
+                return;
+            }else{
+                if(lobby.containsUser(author.getId())){
+                    textChannel.sendMessageFormat("%s you are already in that raid lobby!",author).queue();
+                    return;
+                }
+
+                lobby.joinLobby(author.getId());
+                textChannel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
+            }
+
+            return;
         }
     }
 
@@ -720,7 +839,7 @@ public class MessageListener extends ListenerAdapter
             if (isSupporter(userID)) {
                 continue;
             }
-            if (DBManager.countPokemon(userID) > 3) {
+            if (DBManager.countPokemon(userID, config.countLocationsInLimits()) > 3) {
                 final User user = MessageListener.guild.getMemberById(userID).getUser();
                 if (!user.hasPrivateChannel()) {
                     user.openPrivateChannel().complete();
@@ -730,7 +849,7 @@ public class MessageListener extends ListenerAdapter
                 );
                 DBManager.resetUser(userID);
                 MessageListener.roleLog.sendMessage(String.format("%s has lost supporter status with more than 3 pokemon in their settings. Their settings have been reset and they have been PMed", user.getAsMention())).queue();
-            }else if(DBManager.countRaids(userID) > 3) {
+            }else if(DBManager.countRaids(userID, true) > 3) {
                 final User user = MessageListener.guild.getMemberById(userID).getUser();
                 if (!user.hasPrivateChannel()) {
                     user.openPrivateChannel().complete();
@@ -756,7 +875,10 @@ public class MessageListener extends ListenerAdapter
     public static boolean isSupporter(final String userID) {
         final Member member = MessageListener.guild.getMemberById(userID);
 
+        if(member == null || member.getRoles() == null) return false;
+
         for (final Role role : member.getRoles()) {
+            if(role == null) continue;
             if(config.getSupporterRoles().contains(role.getId())) return true;
         }
         return false;
@@ -815,14 +937,20 @@ public class MessageListener extends ListenerAdapter
                 }
 
                 lobby.joinLobby(author.getId());
+
+                for (String channelId : config.getRaidChats(lobby.spawn.getGeofences())) {
+                    guild.getTextChannelById(channelId).sendMessageFormat("%s joined lobby %s and has been placed in %s. There are now %s users in the lobby.",author,lobby.lobbyCode,lobby.getChannel(),lobby.memberCount()).queue();
+                }
                 channel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
             }
+
+            return;
         }
 
         if (msg.equals("!settings")) {
             final UserPref userPref = DBManager.getUserPref(author.getId());
             novabotLog.log(DEBUG,"!settings");
-            if (userPref == null || userPref.isEmpty()) {
+            if (userPref == null || (userPref.isRaidEmpty() && userPref.isPokeEmpty())) {
                 channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
             }
             else {
@@ -839,8 +967,8 @@ public class MessageListener extends ListenerAdapter
         }else if (msg.equals("!pokemonsettings")){
             final UserPref userPref = DBManager.getUserPref(author.getId());
             novabotLog.log(DEBUG,"!pokemonsettings");
-            if (userPref == null || userPref.isEmpty()) {
-                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
+            if (userPref == null || userPref.isPokeEmpty()) {
+                channel.sendMessage(author.getAsMention() + ", you don't have any pokemon notifications set. Add some with the !addpokemon command.").queue();
             }
             else {
                 String toSend = author.getAsMention() + ", you are currently set to receive notifications for:\n\n";
@@ -856,8 +984,8 @@ public class MessageListener extends ListenerAdapter
         }else if(msg.equals("!raidsettings")){
             final UserPref userPref = DBManager.getUserPref(author.getId());
             novabotLog.log(DEBUG,"!raidsettings");
-            if (userPref == null || userPref.isEmpty()) {
-                channel.sendMessage(author.getAsMention() + ", you don't have any notifications set. Add some with the !addpokemon or !addraid commands.").queue();
+            if (userPref == null || userPref.isRaidEmpty()) {
+                channel.sendMessage(author.getAsMention() + ", you don't have any raid notifications set. Add some with the !addraid command.").queue();
             }
             else {
                 String toSend = author.getAsMention() + ", you are currently set to raid receive notifications for:\n\n";
@@ -883,33 +1011,82 @@ public class MessageListener extends ListenerAdapter
             DBManager.resetRaids(author.getId());
             channel.sendMessage(author.getAsMention() + ", your raid notification settings have been reset").queue();
             return;
+//        }else if(msg.equals("!activeraids")){
+//            ArrayList<GeofenceIdentifier> geofences = config.getRaidChatGeofences(channel.getId());
+//
+//            if(geofences.size() > 0 || channel.getType() == ChannelType.PRIVATE){
+//
+//                String noLobbiesMsg = null;
+//
+//                for (GeofenceIdentifier geofence : geofences) {
+//
+//                    ArrayList<RaidLobby> lobbies = lobbyManager.getLobbiesByGeofence(geofence);
+//
+//                    if(lobbies.size() == 0){
+//                        if(noLobbiesMsg == null){
+//                            noLobbiesMsg = String.format("%s, there are no active lobbies in %s", author.getAsMention(),geofence.name);
+//                        }else{
+//                            noLobbiesMsg += String.format(", %s",geofence.name);
+//                        }
+//                        continue;
+//                    }
+//
+//                    channel.sendMessageFormat("%s, there are %s active lobbies in %s",author,lobbies.size(),geofence.name).queue();
+//
+//                    for (RaidLobby lobby : lobbies) {
+//                        channel.sendMessage(lobby.getInfoMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
+//                    }
+//                }
+//
+//                if(noLobbiesMsg != null){
+//                    channel.sendMessage(noLobbiesMsg).queue();
+//                }
+//
+//                return;
+//            }else{
+//                channel.sendMessageFormat(
+//                        "%s, I only accept the `!activeraids` command in PM or the following raid discussion channels:%n%n" +
+//                        "%s",author,config.raidChatsList()).queue();
+//                return;
+//            }
         }
         else if (msg.equals("!help")) {
             channel.sendMessage("My commands are: \n" +
-                    "**Pokemon Commands:**\n" +
-                    "```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
-                    "!addpokemon pokemon\n" +
-                    "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
-                    "!delpokemon pokemon\n" +
-                    "!clearpokemon <pokemon list>\n" +
-                    "!clearpokelocation <location list>\n" +
-                    "!pokemonsettings\n" +
-                    "!resetpokemon```\n" +
-                    "**Raid Commands:**\n" +
-                    "```!addraid pokemon\n" +
-                    "!addraid <pokemon list> <location list>\n" +
-                    "!delraid pokemon\n" +
-                    "!delraid <pokemon list> <location list>\n" +
-                    "!clearraid <pokemon list>\n" +
-                    "!clearraidlocation <location list>\n" +
-                    "!raidsettings\n" +
-                    "!resetraids```" +
-                    "**Other Commands:**\n" +
-                    "!clearlocation <location list>\n" +
-                    "```!pause\n" +
+                    (config.pokemonEnabled() ?
+                            "**Pokemon Commands:**" +
+                            "```!addpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
+                            "!addpokemon pokemon\n" +
+                            "!delpokemon <pokemon list> <miniv,maxiv> <location list>\n" +
+                            "!delpokemon pokemon\n" +
+                            "!clearpokemon <pokemon list>\n" +
+                            "!clearpokelocation <location list>\n" +
+                            "!pokemonsettings\n" +
+                            "!resetpokemon```" : "") +
+                    (config.raidsEnabled() ?
+                            "**Raid Commands:**" +
+                            "```!addraid pokemon\n" +
+                            "!addraid <pokemon list> <location list>\n" +
+                            "!delraid pokemon\n" +
+                            "!delraid <pokemon list> <location list>\n" +
+                            "!clearraid <pokemon list>\n" +
+                            "!clearraidlocation <location list>\n" +
+                            "!raidsettings\n" +
+                            "!resetraids```" : "") +
+                    "**Other Commands:**" +
+                    "```!clearlocation <location list>\n" +
+                    "!pause\n" +
                     "!unpause\n" +
                     (config.statsEnabled() ? "!stats <pokemon list> <integer> <unit of time>\n" : "") +
-                    (config.isRaidOrganisationEnabled() ? "!joinraid <lobby code>\n" : "") +
+                    (config.isRaidOrganisationEnabled()
+                            && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
+                            || channel.getType() == ChannelType.PRIVATE
+                            ? "!joinraid <lobby code>\n"
+                            : "") +
+                    (config.isRaidOrganisationEnabled()
+                            && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
+                            || channel.getType() == ChannelType.PRIVATE
+                            ? "!!activeraids\n"
+                            : "") +
                     "!reset\n" +
                     "!settings\n" +
                     (config.useChannels() ? "!channellist or !channels\n" : "") +
@@ -994,17 +1171,24 @@ public class MessageListener extends ListenerAdapter
                 }
 
                 if(cmdStr.equals("!addraid")){
-                    if (!isSupporter(author.getId()) && DBManager.countRaids(author.getId()) + raids.length > 3) {
-                        channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 raid notifications set up. " +
-                                "What you tried to add would put you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
+                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+
+                    boolean isSupporter = isSupporter(author.getId());
+                    if ((!isSupporter || limit == null) &&
+                            DBManager.countRaids(author.getId(), config.countLocationsInLimits()) + raids.length
+                                    > config.getNonSupporterLimit().raidLimit) {
+                        channel.sendMessageFormat("%s as a non-supporter, you may have a maximum of %s raid notifications set up. " +
+                                "What you tried to add would put you over this limit, please remove some raids with the !delraid command or try adding fewer raids.",
+                                author,config.getNonSupporterLimit().raidLimit).queue();
                         return;
                     }
 
-                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
-                    if(limit.raidLimit != -1 && DBManager.countRaids(author.getId()) + raids.length > limit.raidLimit) {
+                    if(limit != null && limit.raidLimit != -1 && DBManager.countRaids(author.getId(), config.countLocationsInLimits()) + raids.length > limit.raidLimit) {
                         channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s raid notifications set up. " +
-                                "What you tried to add would take you over this limit, please remove some raids with the !delraid command or try adding fewer raids.").queue();
+                                "What you tried to add would take you over this limit, please remove some raids with the !delraid command or try adding fewer raids.",author,limit.raidLimit).queue();
                         return;
+                    }else if(limit == null && isSupporter){
+                        novabotLog.fatal(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(),isSupporter));
                     }
 
                     if(!DBManager.containsUser(author.getId())){
@@ -1071,16 +1255,24 @@ public class MessageListener extends ListenerAdapter
 
                 switch (cmdStr) {
                     case "!addpokemon": {
-                        if (!isSupporter(author.getId()) && DBManager.countPokemon(author.getId()) + pokemons.length > 3) {
-                            channel.sendMessage(author.getAsMention() + " as a non-supporter, you may have a maximum of 3 pokemon notifications set up. What you tried to add would put you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
+                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+
+                        boolean isSupporter = isSupporter(author.getId());
+                        if ((!isSupporter || limit == null)
+                                && DBManager.countPokemon(author.getId(), config.countLocationsInLimits()) + pokemons.length
+                                > config.getNonSupporterLimit().pokemonLimit) {
+                            channel.sendMessageFormat("%s as a non-supporter, you may have a maximum of %s pokemon notifications set up." +
+                                    " What you tried to add would put you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.",
+                                    author,config.getNonSupporterLimit().pokemonLimit).queue();
                             return;
                         }
 
-                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
-                        if(limit.pokemonLimit != -1 && DBManager.countPokemon(author.getId()) + pokemons.length > limit.pokemonLimit) {
+                        if(limit != null && limit.pokemonLimit != -1 && DBManager.countPokemon(author.getId(), config.countLocationsInLimits()) + pokemons.length > limit.pokemonLimit) {
                             channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s pokemon notifications set up. " +
-                                    "What you tried to add would take you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.").queue();
+                                    "What you tried to add would take you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon.",author,limit.pokemonLimit).queue();
                             return;
+                        }else if(limit == null && isSupporter){
+                            novabotLog.fatal(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(),isSupporter));
                         }
 
                         if (!DBManager.containsUser(author.getId())) {

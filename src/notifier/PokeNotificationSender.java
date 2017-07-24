@@ -41,6 +41,11 @@ class PokeNotificationSender implements Runnable
         for (final PokeSpawn pokeSpawn : this.newPokemon) {
             notificationLog.log(INFO,"Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
 
+            if(pokeSpawn.disappearTime.before(DBManager.getCurrentTime())){
+                notificationLog.log(INFO,"Already despawned, skipping");
+                continue;
+            }
+
             if(!testing) {
                 final ArrayList<String> userIDs = DBManager.getUserIDsToNotify(pokeSpawn);
                 if (userIDs.size() == 0) {

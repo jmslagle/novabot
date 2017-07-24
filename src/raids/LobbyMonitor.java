@@ -3,11 +3,11 @@ package raids;
 import core.DBManager;
 import net.dv8tion.jda.core.utils.SimpleLog;
 
-import java.sql.Time;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Timestamp;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
@@ -24,6 +24,11 @@ public class LobbyMonitor implements Runnable {
     public LobbyMonitor(LobbyManager lobbyManager){
         this.lobbyManager = lobbyManager;
         lobbyMonitorLog.setLevel(DEBUG);
+        try {
+            lobbyMonitorLog.addFileLogs(new File("std.log"),new File("err.log"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -38,25 +43,26 @@ public class LobbyMonitor implements Runnable {
             lobbyMonitorLog.log(INFO, String.format("Commencing check for lobby %s", lobby.lobbyCode));
 
             if(lobby.shutDownService == null && lobby.spawn.raidEnd.before(DBManager.getCurrentTime())){
-                lobbyMonitorLog.log(INFO,String.format("Lobby %s's raid has ended and is not already shutting down, ending raid."));
+                lobbyMonitorLog.log(INFO,String.format("Lobby %s's raid has ended and is not already shutting down, ending raid.",lobby.lobbyCode));
                 lobby.end(15);
                 continue;
             }
 
-            long timeLeft = lobby.spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+            double timeLeft = lobby.spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
 
-            long minutes = MILLISECONDS.toMinutes(timeLeft);
+            if(timeLeft < 0 && lobby.nextTimeLeftUpdate <= 0){
+                continue;
+            }
+
+            double minutes = timeLeft / 1000 / 60;
 
             lobbyMonitorLog.log(DEBUG,String.format("%s minutes left until lobby %s ends",minutes,lobby.lobbyCode));
             if(lobby.channelId != null && minutes <= lobby.nextTimeLeftUpdate){
                 lobbyMonitorLog.log(INFO,String.format("Lobby %s is going to end in %s minutes or less. Alerting the lobby.",
                         lobby.lobbyCode,
                         lobby.nextTimeLeftUpdate));
+                lobby.nextTimeLeftUpdate -= 5;
                 lobby.alertRaidNearlyOver();
-
-                while(minutes < lobby.nextTimeLeftUpdate){
-                    lobby.nextTimeLeftUpdate -= 5;
-                }
             }
         }
 

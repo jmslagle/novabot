@@ -10,12 +10,12 @@ class UserNotifier implements Runnable
 {
     private final User user;
     private final Message message;
-    private final boolean raid;
+    private final boolean showTick;
 
-    public UserNotifier(final User user, final Message message, boolean raid) {
+    public UserNotifier(final User user, final Message message, boolean showTick) {
         this.user = user;
         this.message = message;
-        this.raid = raid;
+        this.showTick = showTick;
     }
 
     @Override
@@ -24,7 +24,7 @@ class UserNotifier implements Runnable
             user.openPrivateChannel().complete();
         }
         user.openPrivateChannel().queue(success -> success.sendMessage(message).queue(m -> {
-            if(raid && config.isRaidOrganisationEnabled()){
+            if(showTick && config.isRaidOrganisationEnabled()){
                 m.addReaction(WHITE_GREEN_CHECK).queue();
             }
         }));

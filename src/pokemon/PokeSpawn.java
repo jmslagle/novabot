@@ -32,7 +32,7 @@ public class PokeSpawn
     public FeedChannel feedChannel;
     private int level;
     private String imageUrl;
-    private Timestamp disappearTime;
+    public Timestamp disappearTime;
     private double lat;
     private double lon;
     private float weight;
@@ -53,7 +53,7 @@ public class PokeSpawn
     private static int lastKey;
     private int cp;
 
-    private HashMap<String,String> pokeProperties = new HashMap<>();
+    public HashMap<String,String> pokeProperties = new HashMap<>();
 
     public static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
 

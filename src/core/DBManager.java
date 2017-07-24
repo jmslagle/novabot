@@ -3,13 +3,20 @@ package core;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import maps.GeocodedLocation;
+import net.dv8tion.jda.core.AccountType;
+import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import pokemon.PokeMove;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
 import raids.Raid;
+import raids.RaidLobby;
 import raids.RaidSpawn;
 
+import javax.security.auth.login.LoginException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,8 +27,7 @@ import static core.FeedChannels.loadChannels;
 import static core.MessageListener.*;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.*;
 
-public class DBManager
-{
+public class DBManager {
     private static final MysqlDataSource rocketmapDataSource = new MysqlDataSource();
     private static final MysqlDataSource novabotDataSource = new MysqlDataSource();
     private static Timestamp lastChecked = getCurrentTime();
@@ -29,7 +35,7 @@ public class DBManager
 
     private static RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
-    private static HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
+    public static HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
 
     static SimpleLog dbLog = SimpleLog.getLog("DB");
     private static String blacklistQMarks;
@@ -37,6 +43,7 @@ public class DBManager
     public static void main(final String[] args) {
 //        MessageListener.main(null);
 
+        testing = true;
 
         dbLog.setLevel(DEBUG);
 
@@ -46,17 +53,36 @@ public class DBManager
 
         novabotdbConnect();
 
+        try {
+            jda = new JDABuilder(AccountType.BOT)
+                    .setAutoReconnect(true)
+                    .setGame(Game.of("Pokemon Go"))
+                    .setToken(config.getToken())
+                    .buildBlocking();
+        } catch (LoginException | InterruptedException | RateLimitedException e) {
+            e.printStackTrace();
+        }
+
+        for (Guild guild1 : jda.getGuilds()) {
+            guild = guild1;
+        }
+
         RaidSpawn spawn = new RaidSpawn("gym",
-                "123",-35.265134,149.122796,
+                "12345", -35.265134, 149.122796,
                 new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
                 new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-                123,
+                248,
                 11003,
                 "fire",
                 "fire blast",
-                2);
+                4);
 
-        System.out.println(getUserIDsToNotify(spawn));
+        knownRaids.put(spawn.gymId, spawn);
+
+        getActiveLobbies();
+
+
+//        System.out.println(getUserIDsToNotify(spawn));
 //        PokeSpawn pokeSpawn = new PokeSpawn(147,FeedChannels.fromString("dratinicandy"),"turner",58,"dragon tail","outrage",null,2413);
 //
 //        System.out.println(pokeSpawn);
@@ -69,44 +95,43 @@ public class DBManager
     public static void novabotdbConnect() {
         DBManager.novabotDataSource.setUser(config.getNbUser());
         DBManager.novabotDataSource.setPassword(config.getNbPass());
-        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s",   config.getNbIp(),config.getNbPort(),config.getNbDbName()));
+        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getNbIp(), config.getNbPort(), config.getNbDbName()));
         DBManager.novabotDataSource.setDatabaseName(config.getNbDbName());
     }
 
     public static void rocketmapdbConnect() {
         DBManager.rocketmapDataSource.setUser(config.getRmUser());
         DBManager.rocketmapDataSource.setPassword(config.getRmPass());
-        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getRmIp(),config.getRmPort(),config.getRmDbName()));
+        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", config.getRmIp(), config.getRmPort(), config.getRmDbName()));
         DBManager.rocketmapDataSource.setDatabaseName(config.getRmDbName());
     }
 
     private static Connection getConnection(final MysqlDataSource dataSource) {
         try {
             return dataSource.getConnection();
-        }
-        catch (SQLException e) {
-            dbLog.log(SimpleLog.Level.WARNING,"Conn is null, something fukedup");
+        } catch (SQLException e) {
+            dbLog.log(SimpleLog.Level.WARNING, "Conn is null, something fukedup");
             e.printStackTrace();
             return null;
         }
     }
 
-    public static ArrayList<RaidSpawn> getCurrentRaids(){
-        dbLog.log(INFO,"Checking which known gyms need to be updated");
+    public static ArrayList<RaidSpawn> getCurrentRaids() {
+        dbLog.log(INFO, "Checking which known gyms need to be updated");
 
         checkKnownRaids();
 
-        dbLog.log(INFO,"Done");
+        dbLog.log(INFO, "Done");
 //        dbLog.log(DEBUG,knownRaids);
 
-        dbLog.log(INFO,"Getting new raid eggs");
+        dbLog.log(INFO, "Getting new raid eggs");
 
         ArrayList<RaidSpawn> raidEggs = new ArrayList<>();
 
 
         String knownIdQMarks = "";
 
-        if(knownRaids.size() > 0) {
+        if (knownRaids.size() > 0) {
             knownIdQMarks += "gym.gym_id NOT IN (";
             for (int i = 0; i < knownRaids.size(); ++i) {
                 knownIdQMarks += "?";
@@ -121,39 +146,38 @@ public class DBManager
 
         knownRaids.keySet().forEach(knownIds::add);
 
-        if(knownRaids.containsKey(null)){
+        if (knownRaids.containsKey(null)) {
             System.out.println("NULL, OH NO KNOWNRAIDS CONTAINS NULL? WHY???");
             System.out.println(knownRaids.get(null));
         }
 
         try (Connection connection = getConnection(rocketmapDataSource);
              PreparedStatement statement = connection.prepareStatement("" +
-                     "SELECT" +
-                     "  `gymdetails`.name," +
-                     "  `gymdetails`.gym_id," +
-                     "  `gym`.latitude," +
-                     "  `gym`.longitude," +
-                     "  (CONVERT_TZ(`raidinfo`.raid_end_ms, 'UTC', '"+config.getTimeZone()+"')) AS end," +
-                     "  (CONVERT_TZ(`raidinfo`.raid_battle_ms, 'UTC', '"+config.getTimeZone()+"')) AS battle," +
-                     "  `raidinfo`.pokemon_id," +
-                     "  `raidinfo`.cp, " +
-                     "  `raidinfo`.raid_level, " +
-                     "  `raidinfo`.move_1, " +
-                     "  `raidinfo`.move_2 " +
-                     "FROM `gym`" +
-                     "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
-                     "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
-                     "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(CONVERT_TZ(NOW(), 'Australia/Canberra', 'UTC'),INTERVAL 1 MINUTE)"
+                             "SELECT" +
+                             "  `gymdetails`.name," +
+                             "  `gymdetails`.gym_id," +
+                             "  `gym`.latitude," +
+                             "  `gym`.longitude," +
+                             "  (CONVERT_TZ(`raidinfo`.raid_end_ms, 'UTC', '" + config.getTimeZone() + "')) AS end," +
+                             "  (CONVERT_TZ(`raidinfo`.raid_battle_ms, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
+                             "  `raidinfo`.pokemon_id," +
+                             "  `raidinfo`.cp, " +
+                             "  `raidinfo`.raid_level, " +
+                             "  `raidinfo`.move_1, " +
+                             "  `raidinfo`.move_2 " +
+                             "FROM `gym`" +
+                             "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
+                             "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
+                             "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(CONVERT_TZ(NOW(), 'Australia/Canberra', 'UTC'),INTERVAL 1 MINUTE)"
 //                     "WHERE gym.last_scanned > ?" +
 //                     "      AND raid_end_ms > CONVERT_TZ(NOW(),'"+config.getTimeZone()+"','UTC')"
              )
-        )
-        {
+        ) {
             for (int i = 0; i < knownRaids.size(); i++) {
-                statement.setString(i+1,knownIds.get(i));
+                statement.setString(i + 1, knownIds.get(i));
             }
 
-            dbLog.log(INFO,"Executing query:");
+            dbLog.log(INFO, "Executing query:");
 //            dbLog.log(DEBUG,statement);
             final ResultSet rs = statement.executeQuery();
             dbLog.log(INFO, "Query complete");
@@ -171,20 +195,19 @@ public class DBManager
                 String move_1 = PokeMove.idToName(rs.getInt(10));
                 String move_2 = PokeMove.idToName(rs.getInt(11));
 
-                RaidSpawn raidSpawn = new RaidSpawn(name,gymId,lat,lon,raidEnd,battleStart,bossId,bossCp,move_1,move_2,raidLevel);
+                RaidSpawn raidSpawn = new RaidSpawn(name, gymId, lat, lon, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
 
-                dbLog.log(DEBUG,raidSpawn);
+                dbLog.log(DEBUG, raidSpawn);
 
-                knownRaids.put(gymId,raidSpawn);
+                knownRaids.put(gymId, raidSpawn);
 
                 raidEggs.add(raidSpawn);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         DBManager.lastCheckedRaids = getCurrentTime();
-        dbLog.log(INFO,"Found: " + raidEggs.size());
+        dbLog.log(INFO, "Found: " + raidEggs.size());
 
         return raidEggs;
     }
@@ -194,14 +217,14 @@ public class DBManager
         ArrayList<String> toRemove = new ArrayList<>();
 
         knownRaids.forEach((gymId, raid) -> {
-            if(lastCheckedRaids.after(raid.battleStart) && raid.bossId == 0){
+            if (lastCheckedRaids.after(raid.battleStart) && raid.bossId == 0) {
                 dbLog.log(DEBUG, String.format("%s egg has hatched, removing from known raids so we can find out boss pokemon", gymId));
                 toRemove.add(gymId);
                 dbLog.log(DEBUG, "Queued for removal " + raid);
             }
 
-            if(lastCheckedRaids.after(raid.raidEnd)){
-                dbLog.log(DEBUG, String.format("%s raid has ended, removing from known raids so we can find new raids on this gym",gymId));
+            if (lastCheckedRaids.after(raid.raidEnd)) {
+                dbLog.log(DEBUG, String.format("%s raid has ended, removing from known raids so we can find new raids on this gym", gymId));
                 toRemove.add(gymId);
                 dbLog.log(DEBUG, "Queued for removal " + raid);
             }
@@ -209,15 +232,15 @@ public class DBManager
 
         toRemove.forEach(knownRaids::remove);
 
-        dbLog.log(DEBUG,"Removed all queued gyms");
+        dbLog.log(DEBUG, "Removed all queued gyms");
     }
 
     public static ArrayList<PokeSpawn> getNewPokemon() {
-        dbLog.log(INFO,"Getting new pokemon");
+        dbLog.log(INFO, "Getting new pokemon");
 
         final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
 
-        if(blacklistQMarks == null) {
+        if (blacklistQMarks == null) {
             blacklistQMarks = "(";
             for (int i = 0; i < config.getBlacklist().size(); ++i) {
                 blacklistQMarks += "?";
@@ -229,33 +252,32 @@ public class DBManager
         }
 
         try (Connection connection = getConnection(rocketmapDataSource);
-            PreparedStatement statement = connection.prepareStatement("" +
-                    "SELECT pokemon_id," +
-                    "       latitude," +
-                    "       longitude," +
-                    "       (CONVERT_TZ(disappear_time,'UTC','"+config.getTimeZone()+"'))," +
-                    "       individual_attack, " +
-                    "       individual_defense," +
-                    "       individual_stamina," +
-                    "       move_1," +
-                    "       move_2," +
-                    "       weight," +
-                    "       height," +
-                    "       gender," +
-                    "       form," +
-                    "       cp, " +
-                    "       cp_multiplier " +
-                    "FROM pokemon " +
-                    "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'"+config.getTimeZone()+"','UTC'),INTERVAL 1 SECOND)");)
-        {
+             PreparedStatement statement = connection.prepareStatement("" +
+                     "SELECT pokemon_id," +
+                     "       latitude," +
+                     "       longitude," +
+                     "       (CONVERT_TZ(disappear_time,'UTC','" + config.getTimeZone() + "'))," +
+                     "       individual_attack, " +
+                     "       individual_defense," +
+                     "       individual_stamina," +
+                     "       move_1," +
+                     "       move_2," +
+                     "       weight," +
+                     "       height," +
+                     "       gender," +
+                     "       form," +
+                     "       cp, " +
+                     "       cp_multiplier " +
+                     "FROM pokemon " +
+                     "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'" + config.getTimeZone() + "','UTC'),INTERVAL 1 SECOND)");) {
             for (int i = 1; i <= config.getBlacklist().size(); ++i) {
                 statement.setString(i, String.valueOf(config.getBlacklist().get(i - 1)));
             }
             statement.setTimestamp(config.getBlacklist().size() + 1, DBManager.lastChecked);
-            dbLog.log(INFO,"Executing query:");
+            dbLog.log(INFO, "Executing query:");
             final ResultSet rs = statement.executeQuery();
-            dbLog.log(DEBUG,statement);
-            dbLog.log(INFO,"Query complete");
+            dbLog.log(DEBUG, statement);
+            dbLog.log(INFO, "Query complete");
             while (rs.next()) {
                 final int id = rs.getInt(1);
                 final double lat = rs.getDouble(2);
@@ -273,35 +295,32 @@ public class DBManager
                 final int cp = rs.getInt(14);
                 final double cpMod = rs.getDouble(15);
                 try {
-                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp,cpMod);
-                    dbLog.log(INFO,pokeSpawn.toString());
-                    dbLog.log(INFO,pokeSpawn.hashCode());
+                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, remainingTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp, cpMod);
+                    dbLog.log(INFO, pokeSpawn.toString());
+                    dbLog.log(INFO, pokeSpawn.hashCode());
 
-                    if(!hashCodes.contains(pokeSpawn.hashCode())) {
-                        dbLog.log(DEBUG,"new pokemon, adding to list");
+                    if (!hashCodes.contains(pokeSpawn.hashCode())) {
+                        dbLog.log(DEBUG, "new pokemon, adding to list");
                         hashCodes.add(pokeSpawn.hashCode());
                         pokeSpawns.add(pokeSpawn);
-                    }else{
-                        dbLog.log(DEBUG,"pokemon already seen, ignoring");
+                    } else {
+                        dbLog.log(DEBUG, "pokemon already seen, ignoring");
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         DBManager.lastChecked = getCurrentTime();
-        dbLog.log(INFO,"Found: " + pokeSpawns.size());
+        dbLog.log(INFO, "Found: " + pokeSpawns.size());
         return pokeSpawns;
     }
 
     public static boolean containsUser(final String userID) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT * FROM users WHERE id = %s;", "'" + userID + "'"));
             final ResultSet rs = statement.getResultSet();
             if (!rs.next()) {
@@ -309,8 +328,7 @@ public class DBManager
                 statement.close();
                 return false;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return true;
@@ -319,15 +337,13 @@ public class DBManager
     public static Timestamp getJoinDate(final String userID) {
         Timestamp timestamp = null;
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT joindate FROM users WHERE id=%s;", userID));
             final ResultSet rs = statement.getResultSet();
             if (rs.next()) {
                 timestamp = rs.getTimestamp(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return timestamp;
@@ -335,15 +351,13 @@ public class DBManager
 
     public static void logNewUser(final String userID) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             final Date date = new Date();
             final Timestamp timestamp = new Timestamp(date.getTime());
             statement.executeUpdate(String.format("INSERT INTO users (id,joindate) VALUES ('%s','%s');", userID, timestamp));
-        }catch (MySQLIntegrityConstraintViolationException e){
-            dbLog.log(DEBUG,"Tried to add a duplicate user");
-        }
-        catch (SQLException e) {
+        } catch (MySQLIntegrityConstraintViolationException e) {
+            dbLog.log(DEBUG, "Tried to add a duplicate user");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -351,8 +365,7 @@ public class DBManager
     public static boolean shouldNotify(final String userID, final PokeSpawn pokeSpawn) {
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT * FROM pokemon WHERE ((user_id=%s) AND ((location=%s) OR (location='All')) AND (id=%s) AND (min_iv <= %s) AND (max_iv >= %s));", "'" + userID + "'", "'" + pokeSpawn.region + "'", pokeSpawn.id, pokeSpawn.iv, pokeSpawn.iv));
             final ResultSet rs = statement.getResultSet();
             if (!rs.next()) {
@@ -360,8 +373,7 @@ public class DBManager
                 statement.close();
                 return false;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return true;
@@ -369,33 +381,27 @@ public class DBManager
 
     public static void addUser(final String userID) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("INSERT INTO users (id) VALUES (%s);", "'" + userID + "'"));
-        }
-        catch (MySQLIntegrityConstraintViolationException e3) {
-            dbLog.log(WARNING,"Cannot add duplicate");
-        }
-        catch (SQLException e) {
+        } catch (MySQLIntegrityConstraintViolationException e3) {
+            dbLog.log(WARNING, "Cannot add duplicate");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public static void addRaid(final String userID, final Raid raid) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement =connection.prepareStatement("INSERT INTO raid VALUES (?,?,?)"))
-        {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO raid VALUES (?,?,?)")) {
             statement.setString(1, userID);
             statement.setDouble(2, raid.bossId);
             statement.setString(3, raid.location.toDbString());
 
-            dbLog.log(DEBUG,statement);
+            dbLog.log(DEBUG, statement);
             statement.executeUpdate();
-        }
-        catch (MySQLIntegrityConstraintViolationException e) {
-            dbLog.log(SimpleLog.Level.WARNING,e.getMessage());
-        }
-        catch (SQLException e2) {
+        } catch (MySQLIntegrityConstraintViolationException e) {
+            dbLog.log(SimpleLog.Level.WARNING, e.getMessage());
+        } catch (SQLException e2) {
             e2.printStackTrace();
         }
     }
@@ -407,14 +413,12 @@ public class DBManager
                      "WHERE ((user_id=?) " +
                      "AND (boss_id=?) " +
                      "AND (LOWER(location)=LOWER(?)))")
-        )
-        {
+        ) {
             statement.setString(1, userID);
             statement.setDouble(2, raid.bossId);
             statement.setString(3, raid.location.toDbString());
             statement.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -431,11 +435,9 @@ public class DBManager
         idsString += ")";
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement   statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND boss_id IN %s;", "'" + id + "'", idsString));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -452,57 +454,53 @@ public class DBManager
                 geofenceQMarks += ",";
             }
         }
-        if(geofences > 0) geofenceQMarks += ",";
+        if (geofences > 0) geofenceQMarks += ",";
 
         String sql = String.format(
-                    "SELECT DISTINCT(user_id) " +
-                            "FROM raid " +
-                            "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
-                            "AND LOWER(location) IN (%s?,'all') " +
-                            "AND boss_id=?;",geofenceQMarks
-            );
+                "SELECT DISTINCT(user_id) " +
+                        "FROM raid " +
+                        "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
+                        "AND LOWER(location) IN (%s?,'all') " +
+                        "AND boss_id=?;", geofenceQMarks
+        );
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(sql)
-        )
-        {
+        ) {
             for (int i = 0; i < geofences; i++) {
-                statement.setString(i+1,raidSpawn.getGeofenceIds().get(i).name.toLowerCase());
+                statement.setString(i + 1, raidSpawn.getGeofenceIds().get(i).name.toLowerCase());
             }
 
+//            statement.setString(geofences + 1, raidSpawn.properties.get("sublocality").toLowerCase());
             statement.setString(geofences + 1, raidSpawn.getSuburb().toLowerCase());
             statement.setInt(geofences + 2, raidSpawn.bossId);
-            dbLog.log(DEBUG,statement);
+            dbLog.log(DEBUG, statement);
             final ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 ids.add(rs.getString(1));
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        dbLog.log(DEBUG,"Found " + ids.size() + " to notify");
+        dbLog.log(DEBUG, "Found " + ids.size() + " to notify");
         return ids;
     }
 
     public static void addPokemon(final String userID, final Pokemon pokemon) {
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement =connection.prepareStatement("INSERT INTO pokemon VALUES (?,?,?,?,?)"))
-        {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO pokemon VALUES (?,?,?,?,?)")) {
             statement.setString(1, userID);
             statement.setInt(2, pokemon.getID());
             statement.setString(3, pokemon.getLocation().toDbString());
             statement.setDouble(4, pokemon.maxiv);
             statement.setDouble(5, pokemon.miniv);
 
-            dbLog.log(DEBUG,statement);
+            dbLog.log(DEBUG, statement);
             statement.executeUpdate();
-        }
-        catch (MySQLIntegrityConstraintViolationException e) {
-            dbLog.log(SimpleLog.Level.WARNING,e.getMessage());
-        }
-        catch (SQLException e2) {
+        } catch (MySQLIntegrityConstraintViolationException e) {
+            dbLog.log(SimpleLog.Level.WARNING, e.getMessage());
+        } catch (SQLException e2) {
             e2.printStackTrace();
         }
     }
@@ -516,16 +514,14 @@ public class DBManager
                      "AND (LOWER(location)=LOWER(?)) " +
                      "AND (id=?) " +
                      "AND (min_iv=?) " +
-                     "AND (max_iv=?))"))
-        {
+                     "AND (max_iv=?))")) {
             statement.setString(1, userID);
             statement.setString(2, (pokemon.getLocation().toString() == null) ? "All" : pokemon.getLocation().toString());
             statement.setDouble(3, pokemon.getID());
             statement.setDouble(4, pokemon.miniv);
             statement.setDouble(5, pokemon.maxiv);
             statement.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -542,11 +538,9 @@ public class DBManager
         idsString += ")";
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement   statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -558,22 +552,18 @@ public class DBManager
 
     public static void resetRaids(String id) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id = %s;", id));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public static void resetPokemon(String id) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id = %s;", id));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -590,11 +580,11 @@ public class DBManager
                 geofenceQMarks += ",";
             }
         }
-        if(geofences > 0) geofenceQMarks += ",";
+        if (geofences > 0) geofenceQMarks += ",";
 
         String sql;
 
-        if(pokeSpawn.feedChannel == null){
+        if (pokeSpawn.feedChannel == null) {
             sql = String.format(
                     "SELECT DISTINCT(user_id) " +
                             "FROM pokemon " +
@@ -602,9 +592,9 @@ public class DBManager
                             "AND ((LOWER(location) IN (%s?,'all')) " +
                             "AND (id=? OR id=?) " +
                             "AND (min_iv <= ?) " +
-                            "AND (max_iv >= ?));",geofenceQMarks
+                            "AND (max_iv >= ?));", geofenceQMarks
             );
-        }else{
+        } else {
             sql = String.format(
                     "SELECT DISTINCT(user_id) " +
                             "FROM pokemon " +
@@ -612,38 +602,37 @@ public class DBManager
                             "AND ((LOWER(location) IN (%s?,?,'all')) " +
                             "AND (id=? OR id=?) " +
                             "AND (min_iv <= ?) " +
-                            "AND (max_iv >= ?));",geofenceQMarks
+                            "AND (max_iv >= ?));", geofenceQMarks
             );
         }
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(sql)
-            )
-        {
+        ) {
             for (int i = 0; i < geofences; i++) {
-                statement.setString(i+1,pokeSpawn.getGeofenceIds().get(i).name.toLowerCase());
+                statement.setString(i + 1, pokeSpawn.getGeofenceIds().get(i).name.toLowerCase());
             }
 
-            if(pokeSpawn.feedChannel != null){
-                statement.setString(geofences + 1,pokeSpawn.feedChannel.getName().toLowerCase());
+            if (pokeSpawn.feedChannel != null) {
+                statement.setString(geofences + 1, pokeSpawn.feedChannel.getName().toLowerCase());
                 geofences++;
             }
 
             statement.setString(geofences + 1, pokeSpawn.getSuburb().toLowerCase());
+//            statement.setString(geofences + 1, pokeSpawn.pokeProperties.get("sublocality").toLowerCase());
             statement.setInt(geofences + 2, pokeSpawn.id);
             statement.setInt(geofences + 3, (pokeSpawn.form != null) ? 201 : pokeSpawn.id);
             statement.setDouble(geofences + 4, pokeSpawn.iv);
             statement.setDouble(geofences + 5, pokeSpawn.iv);
-            dbLog.log(DEBUG,statement);
+            dbLog.log(DEBUG, statement);
             final ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 ids.add(rs.getString(1));
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        dbLog.log(DEBUG,"Found " + ids.size() + " to notify");
+        dbLog.log(DEBUG, "Found " + ids.size() + " to notify");
         return ids;
     }
 
@@ -651,14 +640,13 @@ public class DBManager
         final UserPref userPref = new UserPref(isSupporter(id));
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT id,location,max_iv,min_iv FROM pokemon WHERE user_id=%s", "'" + id + "'"));
             ResultSet rs = statement.getResultSet();
 
             while (rs.next()) {
                 final int pokemon_id = rs.getInt(1);
-                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(),isSupporter(id));
+                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(), isSupporter(id));
                 final float max_iv = rs.getFloat(3);
                 final float min_iv = rs.getFloat(4);
                 userPref.addPokemon(new Pokemon(pokemon_id, location, min_iv, max_iv));
@@ -670,47 +658,61 @@ public class DBManager
 
             while (rs.next()) {
                 final int bossId = rs.getInt(1);
-                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(),isSupporter(id));
+                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(), isSupporter(id));
                 userPref.addRaid(new Raid(bossId, location));
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return userPref;
     }
 
-    public static int countRaids(final String id) {
+    public static int countRaids(final String id, boolean countLocations) {
         int raids = 0;
 
+        String sql;
+
+        if(countLocations){
+            sql = "SELECT count(boss_id) FROM raid WHERE user_id=?";
+        }else{
+            sql = "SELECT count(distinct(boss_id)) FROM raid WHERE user_id=?";
+        }
+
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement =  connection.createStatement())
-        {
-            statement.executeQuery(String.format("SELECT count(boss_id) FROM raid WHERE user_id='%s';",id));
-            final ResultSet rs = statement.getResultSet();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1,id);
+            final ResultSet rs = statement.executeQuery();
             if (rs.next()) {
                 raids = rs.getInt(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return raids;
     }
 
-    public static int countPokemon(final String id) {
+    public static int countPokemon(final String id, boolean countLocations) {
         int pokemon = 0;
 
+        String sql;
+
+        if(countLocations){
+            sql = "SELECT count(id) FROM pokemon WHERE user_id=?";
+        }else{
+            sql = "SELECT count(distinct(id)) FROM pokemon WHERE user_id=?";
+        }
+
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement =  connection.createStatement())
-        {
-            statement.executeQuery(String.format("SELECT count(id) FROM pokemon WHERE user_id=%s;", "'" + id + "'"));
-            final ResultSet rs = statement.getResultSet();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1,id);
+
+            final ResultSet rs = statement.executeQuery();
             if (rs.next()) {
                 pokemon = rs.getInt(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return pokemon;
@@ -718,7 +720,7 @@ public class DBManager
 
     public static Timestamp getCurrentTime() {
 
-        if(MessageListener.config == null) MessageListener.loadConfig();
+        if (config == null) loadConfig();
 
         TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
@@ -727,14 +729,13 @@ public class DBManager
 
     public static void setGeocodedLocation(final double lat, final double lon, GeocodedLocation location) {
 
-        dbLog.log(INFO,"inserting location");
-        dbLog.log(INFO,location.getProperties());
+        dbLog.log(INFO, "inserting location");
+        dbLog.log(INFO, location.getProperties());
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement("" +
                      "INSERT INTO geocoding " +
-                     "VALUES (?,?,?,?,?,?,?,?,?,?)"))
-        {
+                     "VALUES (?,?,?,?,?,?,?,?,?,?)")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             statement.setString(3, location.getProperties().get("city"));
@@ -760,8 +761,7 @@ public class DBManager
              PreparedStatement statement = connection.prepareStatement("" +
                      "SELECT suburb,street_num,street,state,postal,neighbourhood,sublocality,country " +
                      "FROM geocoding " +
-                     "WHERE lat = ? AND lon = ?"))
-        {
+                     "WHERE lat = ? AND lon = ?")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             final ResultSet rs = statement.executeQuery();
@@ -770,28 +770,28 @@ public class DBManager
                 geocodedLocation = new GeocodedLocation();
 
                 String city = rs.getString(1);
-                geocodedLocation.set("city",city);
+                geocodedLocation.set("city", city);
 
                 String streetNum = rs.getString(2);
-                geocodedLocation.set("street_num",streetNum);
+                geocodedLocation.set("street_num", streetNum);
 
                 String street = rs.getString(3);
-                geocodedLocation.set("street",street);
+                geocodedLocation.set("street", street);
 
                 String state = rs.getString(4);
-                geocodedLocation.set("state",state);
+                geocodedLocation.set("state", state);
 
                 String postal = rs.getString(5);
-                geocodedLocation.set("postal",postal);
+                geocodedLocation.set("postal", postal);
 
                 String neighbourhood = rs.getString(6);
-                geocodedLocation.set("neighbourhood",neighbourhood);
+                geocodedLocation.set("neighbourhood", neighbourhood);
 
                 String sublocality = rs.getString(7);
-                geocodedLocation.set("sublocality",sublocality);
+                geocodedLocation.set("sublocality", sublocality);
 
                 String country = rs.getString(8);
-                geocodedLocation.set("country",country);
+                geocodedLocation.set("country", country);
 
             }
         } catch (SQLException e) {
@@ -805,8 +805,7 @@ public class DBManager
         String suburb = null;
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement = connection.prepareStatement("SELECT suburb FROM geocoding WHERE lat = ? AND lon = ?"))
-        {
+             PreparedStatement statement = connection.prepareStatement("SELECT suburb FROM geocoding WHERE lat = ? AND lon = ?")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             final ResultSet rs = statement.executeQuery();
@@ -822,14 +821,12 @@ public class DBManager
 
     public static void setSuburb(final double lat, final double lon, final String suburb) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO geocoding VALUES (?,?,?)"))
-        {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO geocoding VALUES (?,?,?)")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
             statement.setString(3, suburb);
             statement.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -840,19 +837,16 @@ public class DBManager
         for (int i = 0; i < locations.length; ++i) {
             if (i == locations.length - 1) {
                 locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "'";
-            }
-            else {
+            } else {
                 locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "',";
             }
         }
         locationsString += ")";
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -862,46 +856,41 @@ public class DBManager
         for (int i = 0; i < locations.length; ++i) {
             if (i == locations.length - 1) {
                 locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "'";
-            }
-            else {
+            } else {
                 locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "',";
             }
         }
         locationsString += ")";
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement())
-        {
+             Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
 
-    public static int countSpawns(int id, TimeUnit intervalType, int intervalLength){
+    public static int countSpawns(int id, TimeUnit intervalType, int intervalLength) {
         int numSpawns = 0;
 
         try (Connection connection = getConnection(DBManager.rocketmapDataSource);
              PreparedStatement statement = connection.prepareStatement(
-                 "SELECT COUNT(*) " +
-                     "FROM pokemon " +
-                     "WHERE pokemon_id = ? AND disappear_time > CONVERT_TZ(NOW() - INTERVAL ? "+intervalType.toDbString() + ",?,'UTC')"))
-        {
+                     "SELECT COUNT(*) " +
+                             "FROM pokemon " +
+                             "WHERE pokemon_id = ? AND disappear_time > CONVERT_TZ(NOW() - INTERVAL ? " + intervalType.toDbString() + ",?,'UTC')")) {
             statement.setInt(1, id);
             statement.setDouble(2, intervalLength);
-            statement.setString(3,config.getTimeZone());
-            dbLog.log(DEBUG,statement);
+            statement.setString(3, config.getTimeZone());
+            dbLog.log(DEBUG, statement);
             statement.executeQuery();
 
             ResultSet rs = statement.getResultSet();
 
-            if(rs.next()){
+            if (rs.next()) {
                 numSpawns = rs.getInt(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -912,12 +901,10 @@ public class DBManager
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(
                      "UPDATE users SET paused = TRUE WHERE id = ?")
-            )
-        {
-            statement.setString(1,id);
+        ) {
+            statement.setString(1, id);
             statement.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -926,14 +913,116 @@ public class DBManager
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(
                      "UPDATE users SET paused = FALSE WHERE id = ?")
-        )
-        {
-            statement.setString(1,id);
+        ) {
+            statement.setString(1, id);
             statement.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    public static void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate) {
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO raidlobby (lobby_id, gym_id, members, channel_id, role_id, next_timeleft_update) VALUES (?,?,?,?,?,?)")
+        ) {
+            statement.setInt(1, Integer.parseInt(lobbyCode));
+            statement.setString(2, gymId);
+            statement.setInt(3, memberCount);
+            statement.setString(4, channelId);
+            statement.setString(5, roleId);
+            statement.setInt(6, (int) nextTimeLeftUpdate);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate) {
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE raidlobby SET members = ?, next_timeleft_update = ? WHERE lobby_id = ?")
+        ) {
+            statement.setInt(1, memberCount);
+            statement.setInt(2, nextTimeLeftUpdate);
+            statement.setInt(3, Integer.parseInt(lobbyCode));
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void endLobby(String lobbyCode) {
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "DELETE FROM raidlobby WHERE lobby_id = ?")
+        ) {
+            statement.setInt(1, Integer.parseInt(lobbyCode));
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static ArrayList<RaidLobby> getActiveLobbies() {
+        ArrayList<RaidLobby> activeLobbies = new ArrayList<>();
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT lobby_id,gym_id,channel_id,role_id,next_timeleft_update FROM raidlobby;")
+        ) {
+
+            ResultSet rs = statement.executeQuery();
+
+
+            while (rs.next()) {
+                String lobbyCode = String.format("%04d", rs.getInt(1));
+                String gymId = rs.getString(2);
+                String channelId = rs.getString(3);
+                String roleId = rs.getString(4);
+                int nextTimeLeftUpdate = rs.getInt(5);
+
+                dbLog.log(INFO,String.format("Found lobby with info %s,%s,%s,%s in the db, checking for known raid",lobbyCode,gymId,channelId,roleId));
+
+                RaidSpawn spawn = knownRaids.get(gymId);
+
+                if (spawn == null) {
+                    dbLog.log(WARNING, String.format("Couldn't find a known raid for gym id %s which was found as an active raid lobby", gymId));
+                } else {
+                    dbLog.log(INFO, String.format("Found a raid for gym id %s, lobby code %s",gymId,lobbyCode));
+                    RaidLobby lobby = new RaidLobby(spawn, lobbyCode, channelId, roleId);
+                    lobby.nextTimeLeftUpdate = nextTimeLeftUpdate;
+                    lobby.loadMembers();
+
+                    activeLobbies.add(lobby);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return activeLobbies;
+    }
+
+    public static int highestRaidLobbyId() {
+
+        int highest = 0;
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT MAX(lobby_id) FROM raidlobby;")
+        ) {
+
+            ResultSet rs = statement.executeQuery();
+
+            if (rs.next()) {
+                highest = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return highest;
+    }
 }

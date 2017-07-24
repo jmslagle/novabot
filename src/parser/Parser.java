@@ -207,25 +207,30 @@ public class Parser
             else {
                 args.clear();
                 malformed.clear();
-                if (args.size() == 1 || args.size() == 2) {
+                if (strings.length == 1 || strings.length == 2) {
                     for (int i = 0; i < strings.length; ++i) {
-                        args.add(getFloat(strings[i].trim()));
+                        args.add(getInt(strings[i].trim()));
                     }
                     if (!allNull(new ArrayList[]{args})) {
-                        argument.setType(ArgType.Float);
-                    }
-                    else {
-                        malformed.clear();
+                        argument.setType(ArgType.Int);
+                    }else{
                         for (int i = 0; i < strings.length; ++i) {
-                            NestStatus status = NestStatus.fromString(strings[i].trim());
-                            args.add(status);
-                            if (status == null) {
-                                malformed.add(strings[i].trim());
-                            }
+                            args.add(getFloat(strings[i].trim()));
                         }
-                        if (!allNull(args.toArray())) {
-                            argument.setType(ArgType.Status);
+                        if (!allNull(new ArrayList[]{args})) {
+                            argument.setType(ArgType.Float);
                         }
+                    }
+                }else{
+                    for (int i = 0; i < strings.length; ++i) {
+                        NestStatus status = NestStatus.fromString(strings[i].trim());
+                        args.add(status);
+                        if (status == null) {
+                            malformed.add(strings[i].trim());
+                        }
+                    }
+                    if (!allNull(args.toArray())) {
+                        argument.setType(ArgType.Status);
                     }
                 }
             }
@@ -267,7 +272,7 @@ public class Parser
 
         MessageListener.loadSuburbs();
         System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!clearraidlocation phillip",true);
+        UserCommand command = parseInput("!addpokemon chikorita riverland",true);
         command.buildPokemon();
         System.out.println(command.getExceptions());
     }

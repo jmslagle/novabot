@@ -13,7 +13,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static core.MessageListener.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
+import static net.dv8tion.jda.core.utils.SimpleLog.Level.WARNING;
 
 /**
  * Created by Owner on 2/07/2017.
@@ -37,6 +39,23 @@ public class RaidLobby {
     public RaidLobby(RaidSpawn raidSpawn, String lobbyCode){
         this.spawn = raidSpawn;
         this.lobbyCode = lobbyCode;
+
+        long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+
+        long minutes = MILLISECONDS.toMinutes(timeLeft);
+
+        while(minutes <= nextTimeLeftUpdate){
+            nextTimeLeftUpdate -= 5;
+        }
+
+        System.out.println(nextTimeLeftUpdate);
+    }
+
+    public RaidLobby(RaidSpawn spawn, String lobbyCode,String channelId, String roleId) {
+        this.spawn = spawn;
+        this.lobbyCode = lobbyCode;
+        this.channelId = channelId;
+        this.roleId = roleId;
     }
 
     public void joinLobby(String userId){
@@ -49,13 +68,19 @@ public class RaidLobby {
 
             Role role = guild.getRoleById(roleId);
 
+
+            String channelName = spawn.properties.get("gym_name").replace(" ","-").replaceAll("[\\W0-9]-|_", "");
+
+            channelName = channelName.substring(0,Math.min(25,channelName.length()));
+
             role.getManagerUpdatable()
-                    .getNameField().setValue(String.format("raid-%s",lobbyCode))
+                    .getNameField().setValue(String.format("raid-%s",channelName))
                     .getMentionableField().setValue(true)
                     .update()
                     .queue();
 
-            channelId = guild.getController().createTextChannel(String.format("raid-lobby-%s", lobbyCode)).complete().getId();
+
+            channelId = guild.getController().createTextChannel(String.format("raid-%s",channelName)).complete().getId();
 
             channel = guild.getTextChannelById(channelId);
 
@@ -65,6 +90,9 @@ public class RaidLobby {
             channel.createPermissionOverride(guild.getRoleById(config.novabotRole())).setAllow(Permission.MESSAGE_READ,Permission.MESSAGE_WRITE).complete();
 
             raidLobbyLog.log(INFO,String.format("First join for lobbyCode %s, created channel",lobbyCode));
+
+            DBManager.newLobby(lobbyCode,spawn.gymId,memberCount(),channelId,roleId,nextTimeLeftUpdate);
+
         }
 
         Member member = guild.getMemberById(userId);
@@ -85,6 +113,8 @@ public class RaidLobby {
 
         channel.sendMessageFormat("Welcome %s to the raid lobby!\nThere are now %s users in the lobby.",member,memberIds.size()).queue();
         channel.sendMessage(getStatusMessage()).queue();
+
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
     }
 
     public Role getRole() {
@@ -99,6 +129,8 @@ public class RaidLobby {
         guild.getController().removeRolesFromMember(guild.getMemberById(id),getRole()).queue();
         memberIds.remove(id);
         getChannel().sendMessageFormat("%s left the lobby, there are now %s users in the lobby.",guild.getMemberById(id),memberCount()).queue();
+
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
 
         if(memberCount() == 0){
             end(10);
@@ -123,6 +155,7 @@ public class RaidLobby {
             getRole().delete().queue();
             raidLobbyLog.log(INFO, String.format("Ended raid lobby %s", lobbyCode));
             lobbyManager.activeLobbies.remove(lobbyCode);
+            DBManager.endLobby(lobbyCode);
             //TODO: remove all emojis and edit messages so its clear this raid is ended
         };
 
@@ -136,10 +169,12 @@ public class RaidLobby {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
         if(spawn.bossId != 0) {
-            embedBuilder.setTitle(String.format("Raid status for %s in %s - Lobby %s",
+            embedBuilder.setTitle(String.format("Raid status for %s (lvl %s) in %s - Lobby %s",
                     spawn.properties.get("pkmn"),
+                    spawn.properties.get("level"),
                     spawn.properties.get("city"),
-                    lobbyCode));
+                    lobbyCode),
+                    spawn.properties.get("gmaps"));
 
             embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
 
@@ -170,7 +205,8 @@ public class RaidLobby {
             String strengthEmoteStr = "";
 
             for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
-                strengthEmoteStr += Raid.emotes.get(s).getAsMention();
+                Emote emote = Raid.emotes.get(s);
+                strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
             }
 
             embedBuilder.addField("Strong Against", strengthEmoteStr, true);
@@ -224,7 +260,8 @@ public class RaidLobby {
         String strengthEmoteStr = "";
 
         for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
-            strengthEmoteStr += Raid.emotes.get(s).getAsMention();
+            Emote emote = Raid.emotes.get(s);
+            strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
         }
 
         embedBuilder.addField("Strong Against",strengthEmoteStr,true);
@@ -259,5 +296,61 @@ public class RaidLobby {
 
     public void alertRaidNearlyOver() {
         getChannel().sendMessageFormat("%s the raid is going to end in %s!",getRole(),spawn.timeLeft(spawn.raidEnd)).queue();
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
     }
+
+    public Message getInfoMessage() {
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+
+        if(spawn.bossId != 0) {
+            String timeLeft = spawn.timeLeft(spawn.raidEnd);
+
+            embedBuilder.setTitle(String.format("[%s] %s (%s)- Lobby %s"
+                    , spawn.properties.get("city")
+                    , spawn.properties.get("pkmn")
+                    , timeLeft
+                    , lobbyCode),spawn.properties.get("gmaps"));
+            embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
+            embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
+            embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Raid End",String.format("%s (%s remaining)"
+                    ,spawn.properties.get("24h_end")
+                    ,timeLeft
+                    ),false);
+
+            embedBuilder.setThumbnail(spawn.getIcon());
+        }else{
+            String timeLeft = spawn.timeLeft(spawn.battleStart);
+
+            embedBuilder.setTitle(String.format("[%s] Lvl %s Egg (Hatches in %s) - Lobby %s"
+                    , spawn.properties.get("city")
+                    , spawn.properties.get("level")
+                    , timeLeft
+                    , lobbyCode),spawn.properties.get("gmaps"));
+            embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
+            embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
+            embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Raid Start",String.format("%s (%s remaining)"
+                    ,spawn.properties.get("24h_start")
+                    ,timeLeft
+            ),false);
+
+            embedBuilder.setThumbnail(spawn.getIcon());
+        }
+        MessageBuilder messageBuilder = new MessageBuilder().setEmbed(embedBuilder.build());
+
+        return messageBuilder.build();
+    }
+
+    public void loadMembers() {
+        try {
+            Role role = guild.getRoleById(roleId);
+            for (Member member : guild.getMembersWithRoles(role)) {
+                memberIds.add(member.getUser().getId());
+            }
+        }catch (NullPointerException e){
+            raidLobbyLog.log(WARNING,"Couldn't load members, couldnt find role by Id");
+        }
+    }
+
 }

@@ -1,16 +1,14 @@
 package raids;
 
 import core.DBManager;
-import pokemon.Pokemon;
 import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
-import net.dv8tion.jda.core.*;
-import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
+import pokemon.Pokemon;
 
-import javax.security.auth.login.LoginException;
 import java.awt.*;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -18,11 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static core.MessageListener.*;
-import static pokemon.PokeSpawn.getNextKey;
-import static pokemon.PokeSpawn.printFormat;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static maps.Geofencing.getGeofence;
 import static maps.Geofencing.loadGeofences;
+import static pokemon.PokeSpawn.getNextKey;
+import static pokemon.PokeSpawn.printFormat;
 
 /**
  * Created by Owner on 27/06/2017.
@@ -31,6 +29,7 @@ public class RaidSpawn {
 
     static final String NORMAL_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_normal.png";
     static final String RARE_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_rare.png";
+    static final String LEGENDARY_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_legendary.png";
 
     final String name;
     final double lat;
@@ -54,7 +53,6 @@ public class RaidSpawn {
 
     public static void main(String[] args) {
 
-        testing = true;
         loadConfig();
         loadGeofences();
         DBManager.novabotdbConnect();
@@ -66,7 +64,7 @@ public class RaidSpawn {
                 11003,
                 "fire",
                 "fire blast",
-                2);
+                3);
 
         spawn.setLobbyCode(1);
 //        System.out.println(spawn.getLobbyCode());
@@ -77,18 +75,18 @@ public class RaidSpawn {
 
 
 //        System.out.println(spawn.properties.get("geofence"));
-        JDA jda = null;
-        try {
-            jda = new JDABuilder(AccountType.BOT)
-                    .setAutoReconnect(true)
-                    .setGame(Game.of("Pokemon Go"))
-                    .setToken(config.getToken())
-                    .buildBlocking();
-        } catch (LoginException | InterruptedException | RateLimitedException e) {
-            e.printStackTrace();
-        }
-
-        jda.getUserById("107730875596169216").openPrivateChannel().queue(success -> success.sendMessage(message).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue()));
+//        JDA jda = null;
+//        try {
+//            jda = new JDABuilder(AccountType.BOT)
+//                    .setAutoReconnect(true)
+//                    .setGame(Game.of("Pokemon Go"))
+//                    .setToken(config.getToken())
+//                    .buildBlocking();
+//        } catch (LoginException | InterruptedException | RateLimitedException e) {
+//            e.printStackTrace();
+//        }
+//
+//        jda.getUserById("107730875596169216").openPrivateChannel().queue(success -> success.sendMessage(message).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue()));
     }
 
     public RaidSpawn(String name, String gymId, double lat, double lon, Timestamp raidEnd, Timestamp battleStart, int bossId, int bossCp,String move_1, String move_2, int raidLevel) {
@@ -188,11 +186,17 @@ public class RaidSpawn {
         if(bossId == 0) {
             formatKey = "raidEgg";
             embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatKey)),config.formatStr(properties,config.getTitleUrl(formatKey)));
-            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey)));
+            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey)+ (
+                    raidLevel >= 3 && config.isRaidOrganisationEnabled()
+                            ? "\n\nJoin the discord lobby to coordinate with other players, and be alerted when this egg hatches. Join by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
+                            : "")));
         }else{
             formatKey = "raidBoss";
             embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatKey)),config.formatStr(properties,config.getTitleUrl(formatKey)));
-            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey)));
+            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey) + (
+                    raidLevel >= 3 && config.isRaidOrganisationEnabled()
+                            ? "\n\nJoin the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
+                            : "")));
         }
         embedBuilder.setThumbnail(getIcon());
         if (config.showMap(formatKey)) {
@@ -231,6 +235,8 @@ public class RaidSpawn {
                 return new Color(0xff8000);
             case 4:
                 return new Color(0xffe100);
+            case 5:
+                return new Color(0x00082d);
         }
         return Color.WHITE;
     }
@@ -244,6 +250,8 @@ public class RaidSpawn {
                 case 3:
                 case 4:
                     return RARE_EGG;
+                case 5:
+                    return LEGENDARY_EGG;
             }
         }
         return Pokemon.getIcon(bossId);
