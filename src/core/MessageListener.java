@@ -27,13 +27,14 @@ import parser.*;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
 import raids.LobbyManager;
-import raids.LobbyMonitor;
 import raids.Raid;
 import raids.RaidLobby;
+import raids.RaidSpawn;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -71,7 +72,12 @@ public class MessageListener extends ListenerAdapter
     public static LobbyManager lobbyManager;
 
     public static void main(final String[] args) {
-        testing = true;
+        testing = false;
+        try {
+            SimpleLog.addFileLogs(new File("std.log"),new File("err.log"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
 
 //        DBManager.dbLog.setLevel(DEBUG);
 
@@ -157,25 +163,25 @@ public class MessageListener extends ListenerAdapter
 //                lobbyManager.addLobbies(DBManager.getActiveLobbies());
                 RaidNotificationSender.nextId = DBManager.highestRaidLobbyId() + 1;
                 ScheduledExecutor executor = new ScheduledExecutor(1);
-                executor.scheduleAtFixedRate(new LobbyMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
+//                executor.scheduleAtFixedRate(new LobbyMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
             }
 
             if(testing) {
-//                RaidSpawn spawn = new RaidSpawn("Australian Croatian Club",
-//                        "1", -35.265134, 149.122796,
-//                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-//                        1,
-//                        11003,
-//                        "fire",
-//                        "fire blast",
-//                        4);
-//
-//                spawn.setLobbyCode(1);
-//                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
-//                Message message = spawn.buildMessage();
-//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
-//
+                RaidSpawn spawn = new RaidSpawn("Australian Croatian Club",
+                        "1", -35.265134, 149.122796,
+                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+                        1,
+                        11003,
+                        "fire",
+                        "fire blast",
+                        4);
+
+                spawn.setLobbyCode(1);
+                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+                Message message = spawn.buildMessage();
+                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+
 //                spawn = new RaidSpawn("O'Connor 2",
 //                        "2", -35.265134, 149.122796,
 //                        new Timestamp(DBManager.getCurrentTime().getTime() + 404000),
@@ -382,6 +388,7 @@ public class MessageListener extends ListenerAdapter
         final User user = event.getMember().getUser();
         String roleStr = "";
         for (final Role role : event.getRoles()) {
+            if(lobbyManager.isLobbyRoleId(role.getId())) continue;
             roleStr = roleStr + role.getName() + " ";
         }
 
@@ -863,7 +870,11 @@ public class MessageListener extends ListenerAdapter
                 final MessageBuilder builder = new MessageBuilder();
                 builder.setEmbed(message.getEmbeds().get(0));
                 novabotLog.log(DEBUG,String.format("Notifying user: %s%n", userID));
-                final User user2 = MessageListener.guild.getMemberById(userID).getUser();
+                Member member = MessageListener.guild.getMemberById(userID);
+
+                if(member == null) return;
+
+                final User user2 = member.getUser();
                 if (!user2.hasPrivateChannel()) {
                     user2.openPrivateChannel().complete();
                 }

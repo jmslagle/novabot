@@ -1,6 +1,7 @@
 package raids;
 
 import core.DBManager;
+import core.RotatingSet;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.utils.SimpleLog;
 
@@ -17,6 +18,8 @@ public class LobbyManager {
 
     HashMap<String, RaidLobby> activeLobbies = new HashMap<>();
     private static SimpleLog lobbyManagerLog = SimpleLog.getLog("Lobby-Manager");
+
+    RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
 
     public LobbyManager(){
 
@@ -70,7 +73,8 @@ public class LobbyManager {
             if(lobby.roleId == null) continue;
             if(lobby.roleId.equals(id)) return true;
         }
-        return false;
+
+        return oldLobbyRoleIds.contains(id);
     }
 
     public ArrayList<RaidLobby> getLobbiesByGeofence(GeofenceIdentifier geofence) {

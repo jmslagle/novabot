@@ -18,6 +18,8 @@ import static core.MessageListener.guild;
  */
 public class Config {
 
+    private final boolean standardRaidTable;
+    private final String googleSuburbField;
     private NotificationLimit nonSupporterLimit;
     Ini ini;
 
@@ -105,6 +107,10 @@ public class Config {
         useChannels = Boolean.parseBoolean(config.get("channels"));
 
         useRmDb = Boolean.parseBoolean(config.get("useRmDb"));
+
+        standardRaidTable = Boolean.parseBoolean(config.get("standardRaidTable"));
+
+        googleSuburbField = config.get("googleSuburbField");
 
         raidsEnabled = Boolean.parseBoolean(config.get("raids"));
 
@@ -562,5 +568,13 @@ public class Config {
             if(id.equals(s)) return true;
         }
         return false;
+    }
+
+    public boolean standardRaidTable() {
+        return standardRaidTable;
+    }
+
+    public String getGoogleSuburbField(){
+        return googleSuburbField;
     }
 }

@@ -152,23 +152,39 @@ public class DBManager {
         }
 
         try (Connection connection = getConnection(rocketmapDataSource);
-             PreparedStatement statement = connection.prepareStatement("" +
-                             "SELECT" +
-                             "  `gymdetails`.name," +
-                             "  `gymdetails`.gym_id," +
-                             "  `gym`.latitude," +
-                             "  `gym`.longitude," +
-                             "  (CONVERT_TZ(`raidinfo`.raid_end_ms, 'UTC', '" + config.getTimeZone() + "')) AS end," +
-                             "  (CONVERT_TZ(`raidinfo`.raid_battle_ms, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
-                             "  `raidinfo`.pokemon_id," +
-                             "  `raidinfo`.cp, " +
-                             "  `raidinfo`.raid_level, " +
-                             "  `raidinfo`.move_1, " +
-                             "  `raidinfo`.move_2 " +
-                             "FROM `gym`" +
-                             "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
-                             "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
-                             "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(CONVERT_TZ(NOW(), 'Australia/Canberra', 'UTC'),INTERVAL 1 MINUTE)"
+             PreparedStatement statement = connection.prepareStatement(config.standardRaidTable()
+                     ?   "SELECT"+
+                         "  `gymdetails`.name," +
+                         "  `gymdetails`.gym_id," +
+                         "  `gym`.latitude," +
+                         "  `gym`.longitude," +
+                         "  (CONVERT_TZ(`raid`.end, 'UTC', '" + config.getTimeZone() + "')) AS end," +
+                         "  (CONVERT_TZ(`raid`.start, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
+                         "  `raid`.pokemon_id," +
+                         "  `raid`.cp, " +
+                         "  `raid`.level, " +
+                         "  `raid`.move_1, " +
+                         "  `raid`.move_2 " +
+                         "FROM `gym`" +
+                         "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
+                         "  INNER JOIN raid ON gym.gym_id = raid.gym_id " +
+                         "WHERE " + knownIdQMarks + " `raid`.end > DATE_ADD(CONVERT_TZ(NOW(), '" + config.getTimeZone() +"', 'UTC'),INTERVAL 1 MINUTE)"
+                     :   "SELECT" +
+                         "  `gymdetails`.name," +
+                         "  `gymdetails`.gym_id," +
+                         "  `gym`.latitude," +
+                         "  `gym`.longitude," +
+                         "  (CONVERT_TZ(`raidinfo`.raid_end_ms, 'UTC', '" + config.getTimeZone() + "')) AS end," +
+                         "  (CONVERT_TZ(`raidinfo`.raid_battle_ms, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
+                         "  `raidinfo`.pokemon_id," +
+                         "  `raidinfo`.cp, " +
+                         "  `raidinfo`.raid_level, " +
+                         "  `raidinfo`.move_1, " +
+                         "  `raidinfo`.move_2 " +
+                         "FROM `gym`" +
+                         "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
+                         "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
+                         "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(CONVERT_TZ(NOW(), '" + config.getTimeZone() + "', 'UTC'),INTERVAL 1 MINUTE)"
 //                     "WHERE gym.last_scanned > ?" +
 //                     "      AND raid_end_ms > CONVERT_TZ(NOW(),'"+config.getTimeZone()+"','UTC')"
              )
@@ -472,7 +488,8 @@ public class DBManager {
             }
 
 //            statement.setString(geofences + 1, raidSpawn.properties.get("sublocality").toLowerCase());
-            statement.setString(geofences + 1, raidSpawn.getSuburb().toLowerCase());
+//            statement.setString(geofences + 1, raidSpawn.getSuburb().toLowerCase());
+            statement.setString(geofences + 1, raidSpawn.properties.get(config.getGoogleSuburbField()).toLowerCase());
             statement.setInt(geofences + 2, raidSpawn.bossId);
             dbLog.log(DEBUG, statement);
             final ResultSet rs = statement.executeQuery();
@@ -618,8 +635,9 @@ public class DBManager {
                 geofences++;
             }
 
-            statement.setString(geofences + 1, pokeSpawn.getSuburb().toLowerCase());
+//            statement.setString(geofences + 1, pokeSpawn.getSuburb().toLowerCase());
 //            statement.setString(geofences + 1, pokeSpawn.pokeProperties.get("sublocality").toLowerCase());
+            statement.setString(geofences + 1, pokeSpawn.pokeProperties.get(config.getGoogleSuburbField()).toLowerCase());
             statement.setInt(geofences + 2, pokeSpawn.id);
             statement.setInt(geofences + 3, (pokeSpawn.form != null) ? 201 : pokeSpawn.id);
             statement.setDouble(geofences + 4, pokeSpawn.iv);
