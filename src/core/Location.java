@@ -52,7 +52,9 @@ public class Location
     public static void main(final String[] args) {
         FeedChannels.loadChannels();
         Geofencing.loadGeofences();
-        System.out.println(new Location(FeedChannels.fromString("innernorth")).toWords());
+        MessageListener.loadConfig();
+        MessageListener.loadSuburbs();
+        System.out.println(new Location(FeedChannels.fromDbString("TuggeranongRegion")));
     }
 
     public FeedChannel getFeedChannel() {

@@ -109,7 +109,14 @@ public class LobbyManager {
 
     public void addLobbies(ArrayList<RaidLobby> lobbies) {
         for (RaidLobby activeLobby : lobbies) {
-            activeLobbies.put(activeLobby.lobbyCode,activeLobby);
+            if(activeLobby.inviteCode == null){
+                activeLobby.createInvite();
+            }
+            addLobby(activeLobby);
         }
+    }
+
+    public void addLobby(RaidLobby raidLobby) {
+        activeLobbies.put(raidLobby.lobbyCode,raidLobby);
     }
 }

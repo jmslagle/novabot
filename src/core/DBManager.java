@@ -3,11 +3,6 @@ package core;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import maps.GeocodedLocation;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.entities.Game;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import pokemon.PokeMove;
 import pokemon.PokeSpawn;
@@ -16,7 +11,6 @@ import raids.Raid;
 import raids.RaidLobby;
 import raids.RaidSpawn;
 
-import javax.security.auth.login.LoginException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,38 +47,25 @@ public class DBManager {
 
         novabotdbConnect();
 
-        try {
-            jda = new JDABuilder(AccountType.BOT)
-                    .setAutoReconnect(true)
-                    .setGame(Game.of("Pokemon Go"))
-                    .setToken(config.getToken())
-                    .buildBlocking();
-        } catch (LoginException | InterruptedException | RateLimitedException e) {
-            e.printStackTrace();
-        }
+        PokeSpawn pokeSpawn = new PokeSpawn(143,35,149,new Timestamp(DBManager.getCurrentTime().getTime() + 504000), 15,15,15,"","",0,0,0,0,200,.1);
 
-        for (Guild guild1 : jda.getGuilds()) {
-            guild = guild1;
-        }
+        getUserIDsToNotify(pokeSpawn).forEach(System.out::println);
+//        RaidSpawn spawn = new RaidSpawn("gym",
+//                "12345", -35.265134, 149.122796,
+//                new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+//                new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+//                248,
+//                11003,
+//                "fire",
+//                "fire blast",
+//                4);
+//
+//        knownRaids.put(spawn.gymId, spawn);
 
-        RaidSpawn spawn = new RaidSpawn("gym",
-                "12345", -35.265134, 149.122796,
-                new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-                new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-                248,
-                11003,
-                "fire",
-                "fire blast",
-                4);
-
-        knownRaids.put(spawn.gymId, spawn);
-
-        getActiveLobbies();
+//        getActiveLobbies();
 
 
 //        System.out.println(getUserIDsToNotify(spawn));
-//        PokeSpawn pokeSpawn = new PokeSpawn(147,FeedChannels.fromString("dratinicandy"),"turner",58,"dragon tail","outrage",null,2413);
-//
 //        System.out.println(pokeSpawn);
 
 //        System.out.println(getUserIDsToNotify(pokeSpawn));
@@ -506,7 +487,9 @@ public class DBManager {
     public static void addPokemon(final String userID, final Pokemon pokemon) {
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO pokemon VALUES (?,?,?,?,?)")) {
+             PreparedStatement statement = connection.prepareStatement("" +
+                     "INSERT INTO pokemon (user_id, id, location, max_iv, min_iv) " +
+                     "VALUES (?,?,?,?,?)")) {
             statement.setString(1, userID);
             statement.setInt(2, pokemon.getID());
             statement.setString(3, pokemon.getLocation().toDbString());
@@ -939,10 +922,10 @@ public class DBManager {
         }
     }
 
-    public static void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate) {
+    public static void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate, String inviteCode) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(
-                     "INSERT INTO raidlobby (lobby_id, gym_id, members, channel_id, role_id, next_timeleft_update) VALUES (?,?,?,?,?,?)")
+                     "INSERT INTO raidlobby (lobby_id, gym_id, members, channel_id, role_id, next_timeleft_update,invite_code) VALUES (?,?,?,?,?,?,?)")
         ) {
             statement.setInt(1, Integer.parseInt(lobbyCode));
             statement.setString(2, gymId);
@@ -950,20 +933,22 @@ public class DBManager {
             statement.setString(4, channelId);
             statement.setString(5, roleId);
             statement.setInt(6, (int) nextTimeLeftUpdate);
+            statement.setString(7,inviteCode);
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate) {
+    public static void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate, String inviteCode) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(
-                     "UPDATE raidlobby SET members = ?, next_timeleft_update = ? WHERE lobby_id = ?")
+                     "UPDATE raidlobby SET members = ?, next_timeleft_update = ?, invite_code = ? WHERE lobby_id = ?")
         ) {
             statement.setInt(1, memberCount);
             statement.setInt(2, nextTimeLeftUpdate);
-            statement.setInt(3, Integer.parseInt(lobbyCode));
+            statement.setString(3,inviteCode);
+            statement.setInt(4, Integer.parseInt(lobbyCode));
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -985,9 +970,12 @@ public class DBManager {
     public static ArrayList<RaidLobby> getActiveLobbies() {
         ArrayList<RaidLobby> activeLobbies = new ArrayList<>();
 
+        ArrayList<String> toDelete = null;
+
+
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              PreparedStatement statement = connection.prepareStatement(
-                     "SELECT lobby_id,gym_id,channel_id,role_id,next_timeleft_update FROM raidlobby;")
+                     "SELECT lobby_id,gym_id,channel_id,role_id,next_timeleft_update,invite_code FROM raidlobby;")
         ) {
 
             ResultSet rs = statement.executeQuery();
@@ -999,16 +987,22 @@ public class DBManager {
                 String channelId = rs.getString(3);
                 String roleId = rs.getString(4);
                 int nextTimeLeftUpdate = rs.getInt(5);
+                String inviteCode = rs.getString(6);
 
                 dbLog.log(INFO,String.format("Found lobby with info %s,%s,%s,%s in the db, checking for known raid",lobbyCode,gymId,channelId,roleId));
 
                 RaidSpawn spawn = knownRaids.get(gymId);
 
                 if (spawn == null) {
-                    dbLog.log(WARNING, String.format("Couldn't find a known raid for gym id %s which was found as an active raid lobby", gymId));
+                    dbLog.log(WARNING, String.format("Couldn't find a known raid for gym id %s which was found as an active raid lobby, queuing for deletion", gymId));
+                    if(toDelete == null){
+                        toDelete = new ArrayList<>();
+                    }
+
+                    toDelete.add(lobbyCode);
                 } else {
                     dbLog.log(INFO, String.format("Found a raid for gym id %s, lobby code %s",gymId,lobbyCode));
-                    RaidLobby lobby = new RaidLobby(spawn, lobbyCode, channelId, roleId);
+                    RaidLobby lobby = new RaidLobby(spawn, lobbyCode, channelId, roleId,inviteCode);
                     lobby.nextTimeLeftUpdate = nextTimeLeftUpdate;
                     lobby.loadMembers();
 
@@ -1019,7 +1013,40 @@ public class DBManager {
             e.printStackTrace();
         }
 
+
+        if(toDelete != null) {
+            dbLog.log(INFO, "Deleting non-existent lobbies");
+            DBManager.endLobbies(toDelete);
+        }
+
         return activeLobbies;
+    }
+
+    private static void endLobbies(ArrayList<String> toDelete) {
+
+        String qMarks = "";
+        for (int i = 0; i < toDelete.size(); ++i) {
+            qMarks += "?";
+            if (i != toDelete.size() - 1) {
+                qMarks += ",";
+            }
+        }
+
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(
+                     "DELETE FROM raidlobby WHERE lobby_id IN ("+ qMarks + ") ")
+        ) {
+
+            for (int i = 1; i <= toDelete.size(); i++) {
+                statement.setString(i,toDelete.get(i-1));
+            }
+
+            statement.executeUpdate();
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static int highestRaidLobbyId() {

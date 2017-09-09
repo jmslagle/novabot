@@ -1,6 +1,7 @@
 package raids;
 
 import core.DBManager;
+import core.MessageListener;
 import core.ScheduledExecutor;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -34,25 +35,16 @@ public class RaidLobby {
     ScheduledExecutor shutDownService = null;
 
     public long nextTimeLeftUpdate = 15;
+    public String inviteCode;
+    private boolean delete = false;
+    private boolean created = false;
 
-//    Runnable runnable = () -> {
-//        if(spawn.raidEnd.after(DBManager.getCurrentTime())){
-//            //lobby has ended, let's end
-//            end(15);
-//            shutDownService.shutdown();
-//            return;
-//        }
-//
-//        long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
-//        double minutes = timeLeft / 1000 / 60;
-//
-//        if(minutes <= nextTimeLeftUpdate){
-//            alertRaidNearlyOver();
-//            shutDownService.shutdown();
-//            return;
-//        }
-//    };
+    public static void main(String[] args) {
+        String channelName = "O'Connor 2".replace(" ","-").replaceAll("[^\\w-_ A-Z]", "");
 
+        channelName = channelName.substring(0,Math.min(25,channelName.length()));
+        System.out.println(channelName);
+    }
 
     public RaidLobby(RaidSpawn raidSpawn, String lobbyCode){
         this.spawn = raidSpawn;
@@ -69,12 +61,19 @@ public class RaidLobby {
     }
 
 
-    public RaidLobby(RaidSpawn spawn, String lobbyCode,String channelId, String roleId) {
+    public RaidLobby(RaidSpawn spawn, String lobbyCode, String channelId, String roleId, String inviteCode) {
         this(spawn,lobbyCode);
         this.channelId = channelId;
         this.roleId = roleId;
+        this.inviteCode = inviteCode;
 
         long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+
+        if(channelId != null && roleId != null){
+            created = true;
+        }else{
+            return;
+        }
 
         if(nextTimeLeftUpdate == 15){
             getChannel().sendMessageFormat("%s the raid is going to end in %s minutes!",getRole(),15).queueAfter(
@@ -90,15 +89,19 @@ public class RaidLobby {
     public void joinLobby(String userId){
         if(spawn.raidEnd.before(DBManager.getCurrentTime())) return;
 
+        memberIds.add(userId);
+
+        if(delete) delete = false;
+
         TextChannel channel = null;
 
-        if(memberIds.size() == 0 && shutDownService == null){
+        if(!created && shutDownService == null){
             roleId = guild.getController().createRole().complete().getId();
 
             Role role = guild.getRoleById(roleId);
 
 
-            String channelName = spawn.properties.get("gym_name").replace(" ","-").replaceAll("[\\W0-9]-|_", "");
+            String channelName = spawn.properties.get("gym_name").replace(" ","-").replaceAll("[^\\w-_ A-Z]", "");
 
             channelName = channelName.substring(0,Math.min(25,channelName.length()));
 
@@ -118,9 +121,14 @@ public class RaidLobby {
             channel.createPermissionOverride(role).setAllow(Permission.MESSAGE_READ,Permission.MESSAGE_WRITE, Permission.MESSAGE_HISTORY).queue();
             channel.createPermissionOverride(guild.getRoleById(config.novabotRole())).setAllow(Permission.MESSAGE_READ,Permission.MESSAGE_WRITE).complete();
 
+            channel.createInvite().queue(inv -> {
+                inviteCode = inv.getCode();
+                MessageListener.invites.add(inv);
+                DBManager.newLobby(lobbyCode,spawn.gymId,memberCount(),channelId,roleId,nextTimeLeftUpdate,inviteCode);
+            });
+
             raidLobbyLog.log(INFO,String.format("First join for lobbyCode %s, created channel",lobbyCode));
 
-            DBManager.newLobby(lobbyCode,spawn.gymId,memberCount(),channelId,roleId,nextTimeLeftUpdate);
 
             long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
             double minutes = timeLeft / 1000 / 60;
@@ -132,13 +140,15 @@ public class RaidLobby {
 
             getChannel().sendMessageFormat("%s, the raid has ended and the raid lobby will be closed in %s minutes",getRole(),15).
                     queueAfter(timeLeft,TimeUnit.MILLISECONDS,success -> end(15));
+
+            channel.sendMessage(getStatusMessage()).queue();
+            created = true;
         }
 
         Member member = guild.getMemberById(userId);
 
         guild.getController().addRolesToMember(member,guild.getRoleById(roleId)).queue();
 
-        memberIds.add(userId);
 
         if(channel == null){
             channel = guild.getTextChannelById(channelId);
@@ -151,9 +161,8 @@ public class RaidLobby {
         }
 
         channel.sendMessageFormat("Welcome %s to the raid lobby!\nThere are now %s users in the lobby.",member,memberIds.size()).queue();
-        channel.sendMessage(getStatusMessage()).queue();
 
-        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate,inviteCode);
     }
 
     public Role getRole() {
@@ -169,7 +178,7 @@ public class RaidLobby {
         memberIds.remove(id);
         getChannel().sendMessageFormat("%s left the lobby, there are now %s users in the lobby.",guild.getMemberById(id),memberCount()).queue();
 
-        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate,inviteCode);
 
         if(memberCount() == 0){
             getChannel().sendMessage(String.format("There are no users in the lobby, it will be closed in %s minutes", 10)).queue();
@@ -184,13 +193,17 @@ public class RaidLobby {
     public void end(int delay) {
         if(channelId == null || roleId == null) return;
 
+        delete = true;
+
         Runnable shutDownTask = () -> {
-            getChannel().delete().queue();
-            getRole().delete().queue();
-            raidLobbyLog.log(INFO, String.format("Ended raid lobby %s", lobbyCode));
-            lobbyManager.activeLobbies.remove(lobbyCode);
-            DBManager.endLobby(lobbyCode);
-            //TODO: remove all emojis and edit messages so its clear this raid is ended
+            if(delete) {
+                getChannel().delete().queue();
+                getRole().delete().queue();
+                raidLobbyLog.log(INFO, String.format("Ended raid lobby %s", lobbyCode));
+                lobbyManager.activeLobbies.remove(lobbyCode);
+                DBManager.endLobby(lobbyCode);
+                //TODO: remove all emojis and edit messages so its clear this raid is ended
+            }
         };
 
         shutDownService = new ScheduledExecutor(1);
@@ -330,7 +343,7 @@ public class RaidLobby {
 
     public void alertRaidNearlyOver() {
         getChannel().sendMessageFormat("%s the raid is going to end in %s!",getRole(),spawn.timeLeft(spawn.raidEnd)).queue();
-        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate);
+        DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate,inviteCode);
     }
 
     public Message getInfoMessage() {
@@ -387,4 +400,15 @@ public class RaidLobby {
         }
     }
 
+    public void createInvite() {
+        Channel channel = getChannel();
+
+        if(channel != null){
+            channel.createInvite().queue(invite->{
+                inviteCode = invite.getCode();
+                MessageListener.invites.add(invite);
+                DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate,inviteCode);
+            });
+        }
+    }
 }

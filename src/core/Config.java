@@ -1,17 +1,28 @@
 package core;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
+import net.dv8tion.jda.core.entities.Emote;
+import net.dv8tion.jda.core.entities.Icon;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
 import org.ini4j.Ini;
+import pokemon.Pokemon;
+import raids.Raid;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
 import static core.MessageListener.guild;
+import static core.MessageListener.jda;
+import static raids.Raid.emotes;
 
 /**
  * Created by Owner on 13/05/2017.
@@ -88,6 +99,9 @@ public class Config {
 
     HashMap<String,NotificationLimit> roleLimits = new HashMap<>();
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
+    HashMap<GeofenceIdentifier,String> pokemonChannels = new HashMap<>();
+    private int minRaidLevel;
+    public JsonObject pokemonFilter;
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -113,6 +127,8 @@ public class Config {
         googleSuburbField = config.get("googleSuburbField");
 
         raidsEnabled = Boolean.parseBoolean(config.get("raids"));
+
+        minRaidLevel = Integer.parseInt(config.get("minRaidLevel"));
 
         raidOrganisationEnabled = Boolean.parseBoolean(config.get("raidOrganisation"));
 
@@ -201,6 +217,37 @@ public class Config {
         if(!supporterOnly){
             loadSupporterRoles();
         }
+
+//        loadPokeFilter();
+//
+//        loadPokemonChannels();
+    }
+
+    private void loadPokemonChannels() {
+        if(!Geofencing.loaded) Geofencing.loadGeofences();
+
+        File file = new File("pokechannels.txt");
+
+        pokemonChannels = loadGeofencedChannels(file,pokemonChannels);
+    }
+
+    private void loadPokeFilter() {
+        Gson g = new Gson();
+        JsonParser parser = new JsonParser();
+
+        try {
+            JsonElement element = parser.parse(new FileReader("pokefilter.json"));
+
+            if (element.isJsonObject()) {
+                pokemonFilter = (JsonObject) element.getAsJsonObject().get("pokemon");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public JsonElement searchPokemonFilter(int id){
+        return pokemonFilter.get(Util.capitaliseFirst(Pokemon.idToName(id)));
     }
 
     private void loadRaidChats() {
@@ -208,27 +255,7 @@ public class Config {
 
         File file = new File("raidchats.txt");
 
-        try{
-            Scanner sc = new Scanner(file);
-
-            while(sc.hasNext()){
-                String line = sc.nextLine().toLowerCase();
-
-                String[] split = line.split("=");
-
-                ArrayList<GeofenceIdentifier> geofenceIdentifiers = GeofenceIdentifier.fromString(split[0].trim());
-
-                String channelId = split[1].trim();
-
-                for (GeofenceIdentifier geofenceIdentifier : geofenceIdentifiers) {
-                    raidChats.put(geofenceIdentifier,channelId);
-                }
-
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
+        raidChats = loadGeofencedChannels(file,raidChats);
     }
 
     private void loadSupporterRoles() {
@@ -255,12 +282,7 @@ public class Config {
         return geofencedChannelIds.get(identifier);
     }
 
-    private void loadGeofenceChannels() {
-
-        if(!Geofencing.loaded) Geofencing.loadGeofences();
-
-        File file = new File("raidalerts.txt");
-
+    private HashMap<GeofenceIdentifier,String> loadGeofencedChannels(File file, HashMap<GeofenceIdentifier,String> map){
         try{
             Scanner sc = new Scanner(file);
 
@@ -274,13 +296,24 @@ public class Config {
                 String channelId = split[1].trim();
 
                 for (GeofenceIdentifier geofenceIdentifier : geofenceIdentifiers) {
-                    geofencedChannelIds.put(geofenceIdentifier,channelId);
+                    map.put(geofenceIdentifier,channelId);
                 }
 
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        return map;
+    }
+
+    private void loadGeofenceChannels() {
+
+        if(!Geofencing.loaded) Geofencing.loadGeofences();
+
+        File file = new File("raidalerts.txt");
+
+        geofencedChannelIds = loadGeofencedChannels(file,geofencedChannelIds);
 
     }
 
@@ -310,18 +343,14 @@ public class Config {
     public static void main(String[] args) {
         try {
             Config config = new Config(
-                    new Ini(new File("config.example.ini")),
+                    new Ini(new File("config.ini")),
                     new File("gkeys.txt"),
-                    new Ini(new File("formatting.ini"))
-            );
+                    new Ini(new File("formatting.ini")));
 
-            System.out.println(config.getToken());
-            System.out.println(config.useGeofences());
-            System.out.println(config.getRmUser());
-            System.out.println(config.getBlacklist());
-            System.out.println(config.getKeys());
-            System.out.println(config.getSupporterRoles());
-            System.out.println(config.isSupporterOnly());
+            for (int i = 1; i <= 250; i++) {
+                System.out.println(i);
+                    config.searchPokemonFilter(i);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -576,5 +605,27 @@ public class Config {
 
     public String getGoogleSuburbField(){
         return googleSuburbField;
+    }
+
+    public void loadEmotes() {
+        for (String type : Raid.TYPES) {
+            List<Emote> found = jda.getEmotesByName(type,true);
+            if(found.size() == 0) try {
+                guild.getController().createEmote(type, Icon.from(getClass().getResourceAsStream(type + ".png"))).queue(emote ->
+                        emotes.put(type, emote));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }else{
+                emotes.put(type,found.get(0));
+            }
+        }
+    }
+
+    public int getMinRaidLevel() {
+        return minRaidLevel;
+    }
+
+    public String getPokeChannel(GeofenceIdentifier identifier) {
+        return pokemonChannels.get(identifier);
     }
 }

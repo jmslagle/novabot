@@ -1,5 +1,6 @@
 package core;
 
+import maps.GeofenceIdentifier;
 import maps.Geofencing;
 import nests.Nest;
 import nests.NestSearch;
@@ -64,7 +65,9 @@ public class MessageListener extends ListenerAdapter
     public static Config config;
     public static SuburbManager suburbs;
 
-    HashMap<Long, Message> messageMap = new HashMap<Long, Message>();
+    HashMap<Long, Message> messageMap = new HashMap<>();
+    public static ArrayList<Invite> invites = new ArrayList<>();
+
 
     static SimpleLog novabotLog = SimpleLog.getLog("novabot");
     public static JDA jda;
@@ -138,6 +141,8 @@ public class MessageListener extends ListenerAdapter
 
             guild.getMember(jda.getSelfUser()).getRoles().forEach(System.out::println);
 
+            guild.getInvites().queue(success -> invites.addAll(success));
+
             if(config.loggingEnabled()) {
                 MessageListener.roleLog = MessageListener.guild.getTextChannelById(config.getRoleLogId());
                 MessageListener.userUpdatesLog = MessageListener.guild.getTextChannelById(config.getUserUpdatesId());
@@ -152,7 +157,7 @@ public class MessageListener extends ListenerAdapter
                 executor.scheduleAtFixedRate(new PokeNotifier(jda, testing), 0L, config.getPokePollingRate(), TimeUnit.SECONDS);
             }
 
-            if(!testing && config.useRmDb() && config.raidsEnabled()){
+            if(config.useRmDb() && config.raidsEnabled()){
                 ScheduledExecutor executorService = new ScheduledExecutor(1);
                 executorService.scheduleAtFixedRate(new RaidNotifier(jda,testing),0,config.getRaidPollingRate(),TimeUnit.SECONDS);
             }
@@ -162,7 +167,7 @@ public class MessageListener extends ListenerAdapter
                 lobbyManager = new LobbyManager();
 //                lobbyManager.addLobbies(DBManager.getActiveLobbies());
                 RaidNotificationSender.nextId = DBManager.highestRaidLobbyId() + 1;
-                ScheduledExecutor executor = new ScheduledExecutor(1);
+//                ScheduledExecutor executor = new ScheduledExecutor(1);
 //                executor.scheduleAtFixedRate(new LobbyMonitor(lobbyManager),0,30,TimeUnit.SECONDS);
             }
 
@@ -178,7 +183,7 @@ public class MessageListener extends ListenerAdapter
                         4);
 
                 spawn.setLobbyCode(1);
-                lobbyManager.newRaid(spawn.getLobbyCode(),spawn);
+                lobbyManager.addLobby(new RaidLobby(spawn,"0001","293328612919345152","274467121315053569","11111"));
                 Message message = spawn.buildMessage();
                 jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
 
@@ -268,7 +273,7 @@ public class MessageListener extends ListenerAdapter
 //            jda.getTextChannelById(config.getCommandChannelId()).sendMessage(raidSpawn.buildMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
 //        }
 
-        Raid.loadEmotes();
+        config.loadEmotes();
 
 
 
@@ -298,6 +303,9 @@ public class MessageListener extends ListenerAdapter
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
+
+//        if(testing) return;
+
         if(!config.isRaidOrganisationEnabled()) return;
 
         if(event.getUser().isBot()) return;
@@ -306,13 +314,19 @@ public class MessageListener extends ListenerAdapter
 
         Message message = event.getChannel().getMessageById(event.getMessageId()).complete();
 
-        if(message.getEmbeds().size() == 0 || !message.getAuthor().isBot()) return;
+        if(!message.getAuthor().isBot()) return;
 
         novabotLog.log(DEBUG,"white green check reaction added to a bot message that contains an embed!");
 
-        String description = message.getEmbeds().get(0).getDescription();
+        String content;
+        if(message.getEmbeds().size() > 0) {
+            content = message.getEmbeds().get(0).getDescription();
+        }else{
+            content = message.getContent();
+        }
 
-        String lobbyCode = description.substring(description.indexOf("!joinraid") + 10,description.indexOf("` in any")).trim();
+        int joinIndex = content.indexOf("!joinraid") + 10;
+        String lobbyCode = content.substring(joinIndex, content.substring(joinIndex).indexOf("`") + joinIndex).trim();
 
         novabotLog.log(INFO,"Message clicked was for lobbcode " + lobbyCode);
 
@@ -331,9 +345,30 @@ public class MessageListener extends ListenerAdapter
                 event.getChannel().sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.", event.getUser(), lobby.getChannel(), lobby.memberCount()).queue();
             }
 
-            for (String channelId : config.getRaidChats(lobby.spawn.getGeofences())) {
-                guild.getTextChannelById(channelId).sendMessageFormat("%s joined lobby %s and has been placed in %s. There are now %s users in the lobby.",guild.getMember(event.getUser()),lobbyCode,lobby.getChannel(),lobby.memberCount()).queue();
-            }
+            alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
+                    "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                    guild.getMember(event.getUser()).getAsMention(),
+                    lobby.getChannel().getAsMention(),
+                    lobby.memberCount(),
+                    lobby.lobbyCode
+            ));
+
+//            if(lobby.spawn.bossId == 249){
+//                jda.getTextChannelById(338321961040084992L).sendMessageFormat(
+//                        "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+//                        guild.getMember(event.getUser()).getAsMention(),
+//                        lobby.getChannel().getAsMention(),
+//                        lobby.memberCount(),
+//                        lobby.lobbyCode).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue());
+//            }
+        }
+    }
+
+    private void alertRaidChats(String[] raidChatIds, String message) {
+        for (String raidChatId : raidChatIds) {
+            guild.getTextChannelById(raidChatId).sendMessageFormat(message).queue(
+                    m -> m.addReaction(WHITE_GREEN_CHECK).queue()
+            );
         }
     }
 
@@ -401,20 +436,55 @@ public class MessageListener extends ListenerAdapter
     public void onGuildMemberJoin(final GuildMemberJoinEvent event) {
         if(!config.loggingEnabled()) return;
 
-        final JDA jda = event.getJDA();
-        final User user = event.getMember().getUser();
-        MessageListener.userUpdatesLog.sendMessage(
-                user.getAsMention() +
-                        " joined. The account was created " +
-                        user.getCreationTime().atZoneSameInstant(ZoneId.of(config.getTimeZone())).format(formatter)).queue();
-        DBManager.logNewUser(user.getId());
 
-        if(guild.getMember(user).getEffectiveName().equalsIgnoreCase("novabot") && !user.isBot()){
-            Member member = guild.getMember(user);
-            guild.getController().kick(member).queue(
-                    success -> userUpdatesLog.sendMessage("Kicked " + member.getEffectiveName() + " because their name was `novabot`").queue()
-            );
-        }
+        final JDA jda = event.getJDA();
+        final Member member = event.getMember();
+
+        guild.getInvites().queue(success -> {
+            String theCode = null;
+
+            for (Invite newInvite : success) {
+                if(theCode != null) break;
+
+                boolean found = false;
+                for (Invite oldInvite : invites) {
+                    if(oldInvite.getCode().equals(newInvite.getCode())){
+                        found = true;
+
+                        if (newInvite.getUses() > oldInvite.getUses()) {
+                            theCode = newInvite.getCode();
+
+                            RaidLobby lobby = lobbyManager.getLobbyByChannelId(newInvite.getChannel().getId());
+
+                            if(lobby != null){
+                                lobby.joinLobby(member.getUser().getId());
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if(!found && newInvite.getUses() == 1){
+                    theCode = newInvite.getCode();
+                    break;
+                }
+            }
+            invites = (ArrayList<Invite>) success;
+
+            MessageListener.userUpdatesLog.sendMessage(
+                    member.getAsMention() +
+                            " joined with code " + theCode + ". The account was created " +
+                            member.getUser().getCreationTime().atZoneSameInstant(ZoneId.of(config.getTimeZone())).format(formatter)).queue();
+            DBManager.logNewUser(member.getUser().getId());
+
+            if (member.getEffectiveName().equalsIgnoreCase("novabot") && !member.getUser().isBot()) {
+                guild.getController().kick(member).queue(
+                        s -> userUpdatesLog.sendMessage("Kicked " + member.getEffectiveName() + " because their name was `novabot`").queue()
+                );
+            }
+        });
+
+
     }
 
     @Override
@@ -451,6 +521,9 @@ public class MessageListener extends ListenerAdapter
 
     @Override
     public void onMessageReceived(final MessageReceivedEvent event) {
+        if(testing) return;
+
+
         final JDA jda = event.getJDA();
         final User author = event.getAuthor();
         final Message message = event.getMessage();
@@ -486,17 +559,17 @@ public class MessageListener extends ListenerAdapter
 //                    return;
 //                }
 
-                if(!message.isWebhookMessage()) return;
+//                if(!message.isWebhookMessage()) return;
 
-                if(config.useChannels()) {
-                    FeedChannel feedChannel = FeedChannels.fromId(channel.getId());
-
-                    if (feedChannel != null) {
-                        novabotLog.log(DEBUG, "Channel is a feed channel");
-
-                        processPokeAlert(feedChannel, message);
-                    }
-                }
+//                if(config.useChannels()) {
+//                    FeedChannel feedChannel = FeedChannels.fromId(channel.getId());
+//
+//                    if (feedChannel != null) {
+//                        novabotLog.log(DEBUG, "Channel is a feed channel");
+//
+//                        processPokeAlert(feedChannel, message);
+//                    }
+//                }
             }
         }
         else if (event.isFromType(ChannelType.PRIVATE)) {
@@ -543,10 +616,60 @@ public class MessageListener extends ListenerAdapter
                 }
 
                 lobby.joinLobby(author.getId());
-                textChannel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
+                alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
+                        "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                        author.getAsMention(),
+                        lobby.getChannel().getAsMention(),
+                        lobby.memberCount(),
+                        lobby.lobbyCode
+                ));
+
+//                if(lobby.spawn.bossId == 249){
+//                    jda.getTextChannelById(338321961040084992L).sendMessageFormat(
+//                            "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+//                            guild.getMember(author),
+//                            lobby.getChannel(),
+//                            lobby.memberCount(),
+//                            lobby.lobbyCode).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue());
+//                }
+
             }
 
+
             return;
+        }else if(msg.equals("!activeraids")) {
+            ArrayList<GeofenceIdentifier> geofences = config.getRaidChatGeofences(textChannel.getId());
+
+            if (geofences.size() > 0 || textChannel.getType() == ChannelType.PRIVATE) {
+
+                String noLobbiesMsg = null;
+
+                for (GeofenceIdentifier geofence : geofences) {
+
+                    ArrayList<RaidLobby> lobbies = lobbyManager.getLobbiesByGeofence(geofence);
+
+                    if (lobbies.size() == 0) {
+                        if (noLobbiesMsg == null) {
+                            noLobbiesMsg = String.format("%s, there are no active lobbies in %s", author.getAsMention(), geofence.name);
+                        } else {
+                            noLobbiesMsg += String.format(", %s", geofence.name);
+                        }
+                        continue;
+                    }
+
+                    textChannel.sendMessageFormat("%s, there are %s active lobbies in %s", author, lobbies.size(), geofence.name).queue();
+
+                    for (RaidLobby lobby : lobbies) {
+                        textChannel.sendMessage(lobby.getInfoMessage()).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue());
+                    }
+                }
+
+                if (noLobbiesMsg != null) {
+                    textChannel.sendMessage(noLobbiesMsg).queue();
+                }
+
+                return;
+            }
         }
     }
 
@@ -847,7 +970,10 @@ public class MessageListener extends ListenerAdapter
                 continue;
             }
             if (DBManager.countPokemon(userID, config.countLocationsInLimits()) > 3) {
-                final User user = MessageListener.guild.getMemberById(userID).getUser();
+                Member member = MessageListener.guild.getMemberById(userID);
+                if(member == null) continue;;
+
+                final User user = member.getUser();
                 if (!user.hasPrivateChannel()) {
                     user.openPrivateChannel().complete();
                 }
@@ -949,9 +1075,23 @@ public class MessageListener extends ListenerAdapter
 
                 lobby.joinLobby(author.getId());
 
-                for (String channelId : config.getRaidChats(lobby.spawn.getGeofences())) {
-                    guild.getTextChannelById(channelId).sendMessageFormat("%s joined lobby %s and has been placed in %s. There are now %s users in the lobby.",author,lobby.lobbyCode,lobby.getChannel(),lobby.memberCount()).queue();
-                }
+                alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
+                        "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                        author.getAsMention(),
+                        lobby.getChannel().getAsMention(),
+                        lobby.memberCount(),
+                        lobby.lobbyCode
+                ));
+
+//                if(lobby.spawn.bossId == 249){
+//                    jda.getTextChannelById(338321961040084992L).sendMessageFormat(
+//                            "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+//                            guild.getMember(author).getAsMention(),
+//                            lobby.getChannel().getAsMention(),
+//                            lobby.memberCount(),
+//                            lobby.lobbyCode).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue());
+//                }
+
                 channel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
             }
 

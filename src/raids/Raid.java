@@ -7,8 +7,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import static core.MessageListener.jda;
-
 /**
  * Created by Owner on 27/06/2017.
  */
@@ -37,12 +35,37 @@ public class Raid {
                     144,
                     145,
                     146,
+                    150,
                     153,
                     156,
                     159,
+                    243,
+                    244,
+                    245,
                     248,
                     249)
     );
+
+    public static final String[] TYPES = new String[] {
+            "bugtype",
+            "dark",
+            "dragontype",
+            "electric",
+            "fairy",
+            "fighting",
+            "firetype",
+            "flying",
+            "ghosttype",
+            "grass",
+            "ground",
+            "ice",
+            "normal",
+            "poison",
+            "psychic",
+            "rock",
+            "steel",
+            "water"
+    };
 
     public static HashMap<String, Emote> emotes = new HashMap<>();
 
@@ -107,11 +130,19 @@ public class Raid {
                 return new String[] {"rock","ice"};
             case 146: //moltres
                 return new String[] {"rock","water","electric"};
+            case 150: //mewtwo
+                return new String[] {"bugtype","ghosttype","dark"};
             case 153: //bayleef
                 return new String[] {"ice", "firetype", "bugtype", "poison"};
             case 156: //quilava
                 return new String[] {"ground", "water", "rock"};
             case 159: //croconaw
+                return new String[] {"electric", "grass"};
+            case 243: //raikou
+                return new String[] {"ground"};
+            case 244: //entei
+                return new String[] {"ground", "water", "rock"};
+            case 245: //suicine
                 return new String[] {"electric", "grass"};
             case 248: //tyranitar
                 return new String[] {"fighting", "grass", "bugtype", "ground", "water", "steel", "fairy"};
@@ -165,11 +196,19 @@ public class Raid {
                 return new String[] {"fighting","flying","bugtype","water"};
             case 146: //moltres
                 return new String[] {"fighting","bugtype","grass","ice"};
+            case 150: //mewtwo
+                return new String[] {"fighting","poison"};
             case 153: //bayleef
                 return  new String[] {"ground", "rock", "water"};
             case 156: //quilava
                 return  new String[] {"bugtype", "steel", "grass", "ice"};
             case 159: //croconaw
+                return  new String[] {"ground", "rock", "firetype"};
+            case 243: //raikou
+                return  new String[] {"flying","water"};
+            case 244: //entei
+                return  new String[] {"bugtype","steel","grass","ice"};
+            case 245: //suicine
                 return  new String[] {"ground", "rock", "firetype"};
             case 248: //tyranitar
                 return  new String[] {"flying", "bugtype", "ghosttype", "firetype", "psychic", "ice"};
@@ -179,40 +218,5 @@ public class Raid {
         return new String[]{};
     }
 
-    public static void loadEmotes() {
-//        emotes.put("steel",jda.getEmoteById(331594244957405195L));
-//        emotes.put("bugtype",jda.getEmoteById(331594245087690753L));
-//        emotes.put("water",jda.getEmoteById(331594244923850754L));
-//        emotes.put("ice",jda.getEmoteById(331594245305663489L));
-//        emotes.put("ground",jda.getEmoteById(331594244957667330L));
-//        emotes.put("grass",jda.getEmoteById(331594246102581248L));
-//        emotes.put("ghosttype",jda.getEmoteById(331594245167251456L));
-//        emotes.put("flying",jda.getEmoteById(331594245171445760L));
-//        emotes.put("firetype",jda.getEmoteById(331594245037359106L));
-//        emotes.put("fighting",jda.getEmoteById(331594245037359115L));
-//        emotes.put("fairy",jda.getEmoteById(331594245066719232L));
-//        emotes.put("electric",jda.getEmoteById(331594245053874176L));
-//        emotes.put("dragontype",jda.getEmoteById(331594245695864842L));
-//        emotes.put("normal",jda.getEmoteById(331594245788139520L));
-//        emotes.put("poison",jda.getEmoteById(331594245116919809L));
-//        emotes.put("psychic",jda.getEmoteById(331594245246943232L));
-//        emotes.put("rock",jda.getEmoteById(331594245037359107L));
-        emotes.put("steel",jda.getEmotesByName("steel",true).get(0));
-        emotes.put("bugtype",jda.getEmotesByName("bugtype",true).get(0));
-        emotes.put("water",jda.getEmotesByName("water",true).get(0));
-        emotes.put("ice",jda.getEmotesByName("ice",true).get(0));
-        emotes.put("ground",jda.getEmotesByName("ground",true).get(0));
-        emotes.put("grass",jda.getEmotesByName("grass",true).get(0));
-        emotes.put("ghosttype",jda.getEmotesByName("ghosttype",true).get(0));
-        emotes.put("flying",jda.getEmotesByName("flying",true).get(0));
-        emotes.put("firetype",jda.getEmotesByName("firetype",true).get(0));
-        emotes.put("fighting",jda.getEmotesByName("fighting",true).get(0));
-        emotes.put("fairy",jda.getEmotesByName("fairy",true).get(0));
-        emotes.put("electric",jda.getEmotesByName("electric",true).get(0));
-        emotes.put("dragontype",jda.getEmotesByName("dragontype",true).get(0));
-        emotes.put("normal",jda.getEmotesByName("normal",true).get(0));
-        emotes.put("poison",jda.getEmotesByName("poison",true).get(0));
-        emotes.put("psychic",jda.getEmotesByName("psychic",true).get(0));
-        emotes.put("rock",jda.getEmotesByName("rock",true).get(0));
-    }
+
 }

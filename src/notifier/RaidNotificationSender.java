@@ -58,6 +58,9 @@ public class RaidNotificationSender implements Runnable {
             }
             return;
         }
+
+        if(testing) return;
+
         for (final RaidSpawn raidSpawn : this.currentRaids) {
             notificationLog.log(INFO,"Checking " + raidSpawn);
 
@@ -101,7 +104,7 @@ public class RaidNotificationSender implements Runnable {
                 DBManager.getUserIDsToNotify(raidSpawn).forEach(id -> notifyUser(id, raidSpawn.buildMessage(),raidSpawn.raidLevel >= 3));
             }
 
-            if(!config.isRaidChannelsEnabled()) continue;
+            if(!config.isRaidChannelsEnabled() || raidSpawn.raidLevel < config.getMinRaidLevel()) continue;
 
 //            notifyUser("107730875596169216",raidSpawn.buildMessage(),true);
 
@@ -116,6 +119,15 @@ public class RaidNotificationSender implements Runnable {
                         }
                     });
                 }
+            }
+////
+            if(raidSpawn.bossId == 249){
+                jda.getTextChannelById(345259921790468097L).sendMessage(raidSpawn.buildMessage()).queue(m -> {
+                    if(config.isRaidOrganisationEnabled() && raidSpawn.raidLevel >= 3) {
+                        System.out.println(String.format("adding reaction to raid with raidlevel %s", raidSpawn.raidLevel));
+                        m.addReaction(WHITE_GREEN_CHECK).queue();
+                    }
+                });
             }
 
 //            if(!testing) {

@@ -54,6 +54,11 @@ public class GeofenceIdentifier {
 
         ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
 
+        if(str.equalsIgnoreCase("none")){
+            geofenceIdentifiers.add(null);
+            return geofenceIdentifiers;
+        }
+
         for (GeofenceIdentifier identifier : Geofencing.geofencesMap.keySet()) {
             if(str.equals(identifier.name) || identifier.aliases.contains(str)) geofenceIdentifiers.add(identifier);
         }
