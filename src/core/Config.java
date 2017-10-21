@@ -218,9 +218,9 @@ public class Config {
             loadSupporterRoles();
         }
 
-//        loadPokeFilter();
-//
-//        loadPokemonChannels();
+        loadPokeFilter();
+
+        loadPokemonChannels();
     }
 
     private void loadPokemonChannels() {

@@ -346,8 +346,9 @@ public class MessageListener extends ListenerAdapter
             }
 
             alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
-                    "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                    "%s joined %s raid in %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
                     guild.getMember(event.getUser()).getAsMention(),
+                    (lobby.spawn.bossId == 0 ? String.format("lvl %s egg",lobby.spawn.raidLevel) : lobby.spawn.properties.get("pkmn")),
                     lobby.getChannel().getAsMention(),
                     lobby.memberCount(),
                     lobby.lobbyCode
@@ -617,8 +618,9 @@ public class MessageListener extends ListenerAdapter
 
                 lobby.joinLobby(author.getId());
                 alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
-                        "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                        "%s joined %s raid in %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
                         author.getAsMention(),
+                        (lobby.spawn.bossId == 0 ? String.format("lvl %s egg",lobby.spawn.raidLevel) : lobby.spawn.properties.get("pkmn")),
                         lobby.getChannel().getAsMention(),
                         lobby.memberCount(),
                         lobby.lobbyCode
@@ -1076,8 +1078,9 @@ public class MessageListener extends ListenerAdapter
                 lobby.joinLobby(author.getId());
 
                 alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),String.format(
-                        "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
+                        "%s joined %s raid in %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
                         author.getAsMention(),
+                        (lobby.spawn.bossId == 0 ? String.format("lvl %s egg",lobby.spawn.raidLevel) : lobby.spawn.properties.get("pkmn")),
                         lobby.getChannel().getAsMention(),
                         lobby.memberCount(),
                         lobby.lobbyCode
