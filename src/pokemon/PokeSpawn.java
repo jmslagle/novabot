@@ -56,6 +56,8 @@ public class PokeSpawn
     public HashMap<String,String> pokeProperties = new HashMap<>();
 
     public static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
+    private Message builtMessage = null;
+    private Message builtPublicMessage = null;
 
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
         this.imageUrl = null;
@@ -290,25 +292,26 @@ public class PokeSpawn
     }
 
     public Message buildMessage() {
-        final MessageBuilder messageBuilder = new MessageBuilder();
-        final EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.setColor(getColor());
-        embedBuilder.setTitle(config.formatStr(pokeProperties,config.getTitleFormatting("pokemon")),config.formatStr(pokeProperties,config.getTitleUrl("pokemon")));
-        embedBuilder.setDescription(config.formatStr(pokeProperties,(encountered()) ? config.getEncounterBodyFormatting() : config.getBodyFormatting("pokemon")));
-        embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
-        if(config.showMap("pokemon")) {
-            embedBuilder.setImage(this.getImage());
+        if(builtMessage == null) {
+            final MessageBuilder messageBuilder = new MessageBuilder();
+            final EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(getColor());
+            embedBuilder.setTitle(config.formatStr(pokeProperties, config.getTitleFormatting("pokemon")), config.formatStr(pokeProperties, config.getTitleUrl("pokemon")));
+            embedBuilder.setDescription(config.formatStr(pokeProperties, (encountered()) ? config.getEncounterBodyFormatting() : config.getBodyFormatting("pokemon")));
+            embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
+            if (config.showMap("pokemon")) {
+                embedBuilder.setImage(this.getImage());
+            }
+            embedBuilder.setFooter(config.getFooterText(), null);
+            embedBuilder.setTimestamp(Instant.now());
+            messageBuilder.setEmbed(embedBuilder.build());
+            builtMessage = messageBuilder.build();
         }
-        embedBuilder.setFooter(config.getFooterText(), null);
-        embedBuilder.setTimestamp(Instant.now());
-        messageBuilder.setEmbed(embedBuilder.build());
-        return messageBuilder.build();
+        return builtMessage;
     }
 
     private boolean encountered() {
-
         return iv != 0 || !move_1.equals("unkn") || !move_2.equals("unkn") || cp > 0;
-
     }
 
     private Color getColor() {
@@ -414,5 +417,24 @@ public class PokeSpawn
 
     public ArrayList<GeofenceIdentifier> getGeofenceIds() {
         return geofenceIdentifiers;
+    }
+
+    public Message buildPublicMessage() {
+        if(builtPublicMessage == null) {
+            final MessageBuilder messageBuilder = new MessageBuilder();
+            final EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(getColor());
+            embedBuilder.setTitle(config.formatStr(pokeProperties, config.getTitleFormatting("pokemon")), config.formatStr(pokeProperties, config.getTitleUrl("pokemon")));
+            embedBuilder.setDescription(config.formatStr(pokeProperties, config.getBodyFormatting("pokemon")));
+            embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
+            if (config.showMap("pokemon")) {
+                embedBuilder.setImage(this.getImage());
+            }
+            embedBuilder.setFooter(config.getFooterText(), null);
+            embedBuilder.setTimestamp(Instant.now());
+            messageBuilder.setEmbed(embedBuilder.build());
+            builtPublicMessage = messageBuilder.build();
+        }
+        return builtPublicMessage;
     }
 }

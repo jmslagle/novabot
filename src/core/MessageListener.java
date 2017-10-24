@@ -30,12 +30,10 @@ import pokemon.Pokemon;
 import raids.LobbyManager;
 import raids.Raid;
 import raids.RaidLobby;
-import raids.RaidSpawn;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -172,20 +170,20 @@ public class MessageListener extends ListenerAdapter
             }
 
             if(testing) {
-                RaidSpawn spawn = new RaidSpawn("Australian Croatian Club",
-                        "1", -35.265134, 149.122796,
-                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
-                        1,
-                        11003,
-                        "fire",
-                        "fire blast",
-                        4);
-
-                spawn.setLobbyCode(1);
-                lobbyManager.addLobby(new RaidLobby(spawn,"0001","293328612919345152","274467121315053569","11111"));
-                Message message = spawn.buildMessage();
-                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
+//                RaidSpawn spawn = new RaidSpawn("Australian Croatian Club",
+//                        "1", -35.265134, 149.122796,
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+//                        new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+//                        1,
+//                        11003,
+//                        "fire",
+//                        "fire blast",
+//                        4);
+//
+//                spawn.setLobbyCode(1);
+//                lobbyManager.addLobby(new RaidLobby(spawn,"0001","293328612919345152","274467121315053569","11111"));
+//                Message message = spawn.buildMessage();
+//                jda.getUserById(107730875596169216L).openPrivateChannel().queue(c->c.sendMessage(message).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue()));
 
 //                spawn = new RaidSpawn("O'Connor 2",
 //                        "2", -35.265134, 149.122796,
@@ -522,8 +520,6 @@ public class MessageListener extends ListenerAdapter
 
     @Override
     public void onMessageReceived(final MessageReceivedEvent event) {
-        if(testing) return;
-
 
         final JDA jda = event.getJDA();
         final User author = event.getAuthor();
@@ -582,13 +578,15 @@ public class MessageListener extends ListenerAdapter
                 return;
             }
 
-            if (config.nestsEnabled() && msg.equals("!nesthelp")) {
-                channel.sendMessage("My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```").queue();
-                return;
-            }
-            if (!msg.startsWith("!nest") && !msg.startsWith("!map")) {
-                if (!msg.startsWith("fb")) {
+            if (!msg.startsWith("!nest") && !msg.startsWith("!map") && !msg.startsWith("!suspected") && !msg.startsWith("!confirmed")) {
+                if (!msg.startsWith("!fb")) {
                     this.parseMsg(msg.toLowerCase().trim(), author, privateChannel);
+                }
+            }else{
+                if (config.nestsEnabled()) {
+                    parseNestMsg(msg,author,channel,ChannelType.PRIVATE);
+//                channel.sendMessage("My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```").queue();
+                    return;
                 }
             }
         }

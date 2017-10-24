@@ -271,9 +271,9 @@ public class Parser
         }
 
         MessageListener.loadSuburbs();
-        System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!addpokemon chikorita riverland",true);
-        command.buildPokemon();
+//        System.out.println(Location.fromString("turner",true));
+        UserCommand command = parseInput("!nest pikachu",true);
+//        command.buildPokemon();
         System.out.println(command.getExceptions());
     }
 
