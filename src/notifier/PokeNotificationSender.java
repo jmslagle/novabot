@@ -99,30 +99,32 @@ class PokeNotificationSender implements Runnable {
     private void postToChannel(PokeChannel channel, PokeSpawn pokeSpawn) {
         JsonElement pokeFilter = config.searchPokemonFilter(config.filters.get(channel.filterName), pokeSpawn.id);
 //
-        if (pokeSpawn.getGeofenceIds().size() > 0) {
-            if (pokeFilter.isJsonObject()) {
-                JsonObject obj = pokeFilter.getAsJsonObject();
+        if (pokeFilter == null){
+            System.out.println(String.format("wtf pokeFilter %s is null for channel with id %s",channel.filterName, channel.channelId));
+            return;
+        }
+        if (pokeFilter.isJsonObject()) {
+            JsonObject obj = pokeFilter.getAsJsonObject();
 
-                JsonElement maxObj = obj.get("max_iv");
-                JsonElement minObj = obj.get("min_iv");
+            JsonElement maxObj = obj.get("max_iv");
+            JsonElement minObj = obj.get("min_iv");
 
-                float max = maxObj == null ? 100 : maxObj.getAsFloat();
-                float min = minObj == null ? 0 : minObj.getAsFloat();
+            float max = maxObj == null ? 100 : maxObj.getAsFloat();
+            float min = minObj == null ? 0 : minObj.getAsFloat();
 
-                if (pokeSpawn.iv <= max && pokeSpawn.iv >= min) {
-                    notificationLog.log(INFO, String.format("Pokemon between specified ivs (%s,%s), posting to Discord", min, max));
-                    sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
-                } else {
-                    notificationLog.log(INFO, String.format("Pokemon not specified ivs (%s,%s), posting to Discord", min, max));
-
-                }
+            if (pokeSpawn.iv <= max && pokeSpawn.iv >= min) {
+                notificationLog.log(INFO, String.format("Pokemon between specified ivs (%s,%s), posting to Discord", min, max));
+                sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
             } else {
-                if (pokeFilter.getAsBoolean()) {
-                    notificationLog.log(INFO, "Pokemon enabled in filter, posting to Discord");
-                    sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
-                } else {
-                    notificationLog.log(INFO, "Pokemon not enabled in filter, not posting");
-                }
+                notificationLog.log(INFO, String.format("Pokemon not specified ivs (%s,%s), posting to Discord", min, max));
+
+            }
+        } else {
+            if (pokeFilter.getAsBoolean()) {
+                notificationLog.log(INFO, "Pokemon enabled in filter, posting to Discord");
+                sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
+            } else {
+                notificationLog.log(INFO, "Pokemon not enabled in filter, not posting");
             }
         }
     }
