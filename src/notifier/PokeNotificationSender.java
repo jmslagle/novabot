@@ -69,8 +69,12 @@ class PokeNotificationSender implements Runnable {
                 }
 
                 if(pokeSpawn.getGeofenceIds().size() == 0){
-                    for (PokeChannel channel : config.getNonGeofencedChannels()) {
-                        postToChannel(channel,pokeSpawn);
+                    ArrayList<PokeChannel> noGeofences = config.getNonGeofencedChannels();
+
+                    if(noGeofences != null) {
+                        for (PokeChannel channel : config.getNonGeofencedChannels()) {
+                            postToChannel(channel, pokeSpawn);
+                        }
                     }
                 }else {
                     for (GeofenceIdentifier geofenceIdentifier : pokeSpawn.getGeofenceIds()) {
