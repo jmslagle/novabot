@@ -99,9 +99,10 @@ public class Config {
 
     HashMap<String,NotificationLimit> roleLimits = new HashMap<>();
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
-    HashMap<GeofenceIdentifier,String> pokemonChannels = new HashMap<>();
     private int minRaidLevel;
-    public JsonObject pokemonFilter;
+
+    public HashMap<String, JsonObject> filters = new HashMap<>();
+    private ArrayList<PokeChannel> pokeChannels = new ArrayList<>();
 
     public Config(Ini configIni, File gkeys, Ini formattingIni){
         this.ini = configIni;
@@ -218,36 +219,132 @@ public class Config {
             loadSupporterRoles();
         }
 
-        loadPokeFilter();
-
         loadPokemonChannels();
     }
 
     private void loadPokemonChannels() {
         if(!Geofencing.loaded) Geofencing.loadGeofences();
 
-        File file = new File("pokechannels.txt");
+        File file = new File("pokechannels.ini");
 
-        pokemonChannels = loadGeofencedChannels(file,pokemonChannels);
-    }
+        try (Scanner in = new Scanner(file)) {
 
-    private void loadPokeFilter() {
-        Gson g = new Gson();
-        JsonParser parser = new JsonParser();
+            String channelId = null;
+            String filterName = null;
+            HashSet<GeofenceIdentifier> geofenceIdentifiers = null;
 
-        try {
-            JsonElement element = parser.parse(new FileReader("pokefilter.json"));
+            boolean first = true;
 
-            if (element.isJsonObject()) {
-                pokemonFilter = (JsonObject) element.getAsJsonObject().get("pokemon");
+            while(in.hasNext()){
+                String line = in.nextLine().toLowerCase();
+
+                if(line.length() == 0 || line.charAt(0) == ';'){
+                    continue;
+                }
+
+                if(line.charAt(0) == '['){
+                    PokeChannel channel;
+
+                    if (channelId != null){
+                        channel = new PokeChannel(channelId);
+
+                        if (filterName != null){
+                            channel.filterName = filterName;
+
+                            channel.geofences = geofenceIdentifiers;
+
+                            pokeChannels.add(channel);
+                        }else{
+                            System.out.println("couldn't find filter name");
+                        }
+
+                    }else if (!first){
+                        System.out.println("couldn't find channel id");
+                    }
+
+                    int end = line.indexOf("]");
+                    channelId = line.substring(1,end).trim();
+
+                    first = false;
+                }else{
+                    int equalsIndex = line.indexOf("=");
+
+                    if(!(equalsIndex == -1)){
+                        String parameter = line.substring(0,equalsIndex).trim();
+                        String value = line.substring(equalsIndex+1).trim();
+
+                        if(parameter.equals("geofences")){
+                            if(value.equals("all")){
+                                continue;
+                            }
+                            geofenceIdentifiers = new HashSet<>();
+
+                            ArrayList<String> geofences;
+
+                            if(value.charAt(0) == '['){
+                                geofences = Util.parseList(value);
+                            }else{
+                                geofences = new ArrayList<>();
+                                geofences.add(value);
+                            }
+
+                            for (String s : geofences) {
+                                geofenceIdentifiers.addAll(GeofenceIdentifier.fromString(s));
+                            }
+                        }else if (parameter.equals("filter")){
+                            filterName = value;
+
+                            if(!filters.containsKey(filterName)){
+                                filters.put(filterName, loadPokeFilter(filterName));
+                            }
+                        }
+                    }
+                }
             }
+
+            PokeChannel channel;
+            if (channelId != null){
+                channel = new PokeChannel(channelId);
+
+                if (filterName != null){
+                    channel.filterName = filterName;
+
+                    channel.geofences = geofenceIdentifiers;
+
+                    pokeChannels.add(channel);
+                }else{
+                    System.out.println("couldn't find filter name");
+                }
+
+            }else {
+                System.out.println("couldn't find channel id");
+            }
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    public JsonElement searchPokemonFilter(int id){
-        return pokemonFilter.get(Util.capitaliseFirst(Pokemon.idToName(id)));
+    private JsonObject loadPokeFilter(String fileName) {
+        JsonObject filter = null;
+
+        Gson g = new Gson();
+        JsonParser parser = new JsonParser();
+
+        try {
+            JsonElement element = parser.parse(new FileReader(fileName));
+
+            if (element.isJsonObject()) {
+                filter = (JsonObject) element.getAsJsonObject().get("pokemon");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return filter;
+    }
+
+    public JsonElement searchPokemonFilter(JsonObject filter,int id){
+        return filter.get(Util.capitaliseFirst(Pokemon.idToName(id)));
     }
 
     private void loadRaidChats() {
@@ -347,10 +444,7 @@ public class Config {
                     new File("gkeys.txt"),
                     new Ini(new File("formatting.ini")));
 
-            for (int i = 1; i <= 250; i++) {
-                System.out.println(i);
-                    config.searchPokemonFilter(i);
-            }
+            System.out.println("hi");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -625,7 +719,17 @@ public class Config {
         return minRaidLevel;
     }
 
-    public String getPokeChannel(GeofenceIdentifier identifier) {
-        return pokemonChannels.get(identifier);
+    public ArrayList<PokeChannel> getPokeChannels(GeofenceIdentifier identifier) {
+        ArrayList<PokeChannel> channels = null;
+
+        for (PokeChannel pokeChannel : pokeChannels) {
+            if (pokeChannel.geofences.contains(identifier)){
+                if(channels == null) channels = new ArrayList<>();
+
+                channels.add(pokeChannel);
+            }
+        }
+
+        return channels;
     }
 }

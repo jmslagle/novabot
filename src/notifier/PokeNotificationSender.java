@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import core.DBManager;
 import core.MessageListener;
+import core.PokeChannel;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
@@ -67,34 +68,39 @@ class PokeNotificationSender implements Runnable {
                     userIDs.stream().filter((u) -> !MessageListener.isSupporter(u)).forEach(userID -> this.notifyUser(userID,publicMessage));
                 }
 
-                JsonElement pokeFilter = config.searchPokemonFilter(pokeSpawn.id);
+                for (GeofenceIdentifier geofenceIdentifier : pokeSpawn.getGeofenceIds()) {
+                    for (PokeChannel channel : config.getPokeChannels(geofenceIdentifier)) {
+                        JsonElement pokeFilter = config.searchPokemonFilter(config.filters.get(channel.filterName),pokeSpawn.id);
 //
-                if (pokeSpawn.getGeofenceIds().size() > 0) {
-                    if (pokeFilter.isJsonObject()) {
-                        JsonObject obj = pokeFilter.getAsJsonObject();
+                        if (pokeSpawn.getGeofenceIds().size() > 0) {
+                            if (pokeFilter.isJsonObject()) {
+                                JsonObject obj = pokeFilter.getAsJsonObject();
 
-                        JsonElement maxObj = obj.get("max_iv");
-                        JsonElement minObj = obj.get("min_iv");
+                                JsonElement maxObj = obj.get("max_iv");
+                                JsonElement minObj = obj.get("min_iv");
 
-                        float max = maxObj == null ? 100 : maxObj.getAsFloat();
-                        float min = minObj == null ? 0 : minObj.getAsFloat();
+                                float max = maxObj == null ? 100 : maxObj.getAsFloat();
+                                float min = minObj == null ? 0 : minObj.getAsFloat();
 
-                        if (pokeSpawn.iv <= max && pokeSpawn.iv >= min) {
-                            notificationLog.log(INFO, String.format("Pokemon between specified ivs (%s,%s), posting to Discord", min, max));
-                            sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
-                        } else {
-                            notificationLog.log(INFO, String.format("Pokemon not specified ivs (%s,%s), posting to Discord", min, max));
+                                if (pokeSpawn.iv <= max && pokeSpawn.iv >= min) {
+                                    notificationLog.log(INFO, String.format("Pokemon between specified ivs (%s,%s), posting to Discord", min, max));
+                                    sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
+                                } else {
+                                    notificationLog.log(INFO, String.format("Pokemon not specified ivs (%s,%s), posting to Discord", min, max));
 
-                        }
-                    } else {
-                        if (pokeFilter.getAsBoolean()) {
-                            notificationLog.log(INFO, "Pokemon enabled in filter, posting to Discord");
-                            sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
-                        } else {
-                            notificationLog.log(INFO, "Pokemon not enabled in filter, not posting");
+                                }
+                            } else {
+                                if (pokeFilter.getAsBoolean()) {
+                                    notificationLog.log(INFO, "Pokemon enabled in filter, posting to Discord");
+                                    sendPublicAlert(pokeSpawn.buildPublicMessage(), pokeSpawn.getGeofenceIds());
+                                } else {
+                                    notificationLog.log(INFO, "Pokemon not enabled in filter, not posting");
+                                }
+                            }
                         }
                     }
                 }
+
             } else {
                 if (DBManager.shouldNotify("107730875596169216", pokeSpawn)) {
                     final Message message = pokeSpawn.buildMessage();
@@ -110,13 +116,14 @@ class PokeNotificationSender implements Runnable {
     private void sendPublicAlert(Message message, ArrayList<GeofenceIdentifier> geofences) {
         notificationLog.log(INFO, "Sending public alert message to geofenced channels");
         for (GeofenceIdentifier identifier : geofences) {
-            String id = config.getPokeChannel(identifier);
+            for (PokeChannel channel : config.getPokeChannels(identifier)) {
 
-            notificationLog.log(INFO, String.format("Sending message to channel %s from geofence %s", id, identifier));
+                notificationLog.log(INFO, String.format("Sending message to channel %s from geofence %s", channel.channelId, identifier));
 
-            if (id != null) {
-                jda.getTextChannelById(id).sendMessage(message).queue(m -> notificationLog.log(INFO, "Successfully sent message."));
+                channel.getChannel().sendMessage(message).queue(m -> notificationLog.log(INFO, "Successfully sent message."));
+
             }
+
         }
     }
 }
