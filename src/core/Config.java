@@ -732,4 +732,17 @@ public class Config {
 
         return channels;
     }
+
+    public ArrayList<PokeChannel> getNonGeofencedChannels() {
+        ArrayList<PokeChannel> channels = null;
+
+        for (PokeChannel pokeChannel : pokeChannels) {
+            if (pokeChannel.geofences == null){
+                channels = new ArrayList<>();
+                channels.add(pokeChannel);
+            }
+        }
+
+        return channels;
+    }
 }
