@@ -275,6 +275,7 @@ public class Config {
 
                         if(parameter.equals("geofences")){
                             if(value.equals("all")){
+                                geofenceIdentifiers = null;
                                 continue;
                             }
                             geofenceIdentifiers = new HashSet<>();
