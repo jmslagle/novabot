@@ -57,7 +57,6 @@ public class PokeSpawn
 
     public static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
     private Message builtMessage = null;
-    private Message builtPublicMessage = null;
 
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
         this.imageUrl = null;
@@ -417,24 +416,5 @@ public class PokeSpawn
 
     public ArrayList<GeofenceIdentifier> getGeofenceIds() {
         return geofenceIdentifiers;
-    }
-
-    public Message buildPublicMessage() {
-        if(builtPublicMessage == null) {
-            final MessageBuilder messageBuilder = new MessageBuilder();
-            final EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.setColor(getColor());
-            embedBuilder.setTitle(config.formatStr(pokeProperties, config.getTitleFormatting("pokemon")), config.formatStr(pokeProperties, config.getTitleUrl("pokemon")));
-            embedBuilder.setDescription(config.formatStr(pokeProperties, config.getBodyFormatting("pokemon")));
-            embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
-            if (config.showMap("pokemon")) {
-                embedBuilder.setImage(this.getImage());
-            }
-            embedBuilder.setFooter(config.getFooterText(), null);
-            embedBuilder.setTimestamp(Instant.now());
-            messageBuilder.setEmbed(embedBuilder.build());
-            builtPublicMessage = messageBuilder.build();
-        }
-        return builtPublicMessage;
     }
 }
