@@ -38,9 +38,6 @@ class PokeNotificationSender implements Runnable {
         final User user = this.jda.getUserById(userID);
         final Thread thread = new Thread(new UserNotifier(user, message, false));
         thread.start();
-//
-//        UserNotifier notifier = new UserNotifier(user,message);
-//        notifier.run();
     }
 
     @Override
@@ -78,7 +75,9 @@ class PokeNotificationSender implements Runnable {
                     }
                 }else {
                     for (GeofenceIdentifier geofenceIdentifier : pokeSpawn.getGeofenceIds()) {
-                        for (PokeChannel channel : config.getPokeChannels(geofenceIdentifier)) {
+                        ArrayList<PokeChannel> channels = config.getPokeChannels(geofenceIdentifier);
+                        if(channels == null) continue;
+                        for (PokeChannel channel : channels) {
                             postToChannel(channel,pokeSpawn);
                         }
                     }
