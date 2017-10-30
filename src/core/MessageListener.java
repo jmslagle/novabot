@@ -85,11 +85,6 @@ public class MessageListener extends ListenerAdapter
         loadConfig();
         loadSuburbs();
 
-
-        if(config.useChannels()){
-            FeedChannels.loadChannels();
-        }
-
         if(config.useGeofences()){
             Geofencing.loadGeofences();
         }
@@ -110,11 +105,6 @@ public class MessageListener extends ListenerAdapter
                     .setGame(Game.of("Pokemon Go"))
                     .setToken(config.getToken())
                     .buildBlocking();
-
-
-            if(config.useChannels()){
-                FeedChannels.updateDiscordChannels(jda);
-            }
 
             jda.addEventListener(new MessageListener());
 
@@ -1241,13 +1231,8 @@ public class MessageListener extends ListenerAdapter
                             : "") +
                     "!reset\n" +
                     "!settings\n" +
-                    (config.useChannels() ? "!channellist or !channels\n" : "") +
                     (config.useGeofences() ? "!regionlist or !regions\n" : "") +
                     "!help```").queue();
-            return;
-        }
-        else if (config.useChannels() &&(msg.equals("!channellist") || msg.equals("!channels"))) {
-            channel.sendMessageFormat("%s, accepted channels are: ```%s```",author,FeedChannels.getListMessage()).queue();
             return;
         }else if (config.useGeofences() &&(msg.equals("!regionlist") || msg.equals("!regions"))) {
             channel.sendMessageFormat("%s, accepted regions are: ```%s```",author,Geofencing.getListMessage()).queue();

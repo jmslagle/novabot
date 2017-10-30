@@ -85,7 +85,6 @@ public class Config {
 
     private HashMap<String,Boolean> showMap = new HashMap<>();
 
-    private boolean useChannels;
     private boolean useRmDb;
 
     private boolean raidsEnabled;
@@ -118,8 +117,6 @@ public class Config {
         }
 
         geofences = Boolean.parseBoolean(config.get("geofences"));
-
-        useChannels = Boolean.parseBoolean(config.get("channels"));
 
         useRmDb = Boolean.parseBoolean(config.get("useRmDb"));
 
@@ -595,10 +592,6 @@ public class Config {
 
     public String getAdminRole() {
         return adminRole;
-    }
-
-    public boolean useChannels() {
-        return useChannels;
     }
 
     public boolean useRmDb() {
