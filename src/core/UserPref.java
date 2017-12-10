@@ -9,22 +9,28 @@ import java.util.Set;
 
 public class UserPref
 {
-    public HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<>();
-    public HashMap<String, Set<Raid>> raidPrefs = new HashMap<>();
-    private boolean supporter;
-
-    public UserPref(boolean supporter){
-        this.supporter = supporter;
-    }
+    private final HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<>();
+    private final HashMap<String, Set<Raid>> raidPrefs = new HashMap<>();
+    private final HashMap<String, Set<String>> presetPrefs = new HashMap<>();
 
     public UserPref() {
+    }
+
+    public void addPreset(String presetName, Location location){
+        if(!this.presetPrefs.containsKey(location.toWords())){
+            Set<String> set = new HashSet<>();
+            set.add(presetName);
+            this.presetPrefs.put(location.toWords(),set);
+        }else{
+            presetPrefs.get(location.toWords()).add(presetName);
+        }
     }
 
     public void addPokemon(final Pokemon pokemon) {
         Location location = pokemon.getLocation();
 
         if (!this.pokemonPrefs.containsKey(location.toWords())) {
-            final Set<Pokemon> set = new HashSet<Pokemon>();
+            final Set<Pokemon> set = new HashSet<>();
             set.add(pokemon);
             this.pokemonPrefs.put(location.toWords(), set);
         }
@@ -46,40 +52,64 @@ public class UserPref
         }
     }
 
-    public String allRaidsToString(){
-        String str = "";
-        for (String locname : this.raidPrefs.keySet()) {
-            Location location = Location.fromString(locname, supporter);
+    public static void main(String[] args) {
+        MessageListener.loadConfig();
+        MessageListener.loadSuburbs();
+        System.out.println(Location.fromDbString("inner-north"));
+    }
+
+    public String allPresetsToString(){
+        StringBuilder str = new StringBuilder();
+        for (String locname : presetPrefs.keySet()) {
+            Location location = Location.fromString(locname);
 
             String locStr = locname;
             if (location != null) {
                 locStr = location.toWords();
             }
-            str = str + "**" + locname + "**:\n";
-            for (final Raid raid : this.raidPrefs.get(locStr)) {
-                str += String.format("    %s%n", Pokemon.idToName(raid.bossId));
+            str.append("**").append(locname).append("**:\n");
+            for (String preset : presetPrefs.get(locStr)) {
+                str.append(String.format("    %s%n", preset));
             }
-            str += "\n";
+            str.append("\n");
         }
-        return str;
+        return str.toString();
+    }
+
+    public String allRaidsToString(){
+        StringBuilder str = new StringBuilder();
+        for (String locname : this.raidPrefs.keySet()) {
+            Location location = Location.fromString(locname);
+
+            String locStr = locname;
+            if (location != null) {
+                locStr = location.toWords();
+            }
+            str.append("**").append(locname).append("**:\n");
+            for (final Raid raid : this.raidPrefs.get(locStr)) {
+                str.append(String.format("    %s%n", Pokemon.idToName(raid.bossId)));
+            }
+            str.append("\n");
+        }
+        return str.toString();
     }
 
     public String allPokemonToString() {
-        String str = "";
+        StringBuilder str = new StringBuilder();
         for (String locname : this.pokemonPrefs.keySet()) {
-            Location location = Location.fromString(locname, supporter);
+            Location location = Location.fromString(locname);
 
             String locStr = locname;
             if (location != null) {
                 locStr = location.toWords();
             }
-            str = str + "**" + locname + "**:\n";
+            str.append("**").append(locname).append("**:\n");
             for (final Pokemon pokemon : this.pokemonPrefs.get(locStr)) {
-                str += String.format("    %s%n", pokePrefString(pokemon));
+                str.append(String.format("    %s%n", pokePrefString(pokemon)));
             }
-            str += "\n";
+            str.append("\n");
         }
-        return str;
+        return str.toString();
     }
 
     private String pokePrefString(Pokemon pokemon) {
@@ -99,6 +129,10 @@ public class UserPref
             }
         }
         return str;
+    }
+
+    private String presetString(String preset) {
+        return preset + " preset";
     }
 
     public String allSettingsToString() {
@@ -136,41 +170,65 @@ public class UserPref
             }
         });
 
-        String str = "";
+        presetPrefs.forEach((location,presets) -> {
+            if (!prefMap.containsKey(location)) {
+                Set<String> set = new HashSet<>();
+
+                for (String preset : presets) {
+                    set.add(presetString(preset));
+                }
+                prefMap.put(location,set);
+            }else{
+                for (String preset : presets) {
+                    prefMap.get(location).add(presetString(preset));
+                }
+            }
+        });
+
+        StringBuilder str = new StringBuilder();
         for (String locname : prefMap.keySet()) {
-            Location location = Location.fromString(locname, supporter);
+            Location location = Location.fromString(locname);
 
             String locStr = locname;
             if (location != null) {
                 locStr = location.toWords();
             }
-            str = str + "**" + locname + "**:\n";
+            str.append("**").append(locname).append("**:\n");
             for (final String string : prefMap.get(locStr)) {
-                str += String.format("    %s%n", string);
+                str.append(String.format("    %s%n", string));
             }
-            str += "\n";
+            str.append("\n");
         }
-        return str;
+        return str.toString();
     }
 
+
     public boolean isRaidEmpty() {
-        final boolean[] empty = { true };
+        boolean[] empty = { true };
         raidPrefs.forEach((loc, obj) -> {
             if (obj.size() > 0) {
                 empty[0] = false;
             }
-            return;
         });
         return empty[0];
     }
 
     public boolean isPokeEmpty() {
-        final boolean[] empty = { true };
+        boolean[] empty = { true };
         pokemonPrefs.forEach((loc, obj) -> {
             if (obj.size() > 0) {
                 empty[0] = false;
             }
-            return;
+        });
+        return empty[0];
+    }
+
+    public boolean isPresetEmpty() {
+        boolean[] empty = { true };
+        presetPrefs.forEach((loc, obj) -> {
+            if (obj.size() > 0) {
+                empty[0] = false;
+            }
         });
         return empty[0];
     }

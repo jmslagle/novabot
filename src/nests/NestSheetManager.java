@@ -32,7 +32,7 @@ public class NestSheetManager
     private static HttpTransport HTTP_TRANSPORT;
     private static final List<String> SCOPES;
 
-    private static SimpleLog nestsLog = SimpleLog.getLog("nests");
+    private static final SimpleLog nestsLog = SimpleLog.getLog("nests");
 
     public static void main(final String[] args) {
         final String spreadsheetId = "1Scx_49MhfziXhugkW1SK-6X4gDZ7pA-EMSL-WlV17CM";

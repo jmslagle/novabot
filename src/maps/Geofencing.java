@@ -26,9 +26,9 @@ public class Geofencing
 //    private static final GeoPolygon tuggeranong;
 //    private static final HashMap<GeoPolygon, Region> geofences;
 
-    static HashMap<GeofenceIdentifier,GeoPolygon> geofencesMap = new HashMap<>();
+    static final HashMap<GeofenceIdentifier,GeoPolygon> geofencesMap = new HashMap<>();
 
-    private static SimpleLog geofenceLog = SimpleLog.getLog("Geofencing");
+    private static final SimpleLog geofenceLog = SimpleLog.getLog("Geofencing");
     public static boolean loaded = false;
 
     public static void main(final String[] args) {

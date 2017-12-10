@@ -1,5 +1,7 @@
 package core;
 
+import net.dv8tion.jda.core.utils.SimpleLog;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -7,7 +9,7 @@ import java.util.Scanner;
 
 public class SuburbManager
 {
-    private final ArrayList<String> suburbs = new ArrayList<String>();
+    private final ArrayList<String> suburbs = new ArrayList<>();
 
     public SuburbManager(File file) {
         try {
@@ -20,7 +22,7 @@ public class SuburbManager
             }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            MessageListener.novabotLog.log(SimpleLog.Level.WARNING, "Couldn't find suburbs.txt, ignoring");
         }
     }
 

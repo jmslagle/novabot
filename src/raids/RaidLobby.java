@@ -24,13 +24,13 @@ public class RaidLobby {
     String roleId = null;
     String channelId = null;
 
-    public String lobbyCode;
+    public final String lobbyCode;
 
     public RaidSpawn spawn;
 
-    HashSet<String> memberIds = new HashSet<>();
+    private final HashSet<String> memberIds = new HashSet<>();
 
-    static SimpleLog raidLobbyLog = SimpleLog.getLog("raid-lobbies");
+    private static final SimpleLog raidLobbyLog = SimpleLog.getLog("raid-lobbies");
 
     ScheduledExecutor shutDownService = null;
 
@@ -165,7 +165,7 @@ public class RaidLobby {
         DBManager.updateLobby(lobbyCode,memberCount(), (int) nextTimeLeftUpdate,inviteCode);
     }
 
-    public Role getRole() {
+    private Role getRole() {
         return guild.getRoleById(roleId);
     }
 
@@ -251,7 +251,7 @@ public class RaidLobby {
 
             String strengthEmoteStr = "";
 
-            for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
+            for (String s : Raid.getBossStrengthsEmote(spawn.move1Id,spawn.move2Id)) {
                 Emote emote = Raid.emotes.get(s);
                 strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
             }
@@ -259,7 +259,7 @@ public class RaidLobby {
             embedBuilder.addField("Strong Against", strengthEmoteStr, true);
 
             embedBuilder.setThumbnail(spawn.getIcon());
-            embedBuilder.setImage(spawn.getImage());
+            embedBuilder.setImage(spawn.getImage("formatting.ini"));
         }else{
             embedBuilder.setTitle(String.format("Raid status for level %s egg in %s - Lobby %s",
                     spawn.properties.get("level"),
@@ -281,7 +281,7 @@ public class RaidLobby {
                     false);
 
             embedBuilder.setThumbnail(spawn.getIcon());
-            embedBuilder.setImage(spawn.getImage());
+            embedBuilder.setImage(spawn.getImage("formatting.ini"));
         }
 
         MessageBuilder messageBuilder = new MessageBuilder().setEmbed(embedBuilder.build());
@@ -306,7 +306,7 @@ public class RaidLobby {
 
         String strengthEmoteStr = "";
 
-        for (String s : Raid.getBossStrengthsEmote(spawn.bossId)) {
+        for (String s : Raid.getBossStrengthsEmote(spawn.move1Id,spawn.move2Id)) {
             Emote emote = Raid.emotes.get(s);
             strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
         }

@@ -11,7 +11,7 @@ public class RotatingSet<E> extends HashSet<E> {
     private final int maxSize;
 
 
-    private ArrayList<E> objects;
+    private final ArrayList<E> objects;
 
     public RotatingSet(int size){
         this.maxSize = size;

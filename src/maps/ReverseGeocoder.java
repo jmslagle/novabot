@@ -11,6 +11,7 @@ import core.MessageListener;
 
 import static core.MessageListener.config;
 import static core.MessageListener.loadConfig;
+import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 public class ReverseGeocoder {
 
@@ -43,9 +44,10 @@ public class ReverseGeocoder {
         location.set("sublocality","unkn");
         location.set("country","unkn");
 
+        String key = getNextKey();
         final GeoApiContext context = new GeoApiContext();
         try {
-            context.setApiKey(getNextKey());
+            context.setApiKey(key);
             final GeocodingResult[] results = (GeocodingApi.reverseGeocode(context, new LatLng(lat, lon))).await();
             for (final AddressComponent addressComponent : results[0].addressComponents) {
                 final AddressComponentType[] types = addressComponent.types;
@@ -79,6 +81,9 @@ public class ReverseGeocoder {
                     }
                 }
             }
+        }
+        catch (com.google.maps.errors.OverDailyLimitException e){
+            MessageListener.novabotLog.log(INFO, String.format("Exceeded daily limit with key %s", key));
         }
         catch (Exception e) {
             e.printStackTrace();

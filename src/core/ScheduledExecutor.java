@@ -33,9 +33,9 @@ public class ScheduledExecutor extends ScheduledThreadPoolExecutor {
     }
 
     private class LogOnExceptionRunnable implements Runnable {
-        private Runnable theRunnable;
+        private final Runnable theRunnable;
 
-        public LogOnExceptionRunnable(Runnable theRunnable) {
+        LogOnExceptionRunnable(Runnable theRunnable) {
             super();
             this.theRunnable = theRunnable;
         }

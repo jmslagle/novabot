@@ -14,7 +14,7 @@ public class PokeNotifier implements Runnable
     private final JDA jda;
     private final boolean testing;
 
-    private static SimpleLog notifierLog = SimpleLog.getLog("PokeNotifier");
+    private static final SimpleLog notifierLog = SimpleLog.getLog("PokeNotifier");
 
     public PokeNotifier(final JDA jda, boolean testing) {
         this.jda = jda;

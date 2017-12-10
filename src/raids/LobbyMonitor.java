@@ -19,13 +19,13 @@ public class LobbyMonitor implements Runnable {
 
     private final LobbyManager lobbyManager;
 
-    static SimpleLog lobbyMonitorLog = SimpleLog.getLog("Lobby-Monitor");
+    private static final SimpleLog lobbyMonitorLog = SimpleLog.getLog("Lobby-Monitor");
 
     public LobbyMonitor(LobbyManager lobbyManager){
         this.lobbyManager = lobbyManager;
         lobbyMonitorLog.setLevel(DEBUG);
         try {
-            lobbyMonitorLog.addFileLogs(new File("std.log"),new File("err.log"));
+            SimpleLog.addFileLogs(new File("std.log"),new File("err.log"));
         } catch (IOException e) {
             e.printStackTrace();
         }

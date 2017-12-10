@@ -1,55 +1,61 @@
 package raids;
 
 import core.DBManager;
+import core.Spawn;
+import core.Team;
 import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
+import pokemon.PokeMove;
 import pokemon.Pokemon;
 
 import java.awt.*;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import static core.MessageListener.*;
+import static core.MessageListener.config;
+import static core.MessageListener.loadConfig;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static maps.Geofencing.getGeofence;
 import static maps.Geofencing.loadGeofences;
-import static pokemon.PokeSpawn.getNextKey;
-import static pokemon.PokeSpawn.printFormat;
 
 /**
  * Created by Owner on 27/06/2017.
  */
-public class RaidSpawn {
+public class RaidSpawn extends Spawn
+{
 
-    static final String NORMAL_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_normal.png";
-    static final String RARE_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_rare.png";
-    static final String LEGENDARY_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_legendary.png";
+    private static final String NORMAL_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_normal.png";
+    private static final String RARE_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_rare.png";
+    private static final String LEGENDARY_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_legendary.png";
 
-    final String name;
-    final double lat;
-    final double lon;
-    public final Timestamp raidEnd;
-    public final Timestamp battleStart;
-    public final int bossId;
-    final int bossCp;
-    final String move_1;
-    final String move_2;
-    public final int raidLevel;
-    public final String gymId;
-    private final ArrayList<GeofenceIdentifier> geofenceIdentifiers;
+    private String name;
+    public Timestamp raidEnd;
+    public Timestamp battleStart;
+    public int bossId;
+    private int bossCp;
+    public int raidLevel;
+    public String gymId;
 
-    public HashMap<String,String> properties = new HashMap<>();
     private String imageUrl;
-    private String formatKey;
-    private Message builtMessage = null;
+    private final HashMap<String,Message> builtMessages = new HashMap<>();
 
     private int lobbyCode;
+    public int move1Id;
+    public int move2Id;
+
+    public RaidSpawn(int id, boolean egg) {
+        super();
+        if (egg){
+            raidLevel = id;
+        }else{
+            bossId = id;
+        }
+    }
 
     public static void main(String[] args) {
 
@@ -58,18 +64,18 @@ public class RaidSpawn {
         DBManager.novabotdbConnect();
         RaidSpawn spawn = new RaidSpawn("gym",
                 "123",-35.34200996278955,149.05508042811897,
-                new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
+                Team.Valor, new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
                 new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
                 6,
                 11003,
-                "fire",
-                "fire blast",
+                2,
+                4,
                 3);
 
         spawn.setLobbyCode(1);
 //        System.out.println(spawn.getLobbyCode());
 
-        Message message = spawn.buildMessage();
+        Message message = spawn.buildMessage("formatting.ini");
         System.out.println(message.getEmbeds().get(0).getTitle());
         System.out.println(message.getEmbeds().get(0).getDescription());
 
@@ -89,14 +95,20 @@ public class RaidSpawn {
 //        jda.getUserById("107730875596169216").openPrivateChannel().queue(success -> success.sendMessage(message).queue(m -> m.addReaction(WHITE_GREEN_CHECK).queue()));
     }
 
-    public RaidSpawn(String name, String gymId, double lat, double lon, Timestamp raidEnd, Timestamp battleStart, int bossId, int bossCp,String move_1, String move_2, int raidLevel) {
+    public RaidSpawn(String name, String gymId, double lat, double lon, Team team, Timestamp raidEnd, Timestamp battleStart, int bossId, int bossCp, int move_1, int move_2, int raidLevel) {
         this.name = name;
         properties.put("gym_name",name);
 
         this.gymId = gymId;
 
         this.lat = lat;
+        properties.put("lat", String.valueOf(lat));
+
         this.lon = lon;
+        properties.put("lng", String.valueOf(lon));
+
+        Team team1 = team;
+        properties.put("team_name",team.toString());
 
         this.geofenceIdentifiers = getGeofence(lat,lon);
 
@@ -120,13 +132,16 @@ public class RaidSpawn {
 
         this.bossId = bossId;
         this.bossCp = bossCp;
-        this.move_1 = move_1;
-        this.move_2 = move_2;
+        this.move1Id = move_1;
+        this.move2Id = move_2;
+        this.move_1 = PokeMove.idToName(move1Id);
+        this.move_2 = PokeMove.idToName(move2Id);
+
         if(bossId != 0) {
             properties.put("pkmn", Util.capitaliseFirst(Pokemon.idToName(bossId)));
             properties.put("cp", String.valueOf(bossCp));
-            properties.put("quick_move",move_1);
-            properties.put("charge_move",move_2);
+            properties.put("quick_move",this.move_1);
+            properties.put("charge_move",this.move_2);
         }
 
         this.raidLevel = raidLevel;
@@ -135,13 +150,6 @@ public class RaidSpawn {
         properties.put("lobbycode","unkn");
     }
 
-    private String getAppleMapsLink() {
-        return String.format("http://maps.apple.com/maps?daddr=%s,%s&z=10&t=s&dirflg=w", this.lat, this.lon);
-    }
-
-    private String getGmapsLink() {
-        return String.format("https://www.google.com/maps?q=loc:%s,%s", this.lat, this.lon);
-    }
 
     public String timeLeft(Timestamp untilTime) {
         Timestamp currentTime = DBManager.getCurrentTime();
@@ -176,38 +184,40 @@ public class RaidSpawn {
         return String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", name,gymId,lat,lon,raidEnd,battleStart,bossId,bossCp,raidLevel,move_1,move_2);
     }
 
-    public Message buildMessage() {
-        if(builtMessage != null) return builtMessage;
+    public Message buildMessage(String formatFile) {
 
-        final MessageBuilder messageBuilder = new MessageBuilder();
-        final EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.setColor(getColor());
+        if(builtMessages.get(formatFile) == null) {
 
-        if(bossId == 0) {
-            formatKey = "raidEgg";
-            embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatKey)),config.formatStr(properties,config.getTitleUrl(formatKey)));
-            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey)+ (
-                    raidLevel >= 3 && config.isRaidOrganisationEnabled()
-                            ? "\n\nJoin the discord lobby to coordinate with other players, and be alerted when this egg hatches. Join by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
-                            : "")));
-        }else{
-            formatKey = "raidBoss";
-            embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatKey)),config.formatStr(properties,config.getTitleUrl(formatKey)));
-            embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatKey) + (
-                    raidLevel >= 3 && config.isRaidOrganisationEnabled()
-                            ? "\n\nJoin the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
-                            : "")));
+            final MessageBuilder messageBuilder = new MessageBuilder();
+            final EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(getColor());
+
+            if(bossId == 0) {
+                formatKey = "raidEgg";
+                embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatFile, formatKey)),config.formatStr(properties,config.getTitleUrl(formatFile, formatKey)));
+                embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatFile, formatKey)+ (
+                        raidLevel >= 3 && config.isRaidOrganisationEnabled()
+                                ? "\n\nJoin the discord lobby to coordinate with other players, and be alerted when this egg hatches. Join by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
+                                : "")));
+            }else{
+                formatKey = "raidBoss";
+                embedBuilder.setTitle(config.formatStr(properties,config.getTitleFormatting(formatFile, formatKey)),config.formatStr(properties,config.getTitleUrl(formatFile, formatKey)));
+                embedBuilder.setDescription(config.formatStr(properties,config.getBodyFormatting(formatFile, formatKey) + (
+                        raidLevel >= 3 && config.isRaidOrganisationEnabled()
+                                ? "\n\nJoin the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid <lobbycode>` in any novabot channel."
+                                : "")));
+            }
+            embedBuilder.setThumbnail(getIcon());
+            if (config.showMap(formatFile, formatKey)) {
+                embedBuilder.setImage(getImage(formatFile));
+            }
+            embedBuilder.setFooter(config.getFooterText(), null);
+            embedBuilder.setTimestamp(Instant.now());
+            messageBuilder.setEmbed(embedBuilder.build());
+
+            builtMessages.put(formatFile,messageBuilder.build());
         }
-        embedBuilder.setThumbnail(getIcon());
-        if (config.showMap(formatKey)) {
-            embedBuilder.setImage(getImage());
-        }
-        embedBuilder.setFooter(config.getFooterText(), null);
-        embedBuilder.setTimestamp(Instant.now());
-        messageBuilder.setEmbed(embedBuilder.build());
-
-        this.builtMessage = messageBuilder.build();
-        return builtMessage;
+        return builtMessages.get(formatFile);
     }
 
     public String getStartTime() {
@@ -218,14 +228,7 @@ public class RaidSpawn {
         return printFormat.format(raidEnd);
     }
 
-    public String getImage() {
-        if (this.imageUrl == null) {
-            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom(formatKey), config.getMapWidth(formatKey), config.getMapHeight(formatKey), this.lat, this.lon, getNextKey());
-        }
-        return this.imageUrl;
-    }
-
-    public Color getColor() {
+    private Color getColor() {
         switch(raidLevel) {
             case 1:
                 return new Color(0x9d9d9d);
@@ -255,18 +258,6 @@ public class RaidSpawn {
             }
         }
         return Pokemon.getIcon(bossId);
-    }
-
-    public ArrayList<GeofenceIdentifier> getGeofences() {
-        return geofenceIdentifiers;
-    }
-
-    public ArrayList<GeofenceIdentifier> getGeofenceIds() {
-        return geofenceIdentifiers;
-    }
-
-    public String getSuburb() {
-        return properties.get("city");
     }
 
     public void setLobbyCode(int id) {

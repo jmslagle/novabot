@@ -1,10 +1,8 @@
 package notifier;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import core.AlertChannel;
 import core.DBManager;
 import core.MessageListener;
-import core.PokeChannel;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
@@ -14,19 +12,17 @@ import pokemon.PokeSpawn;
 import pokemon.Pokemon;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.HashSet;
 
 import static core.MessageListener.config;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
-class PokeNotificationSender implements Runnable {
+public class PokeNotificationSender implements Runnable {
     private final JDA jda;
     private final ArrayList<PokeSpawn> newPokemon;
     private final boolean testing;
 
-    Random random = new Random();
-
-    private static SimpleLog notificationLog = SimpleLog.getLog("Poke-Notif-Sender");
+    public static final SimpleLog notificationLog = SimpleLog.getLog("Poke-Notif-Sender");
 
     public PokeNotificationSender(final JDA jda, final ArrayList<PokeSpawn> newPokemon, boolean testing) {
         this.jda = jda;
@@ -51,92 +47,65 @@ class PokeNotificationSender implements Runnable {
             }
 
             if (!testing) {
-                final ArrayList<String> userIDs = DBManager.getUserIDsToNotify(pokeSpawn);
 
-                if (userIDs.size() == 0) {
+                HashSet<String> toNotify = new HashSet<>(DBManager.getUserIDsToNotify(pokeSpawn));
+
+                ArrayList<String> matchingPresets = config.findMatchingPresets(pokeSpawn);
+
+                for (String preset : matchingPresets) {
+                    toNotify.addAll(DBManager.getUserIDsToNotify(preset,pokeSpawn));
+                }
+
+                if (toNotify.size() == 0) {
                     notificationLog.log(INFO, "no-one wants this pokemon");
                 } else {
-                    final Message message = pokeSpawn.buildMessage();
+                    final Message message = pokeSpawn.buildMessage("formatting.ini");
                     notificationLog.log(INFO, "Built message for pokespawn");
 
                     if (config.isSupporterOnly()) {
-                        userIDs.stream().filter(MessageListener::isSupporter).forEach(userID -> this.notifyUser(userID, message));
+                        toNotify.stream().filter(MessageListener::isSupporter).forEach(userID -> this.notifyUser(userID, message));
                     } else {
-                        userIDs.forEach(userID -> this.notifyUser(userID, message));
+                        toNotify.forEach(userID -> this.notifyUser(userID, message));
                     }
                 }
-                if (pokeSpawn.getGeofenceIds().size() == 0) {
-                    ArrayList<PokeChannel> noGeofences = config.getNonGeofencedChannels();
 
-                    if (noGeofences != null) {
-                        for (PokeChannel channel : config.getNonGeofencedChannels()) {
-                            postToChannel(channel, pokeSpawn);
-                        }
+                for (GeofenceIdentifier geofenceIdentifier : pokeSpawn.getGeofences()) {
+                    ArrayList<AlertChannel> channels = config.getAlertChannels(geofenceIdentifier);
+                    if(channels == null) continue;
+                    for (AlertChannel channel : channels) {
+                        checkChannelFilter(channel, pokeSpawn);
                     }
-                } else {
-                    for (GeofenceIdentifier geofenceIdentifier : pokeSpawn.getGeofenceIds()) {
-                        ArrayList<PokeChannel> channels = config.getPokeChannels(geofenceIdentifier);
-                        if(channels == null) continue;
-                        for (PokeChannel channel : channels) {
-                            postToChannel(channel, pokeSpawn);
-                        }
+                }
+                ArrayList<AlertChannel> noGeofences = config.getNonGeofencedPokeChannels();
+
+                if (noGeofences != null) {
+                    for (AlertChannel channel : noGeofences) {
+                        checkChannelFilter(channel, pokeSpawn);
                     }
                 }
 
             } else {
                 if (DBManager.shouldNotify("107730875596169216", pokeSpawn)) {
-                    final Message message = pokeSpawn.buildMessage();
+                    final Message message = pokeSpawn.buildMessage("formatting.ini");
                     notificationLog.log(INFO, "Built message for pokespawn");
 
                     notifyUser("107730875596169216", message);
                 }
             }
         }
-
     }
 
-    private void postToChannel(PokeChannel channel, PokeSpawn pokeSpawn) {
-        JsonElement pokeFilter = config.searchPokemonFilter(config.filters.get(channel.filterName), pokeSpawn.id);
-        if (pokeFilter == null) {
-            System.out.println(String.format("wtf pokeFilter %s is null for channel with id %s", channel.filterName, channel.channelId));
-            return;
-        }
-        if (pokeFilter.isJsonObject()) {
-            JsonObject obj = pokeFilter.getAsJsonObject();
-
-            JsonElement maxObj = obj.get("max_iv");
-            JsonElement minObj = obj.get("min_iv");
-
-            float max = maxObj == null ? 100 : maxObj.getAsFloat();
-            float min = minObj == null ? 0 : minObj.getAsFloat();
-
-            if (pokeSpawn.iv <= max && pokeSpawn.iv >= min) {
-                notificationLog.log(INFO, String.format("Pokemon between specified ivs (%s,%s), posting to Discord", min, max));
-                sendPublicAlert(pokeSpawn.buildMessage(), pokeSpawn.getGeofenceIds());
-            } else {
-                notificationLog.log(INFO, String.format("Pokemon not specified ivs (%s,%s), posting to Discord", min, max));
-
-            }
-        } else {
-            if (pokeFilter.getAsBoolean()) {
-                notificationLog.log(INFO, "Pokemon enabled in filter, posting to Discord");
-                sendPublicAlert(pokeSpawn.buildMessage(), pokeSpawn.getGeofenceIds());
-            } else {
-                notificationLog.log(INFO, "Pokemon not enabled in filter, not posting");
-            }
+    private void checkChannelFilter(AlertChannel channel, PokeSpawn pokeSpawn) {
+        if (config.matchesFilter(config.pokeFilters.get(channel.filterName),pokeSpawn, channel.filterName)){
+            notificationLog.log(INFO, "Pokemon passed filter, posting to Discord");
+            sendPublicAlert(pokeSpawn.buildMessage(channel.formattingName),channel.channelId);
+        }else{
+            notificationLog.log(INFO, String.format("Pokemon didn't pass %s filter, not posting", channel.filterName));
         }
     }
 
-    private void sendPublicAlert(Message message, ArrayList<GeofenceIdentifier> geofences) {
-        notificationLog.log(INFO, "Sending public alert message to geofenced channels");
-        for (GeofenceIdentifier identifier : geofences) {
-            for (PokeChannel channel : config.getPokeChannels(identifier)) {
-
-                notificationLog.log(INFO, String.format("Sending message to channel %s from geofence %s", channel.channelId, identifier));
-
-                channel.getChannel().sendMessage(message).queue(m -> notificationLog.log(INFO, "Successfully sent message."));
-
-            }
-        }
+    private void sendPublicAlert(Message message, String channelId) {
+        notificationLog.log(INFO, "Sending public alert message to channel " + channelId);
+        jda.getTextChannelById(channelId).sendMessage(message).queue(m -> notificationLog.log(INFO, "Successfully sent message."));
     }
 }

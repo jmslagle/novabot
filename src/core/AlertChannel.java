@@ -7,21 +7,22 @@ import java.util.HashSet;
 
 import static core.MessageListener.jda;
 
-public class PokeChannel {
+public class AlertChannel {
 
-    public String channelId;
+    public final String channelId;
 
     private TextChannel channel = null;
 
     public String filterName;
 
     HashSet<GeofenceIdentifier> geofences = null;
+    public String formattingName;
 
-    public PokeChannel (String channelId){
+    public AlertChannel(String channelId){
         this.channelId = channelId;
     }
 
-    public PokeChannel (String channelId, String filterName){
+    public AlertChannel(String channelId, String filterName){
         this(channelId);
         this.filterName = filterName;
     }

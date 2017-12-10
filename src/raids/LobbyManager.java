@@ -16,10 +16,10 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
  */
 public class LobbyManager {
 
-    HashMap<String, RaidLobby> activeLobbies = new HashMap<>();
-    private static SimpleLog lobbyManagerLog = SimpleLog.getLog("Lobby-Manager");
+    final HashMap<String, RaidLobby> activeLobbies = new HashMap<>();
+    private static final SimpleLog lobbyManagerLog = SimpleLog.getLog("Lobby-Manager");
 
-    RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
+    private final RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
 
     public LobbyManager(){
 
@@ -116,7 +116,7 @@ public class LobbyManager {
         }
     }
 
-    public void addLobby(RaidLobby raidLobby) {
+    private void addLobby(RaidLobby raidLobby) {
         activeLobbies.put(raidLobby.lobbyCode,raidLobby);
     }
 }

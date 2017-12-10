@@ -1,8 +1,8 @@
 package pokemon;
 
 import core.DBManager;
-import core.FeedChannel;
 import core.Region;
+import core.Spawn;
 import core.Util;
 import maps.GeofenceIdentifier;
 import maps.ReverseGeocoder;
@@ -14,27 +14,20 @@ import java.awt.*;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import static core.MessageListener.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static maps.Geofencing.getGeofence;
 import static maps.Geofencing.loadGeofences;
 
-public class PokeSpawn
+public class PokeSpawn extends Spawn
 {
     private static final String STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap?";
-    public FeedChannel feedChannel;
-    private int level;
     private String imageUrl;
     public Timestamp disappearTime;
-    private double lat;
-    private double lon;
     private float weight;
     private float height;
     private int gender;
@@ -42,23 +35,20 @@ public class PokeSpawn
     public int id;
     private String suburb;
     public Region region;
-    private ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
     public float iv;
-    private String move_1;
-    private String move_2;
     private static final DecimalFormat df;
     private int iv_attack;
     private int iv_defense;
     private int iv_stamina;
-    private static int lastKey;
-    private int cp;
+    public int cp;
+    public int level;
 
-    public HashMap<String,String> pokeProperties = new HashMap<>();
-
-    public static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
-    private Message builtMessage = null;
+    public PokeSpawn(){
+        formatKey = "pokemon";
+    }
 
     public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
+        super();
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
@@ -70,6 +60,11 @@ public class PokeSpawn
         this.iv = iv;
         this.move_1 = move_1;
         this.move_2 = move_2;
+    }
+
+    public PokeSpawn(int i) {
+        super();
+        this.id = i;
     }
 
 
@@ -101,47 +96,32 @@ public class PokeSpawn
                 0,
                 0);
 
-        System.out.println(spawn.pokeProperties.get("geofence"));
+        System.out.println(spawn.properties.get("geofence"));
         System.out.println(spawn.encountered());
-//        System.out.println(config.formatStr(spawn.pokeProperties,config.getTitleFormatting()));
+//        System.out.println(config.formatStr(spawn.properties,config.getTitleFormatting()));
 //        if(spawn.encountered()){
-//            System.out.println(config.formatStr(spawn.pokeProperties,config.getEncounterBodyFormatting()));
+//            System.out.println(config.formatStr(spawn.properties,config.getEncounterBodyFormatting()));
 //        }else {
-//            System.out.println(config.formatStr(spawn.pokeProperties, config.getBodyFormatting()));
+//            System.out.println(config.formatStr(spawn.properties, config.getBodyFormatting()));
 //        }
 //        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,0.743 ).hashCode());
 //        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,.743 ).hashCode());
     }
 
-    public PokeSpawn(int id, FeedChannel feedChannel, String suburb, float pokeIV, String move_1, String move_2, String form, int cp) {
-        this.imageUrl = null;
-        this.disappearTime = null;
-        this.form = null;
-        this.suburb = null;
-        this.feedChannel = feedChannel;
-        this.id = id;
-        this.suburb = suburb;
-        this.pokeProperties.put("city",suburb);
-        this.iv = pokeIV;
-        this.move_2 = move_2;
-        this.move_1 = move_1;
-        this.form = form;
-        this.cp = cp;
-    }
-
 
     public PokeSpawn(final int id, final double lat, final double lon, final Timestamp disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
+        super();
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
         this.suburb = null;
         this.region = null;
         this.disappearTime = disappearTime;
-        pokeProperties.put("24h_time",getDespawnTime());
-        pokeProperties.put("time_left",timeLeft());
+        properties.put("24h_time",getDespawnTime());
+        properties.put("time_left",timeLeft());
 
         this.id = id;
-        pokeProperties.put("pkmn_id", String.valueOf(id));
+        properties.put("pkmn_id", String.valueOf(id));
 
 
         String name = Util.capitaliseFirst(Pokemon.idToName(this.id));
@@ -149,67 +129,70 @@ public class PokeSpawn
             name = "Unown";
         }
 
-        pokeProperties.put("pkmn",name);
+        properties.put("pkmn",name);
 
         this.lat = lat;
-        pokeProperties.put("lat", String.valueOf(lat));
+        properties.put("lat", String.valueOf(lat));
 
         this.lon = lon;
-        pokeProperties.put("lng", String.valueOf(lon));
+        properties.put("lng", String.valueOf(lon));
 
         ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach((key,value)->{
-            pokeProperties.put(key,value);
+            properties.put(key,value);
         });
 
         this.geofenceIdentifiers = getGeofence(lat,lon);
 
-        pokeProperties.put("geofence", GeofenceIdentifier.listToString(geofenceIdentifiers));
+        properties.put("geofence", GeofenceIdentifier.listToString(geofenceIdentifiers));
 
-        pokeProperties.put("gmaps",getGmapsLink());
+        properties.put("gmaps",getGmapsLink());
 
-        pokeProperties.put("applemaps",getAppleMapsLink());
+        properties.put("applemaps",getAppleMapsLink());
 
         this.iv_attack = attack;
-        pokeProperties.put("atk", String.valueOf(iv_attack));
+        properties.put("atk", String.valueOf(iv_attack));
 
         this.iv_defense = defense;
-        pokeProperties.put("def", String.valueOf(iv_defense));
+        properties.put("def", String.valueOf(iv_defense));
 
         this.iv_stamina = stamina;
-        pokeProperties.put("sta", String.valueOf(iv_stamina));
+        properties.put("sta", String.valueOf(iv_stamina));
 
         this.iv = (attack + defense + stamina) / 45.0f * 100.0f;
-        pokeProperties.put("iv", getIv());
+        properties.put("iv", getIv());
 
         this.move_1 = ((move1 == null) ? "unkn" : move1);
-        pokeProperties.put("quick_move", move_1);
+        properties.put("quick_move", move_1);
 
         this.move_2 = ((move2 == null) ? "unkn" : move2);
-        pokeProperties.put("charge_move", move_2);
+        properties.put("charge_move", move_2);
 
         this.weight = weight;
-        pokeProperties.put("weight", getWeight());
+        properties.put("weight", getWeight());
 
         this.height = height;
-        pokeProperties.put("height", getHeight());
+        properties.put("height", getHeight());
+
+        properties.put("size",getSize());
 
         this.gender = gender;
-        pokeProperties.put("gender", getGender());
+        properties.put("gender", getGender());
 
         if (form != 0 && id == 201) {
             this.id = id * 10 + form;
         }
         this.form = ((Pokemon.intToForm(form) == null) ? null : String.valueOf(Pokemon.intToForm(form)));
-        pokeProperties.put("form", (this.form == null ? "" : this.form));
+        properties.put("form", (this.form == null ? "" : this.form));
 
         this.cp = cp;
-        pokeProperties.put("cp", cp == 0 ? "?" : String.valueOf(cp));
+        properties.put("cp", cp == 0 ? "?" : String.valueOf(cp));
 
-        this.level = getLevel(cpModifier);
-        pokeProperties.put("level", String.valueOf(level));
+        level = getLevel(cpModifier);
+        properties.put("level", String.valueOf(level));
     }
 
     public PokeSpawn(final int id, final String suburb, final float pokeIV, final String move_1, final String move_2, final String form, int cp) {
+        super();
         this.imageUrl = null;
         this.disappearTime = null;
         this.form = null;
@@ -224,7 +207,7 @@ public class PokeSpawn
         this.cp = cp;
     }
 
-    public static int getLevel(double cpModifier){
+    private static int getLevel(double cpModifier){
         double unRoundedLevel;
 
         if(cpModifier < 0.734){
@@ -236,26 +219,6 @@ public class PokeSpawn
         return (int) Math.round(unRoundedLevel);
     }
 
-    public String getSuburb() {
-
-        return pokeProperties.get("city");
-
-//        if (this.suburb != null) {
-//            return this.suburb;
-//        }
-//        final String foundSuburb = ReverseGeocoder.getSuburb(this.lat, this.lon);
-//        if (foundSuburb.equals("")) {
-//            return this.suburb = "Unknown";
-//        }
-//        return this.suburb = ReverseGeocoder.getSuburb(this.lat, this.lon);
-    }
-
-//    public Region getRegion() {
-//        if (this.region == null) {
-//            return this.region = Geofencing.getRegion(this.lat, this.lon);
-//        }
-//        return this.region;
-//    }
 
     @Override
     public String toString() {
@@ -290,23 +253,24 @@ public class PokeSpawn
         return time;
     }
 
-    public Message buildMessage() {
-        if(builtMessage == null) {
+    public Message buildMessage(String formatFile) {
+        if(builtMessages.get(formatFile) == null) {
             final MessageBuilder messageBuilder = new MessageBuilder();
             final EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setColor(getColor());
-            embedBuilder.setTitle(config.formatStr(pokeProperties, config.getTitleFormatting("pokemon")), config.formatStr(pokeProperties, config.getTitleUrl("pokemon")));
-            embedBuilder.setDescription(config.formatStr(pokeProperties, (encountered()) ? config.getEncounterBodyFormatting() : config.getBodyFormatting("pokemon")));
+            embedBuilder.setTitle(config.formatStr(properties, (encountered()) ? config.getEncounterTitleFormatting(formatFile) : (config.getTitleFormatting(formatFile,"pokemon"))), config.formatStr(properties, config.getTitleUrl(formatFile,"pokemon")));
+            embedBuilder.setDescription(config.formatStr(properties, (encountered()) ? config.getEncounterBodyFormatting(formatFile) : config.getBodyFormatting(formatFile,"pokemon")));
             embedBuilder.setThumbnail(Pokemon.getIcon(this.id));
-            if (config.showMap("pokemon")) {
-                embedBuilder.setImage(this.getImage());
+            if (config.showMap(formatFile,"pokemon")) {
+                embedBuilder.setImage(this.getImage(formatFile));
             }
             embedBuilder.setFooter(config.getFooterText(), null);
             embedBuilder.setTimestamp(Instant.now());
             messageBuilder.setEmbed(embedBuilder.build());
-            builtMessage = messageBuilder.build();
+            builtMessages.put(formatFile,messageBuilder.build());
         }
-        return builtMessage;
+
+        return builtMessages.get(formatFile);
     }
 
     private boolean encountered() {
@@ -351,34 +315,13 @@ public class PokeSpawn
         return PokeSpawn.df.format(this.weight);
     }
 
-    private String getImage() {
-
-        if (this.imageUrl == null) {
-            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom("pokemon"), config.getMapWidth("pokemon"), config.getMapHeight("pokemon"), this.lat, this.lon, getNextKey());
-        }
-        return this.imageUrl;
-    }
-
-    public static String getNextKey() {
-        if (PokeSpawn.lastKey == config.getKeys().size() - 1) {
-            PokeSpawn.lastKey = 0;
-            return config.getKeys().get(PokeSpawn.lastKey);
-        }
-        ++PokeSpawn.lastKey;
-        return config.getKeys().get(PokeSpawn.lastKey);
-    }
-
-    private String getGmapsLink() {
-        return String.format("https://www.google.com/maps?q=loc:%s,%s", this.lat, this.lon);
-    }
-
     private String getIv() {
         return PokeSpawn.df.format(this.iv);
     }
 
     static {
         (df = new DecimalFormat("#.##")).setRoundingMode(RoundingMode.CEILING);
-        PokeSpawn.lastKey = 0;
+
     }
 
     @Override
@@ -406,15 +349,23 @@ public class PokeSpawn
         return hash;
     }
 
-    public String getDespawnTime() {
+    private String getDespawnTime() {
         return printFormat.format(disappearTime);
     }
 
-    public String getAppleMapsLink() {
-        return String.format("http://maps.apple.com/maps?daddr=%s,%s&z=10&t=s&dirflg=w", this.lat, this.lon);
+    private String getSize() {
+        if ((weight == 0) && (height == 0)) {
+            return "?";
+        }
+
+        return Pokemon.getSize(id,height,weight);
     }
 
-    public ArrayList<GeofenceIdentifier> getGeofenceIds() {
-        return geofenceIdentifiers;
+    public int getFilterId() {
+        if (id >= 2011){
+            return 201;
+        }else{
+            return id;
+        }
     }
 }

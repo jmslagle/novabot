@@ -20,7 +20,7 @@ class UserNotifier implements Runnable
 
     @Override
     public void run() {
-        if(user == null)return;;
+        if(user == null)return;
 
         if (!user.hasPrivateChannel()) {
             user.openPrivateChannel().complete();

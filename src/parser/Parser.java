@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static core.MessageListener.config;
+
 public class Parser
 {
     private static final Pattern PATTERN;
@@ -107,7 +109,7 @@ public class Parser
         }
         else {
             final Location location;
-            if ((location = Location.fromString(s.trim(),supporter)) != null) {
+            if ((location = Location.fromString(s.trim())) != null) {
                 argument.setType(ArgType.Locations);
 
                 ArrayList<Location> locations = new ArrayList<>();
@@ -138,6 +140,10 @@ public class Parser
             else if (getFloat(s.trim()) != null) {
                 argument.setType(ArgType.Float);
                 argument.setParams(new Object[] { getFloat(s.trim()) });
+            }
+            else if (config.presets.get(s.trim()) != null){
+                argument.setType(ArgType.Preset);
+                argument.setParams(new Object[] { s.trim()});
             }
             else {
                 argument.setType(ArgType.Unknown);
@@ -173,20 +179,20 @@ public class Parser
         final String[] strings = toSplit.split(",");
         final ArrayList<Object> args = new ArrayList<>();
         final ArrayList<String> malformed = new ArrayList<String>();
-        for (int i = 0; i < strings.length; ++i) {
-            Location loc = Location.fromString(strings[i].trim(), supporter);
+        for (String string2 : strings) {
+            Location loc = Location.fromString(string2.trim());
 
             if (loc == null) {
-                malformed.add(strings[i].trim());
-                args.add(loc);
+                malformed.add(string2.trim());
+                args.add(null);
                 continue;
             }
 
-            if(loc.locationType == LocationType.Geofence){
+            if (loc.locationType == LocationType.Geofence) {
                 for (GeofenceIdentifier geofenceIdentifier : loc.geofenceIdentifiers) {
                     args.add(new Location(geofenceIdentifier));
                 }
-            }else{
+            } else {
                 args.add(loc);
             }
 
@@ -194,10 +200,10 @@ public class Parser
         if (allNull(args.toArray())) {
             args.clear();
             malformed.clear();
-            for (int i = 0; i < strings.length; ++i) {
-                final Pokemon pokemon = new Pokemon(strings[i].trim());
+            for (String string1 : strings) {
+                final Pokemon pokemon = new Pokemon(string1.trim());
                 if (pokemon.name == null) {
-                    malformed.add(strings[i].trim());
+                    malformed.add(string1.trim());
                 }
                 args.add(pokemon.name);
             }
@@ -208,29 +214,44 @@ public class Parser
                 args.clear();
                 malformed.clear();
                 if (strings.length == 1 || strings.length == 2) {
-                    for (int i = 0; i < strings.length; ++i) {
-                        args.add(getInt(strings[i].trim()));
+                    for (String string : strings) {
+                        args.add(getInt(string.trim()));
                     }
                     if (!allNull(new ArrayList[]{args})) {
                         argument.setType(ArgType.Int);
                     }else{
-                        for (int i = 0; i < strings.length; ++i) {
-                            args.add(getFloat(strings[i].trim()));
+                        for (String string : strings) {
+                            args.add(getFloat(string.trim()));
                         }
                         if (!allNull(new ArrayList[]{args})) {
                             argument.setType(ArgType.Float);
                         }
                     }
                 }else{
-                    for (int i = 0; i < strings.length; ++i) {
-                        NestStatus status = NestStatus.fromString(strings[i].trim());
+                    for (String string : strings) {
+                        NestStatus status = NestStatus.fromString(string.trim());
                         args.add(status);
                         if (status == null) {
-                            malformed.add(strings[i].trim());
+                            malformed.add(string.trim());
                         }
                     }
                     if (!allNull(args.toArray())) {
                         argument.setType(ArgType.Status);
+                    }else {
+                        args.clear();
+                        malformed.clear();
+
+                        for (String string : strings) {
+                            String presetFilter = config.presets.get(string.trim());
+                            args.add(string.trim());
+                            if(presetFilter == null){
+                                malformed.add(string.trim());
+                            }
+                        }
+
+                        if (!allNull(args.toArray())) {
+                            argument.setType(ArgType.Preset);
+                        }
                     }
                 }
             }
@@ -262,17 +283,13 @@ public class Parser
     public static void main(String[] args) {
         MessageListener.loadConfig();
 
-        if(MessageListener.config.useChannels()){
-            FeedChannels.loadChannels();
-        }
-
-        if(MessageListener.config.useGeofences()){
+        if(config.useGeofences()){
             Geofencing.loadGeofences();
         }
 
         MessageListener.loadSuburbs();
 //        System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!nest pikachu",true);
+        UserCommand command = parseInput("!loadpreset 100iv",true);
 //        command.buildPokemon();
         System.out.println(command.getExceptions());
     }

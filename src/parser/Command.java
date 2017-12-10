@@ -8,7 +8,7 @@ public class Command
     int maxArgs;
     HashSet<ArgType> validArgTypes;
     private HashSet<ArgType> requiredArgTypes;
-    boolean allowDuplicateArgs;
+    final boolean allowDuplicateArgs;
     private Argument[] arguments;
 
     public Command() {

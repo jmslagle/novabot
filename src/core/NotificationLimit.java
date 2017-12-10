@@ -5,10 +5,10 @@ package core;
  */
 public class NotificationLimit {
 
-    public int pokemonLimit;
-    public int raidLimit;
+    public final int pokemonLimit;
+    public final int raidLimit;
 
-    public NotificationLimit(int pokemonLimit, int raidLimit){
+    private NotificationLimit(int pokemonLimit, int raidLimit){
         this.pokemonLimit = pokemonLimit;
         this.raidLimit = raidLimit;
     }

@@ -7,7 +7,7 @@ import java.util.HashMap;
  */
 public class GeocodedLocation {
 
-    private HashMap<String,String> locationProperties;
+    private final HashMap<String,String> locationProperties;
 
     public GeocodedLocation(){
         locationProperties = new HashMap<>();

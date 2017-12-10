@@ -11,7 +11,7 @@ public enum ArgType
     Unknown,
     TimeUnit,
     Status,
-    Int;
+    Int, Preset;
 
     public static void main(final String[] args) {
         final HashSet<ArgType> hashSet = new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
@@ -35,6 +35,10 @@ public enum ArgType
                 return "time unit";
             case Int:
                 return "whole number";
+            case Preset:
+                return "preset";
+            case CommandStr:
+                return "command";
             default:
                 return null;
         }

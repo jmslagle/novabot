@@ -1,5 +1,6 @@
 package notifier;
 
+import core.AlertChannel;
 import core.DBManager;
 import core.MessageListener;
 import maps.GeofenceIdentifier;
@@ -11,10 +12,9 @@ import raids.RaidLobby;
 import raids.RaidSpawn;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
-import static core.MessageListener.WHITE_GREEN_CHECK;
-import static core.MessageListener.config;
-import static core.MessageListener.lobbyManager;
+import static core.MessageListener.*;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 /**
@@ -23,7 +23,7 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 public class RaidNotificationSender implements Runnable {
 
 
-    private static SimpleLog notificationLog = SimpleLog.getLog("Raid-Notif-Sender");
+    public static final SimpleLog notificationLog = SimpleLog.getLog("Raid-Notif-Sender");
     private final JDA jda;
     private final ArrayList<RaidSpawn> currentRaids;
     private final boolean testing;
@@ -98,31 +98,48 @@ public class RaidNotificationSender implements Runnable {
                 }
             }
 
+            HashSet<String> toNotify = new HashSet<>();
+
             if (raidSpawn.bossId != 0) {
                 notificationLog.log(INFO, "Checking if anyone wants: " + raidSpawn);
 
-                DBManager.getUserIDsToNotify(raidSpawn).forEach(id -> notifyUser(id, raidSpawn.buildMessage(),raidSpawn.raidLevel >= 3));
+                toNotify.addAll(DBManager.getUserIDsToNotify(raidSpawn));
             }
 
-            if(!config.isRaidChannelsEnabled() || raidSpawn.raidLevel < config.getMinRaidLevel()) continue;
+            ArrayList<String> matchingPresets = config.findMatchingPresets(raidSpawn);
+
+            for (String preset : matchingPresets) {
+                toNotify.addAll(DBManager.getUserIDsToNotify(preset,raidSpawn));
+            }
+
+            toNotify.forEach(id -> notifyUser(id, raidSpawn.buildMessage("formatting.ini"),raidSpawn.raidLevel >= 3));
+
+            if(!config.isRaidChannelsEnabled()) continue;
 
 //            notifyUser("107730875596169216",raidSpawn.buildMessage(),true);
 
             for (GeofenceIdentifier identifier : raidSpawn.getGeofences()) {
-                String id = config.getGeofenceChannelId(identifier);
+                ArrayList<AlertChannel> channels = config.getRaidChannels(identifier);
 
-                if(id != null){
-                    jda.getTextChannelById(id).sendMessage(raidSpawn.buildMessage()).queue(m -> {
-                        if(config.isRaidOrganisationEnabled() && raidSpawn.raidLevel >= 3) {
-                            System.out.println(String.format("adding reaction to raid with raidlevel %s", raidSpawn.raidLevel));
-                            m.addReaction(WHITE_GREEN_CHECK).queue();
-                        }
-                    });
+                if(channels == null) continue;
+
+                for (AlertChannel channel : channels) {
+                    if(channel != null){
+                        checkAndPost(channel,raidSpawn);
+                    }
+                }
+            }
+
+            ArrayList<AlertChannel> noGeofences = config.getNonGeofencedRaidChannels();
+
+            if (noGeofences != null){
+                for (AlertChannel channel : noGeofences) {
+                    checkAndPost(channel, raidSpawn);
                 }
             }
 ////
             if(raidSpawn.bossId == 249){
-                jda.getTextChannelById(345259921790468097L).sendMessage(raidSpawn.buildMessage()).queue(m -> {
+                jda.getTextChannelById(345259921790468097L).sendMessage(raidSpawn.buildMessage("formatting.ini")).queue(m -> {
                     if(config.isRaidOrganisationEnabled() && raidSpawn.raidLevel >= 3) {
                         System.out.println(String.format("adding reaction to raid with raidlevel %s", raidSpawn.raidLevel));
                         m.addReaction(WHITE_GREEN_CHECK).queue();
@@ -148,5 +165,22 @@ public class RaidNotificationSender implements Runnable {
 ////                }
 //            }
         }
+    }
+
+    private void checkAndPost(AlertChannel channel, RaidSpawn raidSpawn) {
+        if (config.matchesFilter(config.raidFilters.get(channel.filterName),raidSpawn)){
+            notificationLog.log(INFO, "Raid passed filter, posting to Discord");
+            sendPublicAlert(raidSpawn.buildMessage(channel.formattingName),channel.channelId, raidSpawn.raidLevel);
+        }
+    }
+
+    private void sendPublicAlert(Message message, String channelId, int raidLevel) {
+        notificationLog.log(INFO, "Sending public alert message to channel " + channelId);
+        jda.getTextChannelById(channelId).sendMessage(message).queue(m -> {
+            if(config.isRaidOrganisationEnabled() && raidLevel >= 3) {
+                System.out.println(String.format("adding reaction to raid with raidlevel %s", raidLevel));
+                m.addReaction(WHITE_GREEN_CHECK).queue();
+            }
+        });
     }
 }

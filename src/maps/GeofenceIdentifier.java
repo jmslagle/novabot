@@ -9,9 +9,9 @@ import static core.MessageListener.config;
  */
 public class GeofenceIdentifier {
 
-    public String name;
+    public final String name;
 
-    ArrayList<String> aliases;
+    private final ArrayList<String> aliases;
 
     public GeofenceIdentifier(String name, ArrayList<String> aliases) {
         this.name = name;
