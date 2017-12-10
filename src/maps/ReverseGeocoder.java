@@ -109,10 +109,6 @@ public class ReverseGeocoder {
                     while (j < length2) {
                         final AddressComponentType type = types[j];
                         if (type == AddressComponentType.LOCALITY) {
-                            if (addressComponent.longName.equals("MacArthur")) {
-                                suburb = "Macarthur";
-                                break;
-                            }
                             suburb = addressComponent.longName;
                             break;
                         }

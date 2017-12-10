@@ -9,9 +9,8 @@ import static core.MessageListener.config;
 
 public class Location
 {
-    private static final Location ALL = new Location(Region.All);
+    private static final Location ALL = new Location(LocationType.All);
     public ArrayList<GeofenceIdentifier> geofenceIdentifiers;
-    private Region region;
     public LocationType locationType;
     private String suburb;
     public final boolean usable = true;
@@ -28,18 +27,14 @@ public class Location
         this.geofenceIdentifiers.add(geofenceIdentifier);
     }
 
-    public Location(Region region) {
-        this.locationType = LocationType.Region;
-        this.region = region;
-    }
-
-    private Location() {
-
-    }
 
     public Location(ArrayList<GeofenceIdentifier> identifiers) {
         this.locationType = LocationType.Geofence;
         this.geofenceIdentifiers = identifiers;
+    }
+
+    public Location(LocationType type) {
+        this.locationType = type;
     }
 
 
@@ -55,9 +50,11 @@ public class Location
                 return this.suburb;
             case Geofence:
                 return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
+            case All:
+                return "all";
         }
 
-        return this.region.toString();
+        return null;
     }
 
     public static String listToString(final Location[] locations) {
@@ -78,7 +75,7 @@ public class Location
 
     public static Location fromString(final String str) {
 
-        if(str.equalsIgnoreCase("all")) return new Location(Region.All);
+        if(str.equalsIgnoreCase("all")) return Location.ALL;
 
         if(config.useGeofences()) {
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
@@ -95,15 +92,7 @@ public class Location
     }
 
     public String toWords() {
-        switch(locationType){
-            case Suburb:
-                return this.suburb;
-            case Geofence:
-                return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
-            case Region:
-                return this.region.toString().toLowerCase();
-        }
-        return "";
+        return toString();
     }
 
     public static Location fromDbString(String str) {
@@ -126,15 +115,6 @@ public class Location
         MessageListener.novabotLog.log(SimpleLog.Level.WARNING,str + ", from db string is null");
         return null;
     }
-//
-//    private static Location UNUSABLE(Reason reason, String str, LocationType type) {
-//        Location location = new Location();
-//        location.usable = false;
-//        location.locationType = type;
-//        location.suburb = str;
-//        location.reason = reason;
-//        return location;
-//    }
 
     public String toDbString() {
 
@@ -143,8 +123,10 @@ public class Location
                 return this.suburb;
             case Geofence:
                 return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
+            case All:
+                return "All";
         }
 
-        return this.region.toString();
+        return null;
     }
 }
