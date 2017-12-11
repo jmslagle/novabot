@@ -1,31 +1,75 @@
 package core;
 
+import net.dv8tion.jda.core.utils.SimpleLog;
+
+import static core.MessageListener.novabotLog;
+
 /**
  * Created by miriam on 5/7/17.
  */
 public class NotificationLimit {
 
-    public final int pokemonLimit;
-    public final int raidLimit;
+    public final Integer pokemonLimit;
+    public final Integer raidLimit;
+    public final Integer presetLimit;
 
-    private NotificationLimit(int pokemonLimit, int raidLimit){
+    private NotificationLimit(Integer pokemonLimit, Integer raidLimit, Integer presetLimit){
         this.pokemonLimit = pokemonLimit;
         this.raidLimit = raidLimit;
+        this.presetLimit = presetLimit;
     }
 
     @Override
     public String toString() {
-        return String.format("%s,%s",(pokemonLimit == -1 ? "n" : pokemonLimit),(raidLimit == -1 ? "n" : raidLimit));
+        return String.format("%s pokemon, %s raid%s, %s preset%s",
+                (pokemonLimit == null ? "unlimited" : pokemonLimit),
+                (raidLimit == null ? "unlimited" : raidLimit),
+                (raidLimit == null || raidLimit != 1) ? "s" : "",
+                presetLimit == null ? "unlimited" : presetLimit,
+                (presetLimit == null || presetLimit != 1) ? "s" : "");
+    }
+
+    public String toWords() {
+        return String.format("%s pokemon, %s raid%s, and %s preset%s",
+                (pokemonLimit == null ? "unlimited" : pokemonLimit),
+                (raidLimit == null ? "unlimited" : raidLimit),
+                (raidLimit == null || raidLimit != 1) ? "s" : "",
+                presetLimit == null ? "unlimited" : presetLimit,
+                (presetLimit == null || presetLimit != 1) ? "s" : "");
+    }
+
+    public static void main(String[] args) {
+        System.out.println(NotificationLimit.fromString("[5, 2, 1  ]"));
     }
 
     public static NotificationLimit fromString(String line) {
         String[] limitSplit = line.split(",");
 
-        String pokeLimitStr = limitSplit[0].substring(limitSplit[0].indexOf("[") + 1);
-        int pokeLimit = pokeLimitStr.equals("n") ? -1 : Integer.parseInt(pokeLimitStr);
+        Integer pokeLimit = null, raidLimit = null, presetLimit = null;
 
-        String raidLimitStr = limitSplit[1].substring(0,limitSplit[1].indexOf("]"));
-        int raidLimit = raidLimitStr.equals("n") ? -1 :Integer.parseInt(raidLimitStr);
-        return new  NotificationLimit(pokeLimit,raidLimit);
+        String pokeLimitStr = null;
+        try {
+            pokeLimitStr = limitSplit[0].substring(limitSplit[0].indexOf("[") + 1).trim();
+            pokeLimit = pokeLimitStr.equals("n") ? null : Integer.parseInt(pokeLimitStr);
+        } catch (NumberFormatException e) {
+            novabotLog.log(SimpleLog.Level.FATAL, String.format("Error converting pokemon limit: \"%s\" to a number", pokeLimitStr));
+        }
+
+        String raidLimitStr = limitSplit[1].trim();
+        try {
+            raidLimit = raidLimitStr.equals("n") ? null : Integer.parseInt(raidLimitStr);
+        } catch (NumberFormatException e) {
+            novabotLog.log(SimpleLog.Level.FATAL, String.format("Error converting raid limit: \"%s\" to a number", raidLimitStr));
+        }
+
+        String presetLimitStr = limitSplit[2].substring(0, limitSplit[2].indexOf("]")).trim();
+        try {
+            presetLimit = presetLimitStr.equals("n") ? null : Integer.parseInt(presetLimitStr);
+        } catch (NumberFormatException e) {
+            novabotLog.log(SimpleLog.Level.FATAL, String.format("Error converting preset limit: \"%s\" to a number", presetLimitStr));
+        }
+
+        return new NotificationLimit(pokeLimit, raidLimit, presetLimit);
     }
+
 }

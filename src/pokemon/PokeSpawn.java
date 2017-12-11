@@ -1,7 +1,6 @@
 package pokemon;
 
 import core.DBManager;
-import core.Region;
 import core.Spawn;
 import core.Util;
 import maps.GeofenceIdentifier;
@@ -34,7 +33,6 @@ public class PokeSpawn extends Spawn
     public String form;
     public int id;
     private String suburb;
-    public Region region;
     public float iv;
     private static final DecimalFormat df;
     private int iv_attack;
@@ -45,21 +43,6 @@ public class PokeSpawn extends Spawn
 
     public PokeSpawn(){
         formatKey = "pokemon";
-    }
-
-    public PokeSpawn(final int id, final String suburb, final Region region, final float iv, final String move_1, final String move_2) {
-        super();
-        this.imageUrl = null;
-        this.disappearTime = null;
-        this.form = null;
-        this.suburb = null;
-        this.region = null;
-        this.id = id;
-        this.suburb = suburb;
-        this.region = region;
-        this.iv = iv;
-        this.move_1 = move_1;
-        this.move_2 = move_2;
     }
 
     public PokeSpawn(int i) {
@@ -83,7 +66,7 @@ public class PokeSpawn extends Spawn
         PokeSpawn spawn = new PokeSpawn(149,
                 -35.214385,
                 149.0405493,
-                new Timestamp(DBManager.getCurrentTime().getTime() + 6000),
+                new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 6000),
                 0,
                 0,
                 0,
@@ -115,7 +98,6 @@ public class PokeSpawn extends Spawn
         this.disappearTime = null;
         this.form = null;
         this.suburb = null;
-        this.region = null;
         this.disappearTime = disappearTime;
         properties.put("24h_time",getDespawnTime());
         properties.put("time_left",timeLeft());
@@ -191,22 +173,6 @@ public class PokeSpawn extends Spawn
         properties.put("level", String.valueOf(level));
     }
 
-    public PokeSpawn(final int id, final String suburb, final float pokeIV, final String move_1, final String move_2, final String form, int cp) {
-        super();
-        this.imageUrl = null;
-        this.disappearTime = null;
-        this.form = null;
-        this.suburb = null;
-        this.region = null;
-        this.id = id;
-        this.suburb = suburb;
-        this.iv = pokeIV;
-        this.move_2 = move_2;
-        this.move_1 = move_1;
-        this.form = form;
-        this.cp = cp;
-    }
-
     private static int getLevel(double cpModifier){
         double unRoundedLevel;
 
@@ -223,15 +189,15 @@ public class PokeSpawn extends Spawn
     @Override
     public String toString() {
         if (this.disappearTime == null) {
-            return ((this.region == null) ? "null" : this.region.toString()) + ": [" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.move_1 + ", " + this.move_2;
+            return "[" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.move_1 + ", " + this.move_2;
         }
-        return ((this.region == null) ? "null" : this.region.toString()) + ": [" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%,CP: " + this.cp + ", " + this.move_1 + ", " + this.move_2 + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
+        return "[" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%,CP: " + this.cp + ", " + this.move_1 + ", " + this.move_2 + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
     }
 
     private String timeLeft() {
 //        ZonedDateTime.of(LocalDate.of, ZoneId.of("Australia/Canberra"))
 
-        Timestamp currentTime = DBManager.getCurrentTime();
+        Timestamp currentTime = Util.getCurrentTime(config.getTimeZone());
 //
 //        System.out.println(disappearTime);
 //        System.out.println(currentTime);

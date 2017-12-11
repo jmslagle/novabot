@@ -3,6 +3,7 @@ package notifier;
 import core.AlertChannel;
 import core.DBManager;
 import core.MessageListener;
+import core.Util;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.core.utils.SimpleLog;
 import raids.RaidLobby;
 import raids.RaidSpawn;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -20,7 +22,7 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 /**
  * Created by Owner on 27/06/2017.
  */
-public class RaidNotificationSender implements Runnable {
+public class RaidNotificationSender extends NotificationSender implements Runnable {
 
 
     public static final SimpleLog notificationLog = SimpleLog.getLog("Raid-Notif-Sender");
@@ -40,11 +42,23 @@ public class RaidNotificationSender implements Runnable {
 
     private void notifyUser(final String userID, final Message message, boolean showTick) {
         final User user = this.jda.getUserById(userID);
-        final Thread thread = new Thread(new UserNotifier(user, message, true));
-        thread.start();
-//
-//        UserNotifier notifier = new UserNotifier(user,message);
-//        notifier.run();
+        if(user == null)return;
+
+        Timestamp lastChecked = MessageListener.lastUserRoleChecks.get(userID);
+        Timestamp currentTime = Util.getCurrentTime(config.getTimeZone());
+        if (lastChecked == null || lastChecked.before(new Timestamp(currentTime.getTime() - (10 * 60 * 1000)))){
+            notificationLog.log(INFO, String.format("Checking supporter status of %s", user.getName()));
+            MessageListener.lastUserRoleChecks.put(userID,currentTime);
+            checkSupporterStatus(user);
+        }else {
+            user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue(
+                    msg -> {
+                        if (showTick) {
+                            msg.addReaction(WHITE_GREEN_CHECK).queue();
+                        }
+                    }
+            ));
+        }
     }
 
     @Override
@@ -69,7 +83,7 @@ public class RaidNotificationSender implements Runnable {
                 continue;
             }
 
-            if (raidSpawn.raidEnd.before(DBManager.getCurrentTime())){
+            if (raidSpawn.raidEnd.before(Util.getCurrentTime(config.getTimeZone()))){
                 notificationLog.log(INFO,"Raid already ended, not posting");
                 continue;
             }
@@ -112,7 +126,7 @@ public class RaidNotificationSender implements Runnable {
                 toNotify.addAll(DBManager.getUserIDsToNotify(preset,raidSpawn));
             }
 
-            toNotify.forEach(id -> notifyUser(id, raidSpawn.buildMessage("formatting.ini"),raidSpawn.raidLevel >= 3));
+            toNotify.forEach(id -> notifyUser(id, raidSpawn.buildMessage("formatting.ini"),raidSpawn.raidLevel >= 3 && config.isRaidOrganisationEnabled()));
 
             if(!config.isRaidChannelsEnabled()) continue;
 
@@ -170,11 +184,11 @@ public class RaidNotificationSender implements Runnable {
     private void checkAndPost(AlertChannel channel, RaidSpawn raidSpawn) {
         if (config.matchesFilter(config.raidFilters.get(channel.filterName),raidSpawn)){
             notificationLog.log(INFO, "Raid passed filter, posting to Discord");
-            sendPublicAlert(raidSpawn.buildMessage(channel.formattingName),channel.channelId, raidSpawn.raidLevel);
+            sendChannelAlert(raidSpawn.buildMessage(channel.formattingName),channel.channelId, raidSpawn.raidLevel);
         }
     }
 
-    private void sendPublicAlert(Message message, String channelId, int raidLevel) {
+    private void sendChannelAlert(Message message, String channelId, int raidLevel) {
         notificationLog.log(INFO, "Sending public alert message to channel " + channelId);
         jda.getTextChannelById(channelId).sendMessage(message).queue(m -> {
             if(config.isRaidOrganisationEnabled() && raidLevel >= 3) {

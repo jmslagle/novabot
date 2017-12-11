@@ -14,10 +14,12 @@ public class RaidNotifier implements Runnable
 {
     private final JDA jda;
     private final boolean testing;
+    private final NotificationsManager manager;
 
     private static final SimpleLog notifierLog = SimpleLog.getLog("RaidNotifier");
 
-    public RaidNotifier(final JDA jda, boolean testing) {
+    public RaidNotifier(NotificationsManager manager, final JDA jda, boolean testing) {
+        this.manager = manager;
         this.jda = jda;
         this.testing = testing;
     }
@@ -25,10 +27,7 @@ public class RaidNotifier implements Runnable
     @Override
     public void run() {
         notifierLog.log(INFO,"checking for raids to notify");
-        final Thread thread = new Thread(new RaidNotificationSender(this.jda, DBManager.getCurrentRaids(),testing));
-        thread.start();
-//        PokeNotificationSender sender = new PokeNotificationSender(this.jda, DBManager.getNewPokemon(),testing);
-//        sender.run();
-        notifierLog.log(DEBUG,"Done checking");
+        manager.raidNotifSenderExecutor.submit(new RaidNotificationSender(this.jda, DBManager.getCurrentRaids(),testing));
+        notifierLog.log(DEBUG,"Done checking and adding to queue for processing");
     }
 }

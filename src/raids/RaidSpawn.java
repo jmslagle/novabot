@@ -64,8 +64,8 @@ public class RaidSpawn extends Spawn
         DBManager.novabotdbConnect();
         RaidSpawn spawn = new RaidSpawn("gym",
                 "123",-35.34200996278955,149.05508042811897,
-                Team.Valor, new Timestamp(DBManager.getCurrentTime().getTime() + 504000),
-                new Timestamp(DBManager.getCurrentTime().getTime() + 6000000),
+                Team.Valor, new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 504000),
+                new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 6000000),
                 6,
                 11003,
                 2,
@@ -152,7 +152,7 @@ public class RaidSpawn extends Spawn
 
 
     public String timeLeft(Timestamp untilTime) {
-        Timestamp currentTime = DBManager.getCurrentTime();
+        Timestamp currentTime = Util.getCurrentTime(config.getTimeZone());
 
         long diff = untilTime.getTime() - currentTime.getTime();
 

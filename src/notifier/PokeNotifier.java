@@ -13,10 +13,12 @@ public class PokeNotifier implements Runnable
 {
     private final JDA jda;
     private final boolean testing;
+    private final NotificationsManager manager;
 
     private static final SimpleLog notifierLog = SimpleLog.getLog("PokeNotifier");
 
-    public PokeNotifier(final JDA jda, boolean testing) {
+    public PokeNotifier(NotificationsManager manager, final JDA jda, boolean testing) {
+        this.manager = manager;
         this.jda = jda;
         this.testing = testing;
     }
@@ -25,10 +27,7 @@ public class PokeNotifier implements Runnable
     public void run() {
         notifierLog.log(DEBUG,"Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
         notifierLog.log(INFO,"checking for pokemon to notify");
-        final Thread thread = new Thread(new PokeNotificationSender(this.jda, DBManager.getNewPokemon(),testing));
-        thread.start();
-//        PokeNotificationSender sender = new PokeNotificationSender(this.jda, DBManager.getNewPokemon(),testing);
-//        sender.run();
-        notifierLog.log(DEBUG,"Done checking");
+        manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(this.jda, DBManager.getNewPokemon(),testing));
+        notifierLog.log(DEBUG,"Done checking and adding to queue for processing");
     }
 }

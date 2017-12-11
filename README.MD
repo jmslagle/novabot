@@ -265,6 +265,64 @@ formatting = filename of formatting file eg: specialformat.ini
 
 [example file](pokechannels.ini)
 
+### config.ini variables
+
+#### token
+
+#### blacklist
+
+#### raidBosses
+
+#### useRmDb
+
+#### standardRaidTable
+
+#### googleSuburbField
+
+#### pokemon
+
+#### raids
+
+#### raidChannels
+
+#### geofences
+
+#### raidOrganisation
+
+#### pokePollingRate
+
+#### pokemonThreads
+
+#### raidPollingRate
+
+#### raidThreads
+
+#### startupMessage
+
+#### footerText
+
+#### stats
+
+#### timezone
+
+#### countLocationsInLimits
+
+#### nonSupporterLimit
+
+#### adminRole
+
+#### novabotRole
+
+#### supporterRolees
+
+#### commandChannel
+
+#### logging
+
+#### roleLogChannel
+
+#### userUpdatesChannel]
+
 ### Filters
 
 #### Pokemon filters
@@ -350,3 +408,9 @@ Examples:
 ## <a name="usage"></a> Usage
 
 ### <a name="basic-examples"></a> Basic Examples
+
+## <a name="faq"></a> FAQ
+
+### How do I get the ID of a channel?
+
+### How do I get the ID of a role?

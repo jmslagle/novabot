@@ -21,8 +21,8 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.*;
 public class DBManager {
     private static final MysqlDataSource rocketmapDataSource = new MysqlDataSource();
     private static final MysqlDataSource novabotDataSource = new MysqlDataSource();
-    private static Timestamp lastChecked = getCurrentTime();
-    private static Timestamp lastCheckedRaids = getCurrentTime();
+    private static Timestamp lastChecked = Util.getCurrentTime(config.getTimeZone());
+    private static Timestamp lastCheckedRaids = Util.getCurrentTime(config.getTimeZone());
 
     private static final RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
@@ -207,7 +207,7 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        DBManager.lastCheckedRaids = getCurrentTime();
+        DBManager.lastCheckedRaids = Util.getCurrentTime(config.getTimeZone());
         dbLog.log(INFO, "Found: " + raidEggs.size());
 
         return raidEggs;
@@ -314,7 +314,7 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        DBManager.lastChecked = getCurrentTime();
+        DBManager.lastChecked = Util.getCurrentTime(config.getTimeZone());
         dbLog.log(INFO, "Found: " + pokeSpawns.size());
         return pokeSpawns;
     }
@@ -348,22 +348,22 @@ public class DBManager {
         }
     }
 
-    public static boolean shouldNotify(final String userID, final PokeSpawn pokeSpawn) {
-
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
-             Statement statement = connection.createStatement()) {
-            statement.executeQuery(String.format("SELECT * FROM pokemon WHERE ((user_id=%s) AND ((location=%s) OR (location='All')) AND (id=%s) AND (min_iv <= %s) AND (max_iv >= %s));", "'" + userID + "'", "'" + pokeSpawn.region + "'", pokeSpawn.id, pokeSpawn.iv, pokeSpawn.iv));
-            final ResultSet rs = statement.getResultSet();
-            if (!rs.next()) {
-                connection.close();
-                statement.close();
-                return false;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
+//    public static boolean shouldNotify(final String userID, final PokeSpawn pokeSpawn) {
+//
+//        try (Connection connection = getConnection(DBManager.novabotDataSource);
+//             Statement statement = connection.createStatement()) {
+//            statement.executeQuery(String.format("SELECT * FROM pokemon WHERE ((user_id=%s) AND ((location=%s) OR (location='All')) AND (id=%s) AND (min_iv <= %s) AND (max_iv >= %s));", "'" + userID + "'", "'" + pokeSpawn.region + "'", pokeSpawn.id, pokeSpawn.iv, pokeSpawn.iv));
+//            final ResultSet rs = statement.getResultSet();
+//            if (!rs.next()) {
+//                connection.close();
+//                statement.close();
+//                return false;
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        return true;
+//    }
 
     public static void addUser(final String userID) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
@@ -796,13 +796,30 @@ public class DBManager {
         return pokemon;
     }
 
-    public static Timestamp getCurrentTime() {
+    public static int countPresets(String userID, boolean countLocations) {
+        int presets = 0;
 
-        if (config == null) loadConfig();
+        String sql;
 
-        TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
+        if(countLocations){
+            sql = "SELECT count(id) FROM preset WHERE user_id=?";
+        }else{
+            sql = "SELECT count(distinct(id)) FROM preset WHERE user_id=?";
+        }
 
-        return new Timestamp(new Date().getTime());
+        try (Connection connection = getConnection(DBManager.novabotDataSource);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1,userID);
+
+            final ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                presets = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return presets;
     }
 
     public static void setGeocodedLocation(final double lat, final double lon, GeocodedLocation location) {
@@ -1147,4 +1164,5 @@ public class DBManager {
 
         return highest;
     }
+
 }

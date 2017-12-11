@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import core.Location;
-import core.Region;
 import core.Types;
 
 import java.io.FileNotFoundException;
@@ -71,20 +70,6 @@ public class Pokemon
         else {
             this.name = name.toLowerCase();
         }
-    }
-
-    private Pokemon(final String name, final Region region) {
-        this(name);
-    }
-
-    private Pokemon(final String name, final Region region, final float miniv) {
-        this(name, region);
-        this.miniv = miniv;
-    }
-
-    public Pokemon(final String name, final Region region, final float miniv, final float maxiv) {
-        this(name, region, miniv);
-        this.maxiv = maxiv;
     }
 
     public Pokemon(final int id, final float min_iv, final float max_iv) {

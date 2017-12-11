@@ -24,8 +24,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-import static core.MessageListener.guild;
-import static core.MessageListener.jda;
+import static core.MessageListener.*;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.WARNING;
 import static raids.Raid.emotes;
@@ -35,37 +34,32 @@ import static raids.Raid.emotes;
  */
 public class Config {
 
-    private final boolean standardRaidTable;
-    private final String googleSuburbField;
-    private final NotificationLimit nonSupporterLimit;
-    private final Ini ini;
+    private static final String[] formatKeys = new String[]{"pokemon", "raidEgg", "raidBoss"};
+    private static final String[] formattingVars = new String[]{"title", "titleUrl", "body", "showMap", "mapZoom", "mapWidth", "mapHeight"};
 
+
+    final ArrayList<Integer> raidBosses = new ArrayList<>();
     private ArrayList<String> GMAPS_KEYS = new ArrayList<>();
-
     private final ArrayList<Integer> blacklist = new ArrayList<>();
     private ArrayList<String> supporterRoles = new ArrayList<>();
 
-    private final String token;
     private final boolean geofences;
     private final boolean logging;
     private final boolean stats;
     private final boolean startupMessage;
-    private final boolean supporterOnly;
     private final boolean countLocationsInLimits;
+    private final boolean standardRaidTable;
 
+    private final String token;
     private final String timeZone;
-
     private final String footerText;
+    private final String googleSuburbField;
 
     private final String adminRole;
-
     private final String commandChannelId;
     private String roleLogId;
     private String userUpdatesId;
-
-    private final long pokePollingRate;
-    private final long raidPollingRate;
-
+    private final String novabotRoleId;
 
     private final String rmUser;
     private final String rmPass;
@@ -79,6 +73,12 @@ public class Config {
     private final String nbPort;
     private final String nbDbName;
 
+    private final long pokePollingRate;
+    private final long raidPollingRate;
+
+    private final int pokemonThreads;
+    private final int raidThreads;
+
     private final boolean useRmDb;
 
     private final boolean raidsEnabled;
@@ -86,28 +86,27 @@ public class Config {
 
     private final boolean raidOrganisationEnabled;
 
-    private final HashMap<GeofenceIdentifier, String> geofencedChannelIds = new HashMap<>();
-    private final String novabotRoleId;
+//    private final HashMap<GeofenceIdentifier, String> geofencedChannelIds = new HashMap<>();
+
+    private final NotificationLimit nonSupporterLimit;
 
     private final HashMap<String, NotificationLimit> roleLimits = new HashMap<>();
-    private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
+
 
     public final HashMap<String, JsonObject> pokeFilters = new HashMap<>();
+    public final HashMap<String, JsonObject> raidFilters = new HashMap<>();
+
     private final HashMap<String, Format> formats = new HashMap<>();
 
-    private final ArrayList<AlertChannel> pokeChannels = new ArrayList<>();
-    private final ArrayList<AlertChannel> raidChannels = new ArrayList<>();
+    private final AlertChannels pokeChannels = new AlertChannels();
+    private final AlertChannels raidChannels = new AlertChannels();
 
-
-    private static final String[] formatKeys = new String[]{"pokemon", "raidEgg", "raidBoss"};
-    private static final String[] formattingVars = new String[]{"title", "titleUrl", "body", "showMap", "mapZoom", "mapWidth", "mapHeight"};
-    public final ArrayList<Integer> raidBosses = new ArrayList<>();
-    public final HashMap<String, JsonObject> raidFilters = new HashMap<>();
+    private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
 
     public final HashMap<String, String> presets = new HashMap<>();
 
     public Config(Ini configIni, File gkeys) {
-        this.ini = configIni;
+        Ini ini = configIni;
 
         Ini.Section config = ini.get("config");
 
@@ -141,9 +140,11 @@ public class Config {
 
         pokePollingRate = Long.parseLong(config.get("pokePollingRate"));
 
+        pokemonThreads = Integer.parseInt(config.get("pokemonThreads"));
+
         raidPollingRate = Long.parseLong(config.get("raidPollingRate"));
 
-        supporterOnly = Boolean.parseBoolean(config.get("supporterOnly"));
+        raidThreads = Integer.parseInt(config.get("raidThreads"));
 
         nonSupporterLimit = NotificationLimit.fromString(config.get("nonSupporterLimit"));
 
@@ -212,6 +213,18 @@ public class Config {
         loadPresets();
     }
 
+    public static void main(String[] args) {
+        try {
+            Config config = new Config(
+                    new Ini(new File("config.ini")),
+                    new File("gkeys.txt"));
+
+            System.out.println(config.nonSupporterLimit);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void loadPresets() {
         File file = new File("presets.ini");
 
@@ -233,26 +246,7 @@ public class Config {
                 if (line.charAt(0) == '[') {
 
                     if (presetName != null) {
-                        if (filterName != null) {
-                            if (pokemon != null) {
-                                if (pokemon) {
-                                    if (!pokeFilters.containsKey(filterName)) {
-                                        loadFilter(filterName,pokeFilters);
-                                    }
-                                } else {
-                                    if (!raidFilters.containsKey(filterName)) {
-                                        loadFilter(filterName,raidFilters);
-                                    }
-                                }
-
-                                presets.put(presetName, filterName);
-                        }else{
-                            System.out.println("couldn't find type value");
-                        }
-                        } else {
-                            System.out.println("couldn't find filter name");
-                        }
-
+                        parseBlock(presetName, filterName, pokemon);
                     } else if (!first) {
                         System.out.println("couldn't find preset name");
                     }
@@ -282,46 +276,47 @@ public class Config {
             }
 
             if (presetName != null) {
-                if (filterName != null) {
-                    if (pokemon != null) {
-
-                        if (pokemon) {
-                            if (!pokeFilters.containsKey(filterName)) {
-                                loadFilter(filterName,pokeFilters);
-                            }
-                        } else {
-                            if (!raidFilters.containsKey(filterName)) {
-                                loadFilter(filterName,raidFilters);
-                            }
-                        }
-
-                        presets.put(presetName, filterName);
-                    }else{
-                        System.out.println("couldn't find type value");
-                    }
-                } else {
-                    System.out.println("couldn't find filter name");
-                }
-
+                parseBlock(presetName,filterName,pokemon);
             } else {
                 System.out.println("couldn't find preset name");
             }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novabotLog.log(WARNING, "Couldn't find presets.ini, ignoring");
         }
     }
 
-    private void loadRaidChannels() {
+    private void parseBlock(String presetName, String filterName, Boolean pokemon) {
+        if (filterName != null) {
+            if (pokemon != null) {
+                if (pokemon) {
+                    if (!pokeFilters.containsKey(filterName)) {
+                        loadFilter(filterName,pokeFilters);
+                    }
+                } else {
+                    if (!raidFilters.containsKey(filterName)) {
+                        loadFilter(filterName,raidFilters);
+                    }
+                }
+
+                presets.put(presetName, filterName);
+            }else{
+                System.out.println("couldn't find type value");
+            }
+        } else {
+            System.out.println("couldn't find filter name");
+        }
+    }
+
+    private void loadChannels(String fileName, ArrayList<AlertChannel> channelsList, HashMap<String, JsonObject> filters){
         if (!Geofencing.loaded) Geofencing.loadGeofences();
 
-        File file = new File("raidchannels.ini");
+        File file = new File(fileName);
 
         try (Scanner in = new Scanner(file)) {
 
             String channelId = null;
             String filterName = null;
-//            Integer minLevel = null;
             String formattingName = "formatting.ini";
             HashSet<GeofenceIdentifier> geofenceIdentifiers = null;
 
@@ -343,13 +338,11 @@ public class Config {
                         if (filterName != null) {
                             channel.filterName = filterName;
 
-//                            channel.minLevel = minLevel;
-
                             channel.geofences = geofenceIdentifiers;
 
                             channel.formattingName = formattingName;
 
-                            raidChannels.add(channel);
+                            channelsList.add(channel);
                         } else {
                             System.out.println("couldn't find filter name");
                         }
@@ -390,14 +383,11 @@ public class Config {
                                     geofenceIdentifiers.addAll(GeofenceIdentifier.fromString(s));
                                 }
                                 break;
-//                            case "minLevel":
-//                                minLevel = Integer.parseInt(value);
-//                                break;
                             case "filter":
                                 filterName = value;
 
                                 if (!raidFilters.containsKey(filterName)) {
-                                    loadFilter(filterName, raidFilters);
+                                    loadFilter(filterName, filters);
                                 }
                                 break;
                             case "formatting":
@@ -414,18 +404,16 @@ public class Config {
 
             AlertChannel channel;
             if (channelId != null) {
-                channel = new RaidChannel(channelId);
+                channel = new AlertChannel(channelId);
 
                 if (filterName != null) {
                     channel.filterName = filterName;
-
-//                    channel.minLevel = minLevel;
 
                     channel.formattingName = formattingName;
 
                     channel.geofences = geofenceIdentifiers;
 
-                    raidChannels.add(channel);
+                    channelsList.add(channel);
                 } else {
                     System.out.println("couldn't find filter name");
                 }
@@ -439,6 +427,10 @@ public class Config {
         }
     }
 
+    private void loadRaidChannels() {
+        loadChannels("raidchannels.ini",raidChannels, raidFilters);
+    }
+
     private void loadFilter(String filterName, HashMap<String, JsonObject> filterMap) {
         JsonObject filter = null;
         JsonParser parser = new JsonParser();
@@ -450,8 +442,9 @@ public class Config {
                 filter = element.getAsJsonObject();
             }
 
-            filterMap.put(filterName, filter);
-            System.out.println(String.format("Loaded filter %s: %s",filterName,filter));
+            if(filterMap.put(filterName, filter) == null) {
+                novabotLog.log(INFO,String.format("Loaded filter %s", filterName));
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -459,7 +452,7 @@ public class Config {
 
     private void loadFormatting(String fileName) {
 
-        Ini formatting = null;
+        Ini formatting;
         try {
             formatting = new Ini(new File(fileName));
 
@@ -479,124 +472,15 @@ public class Config {
             }
 
             formats.put(fileName, format);
+        } catch (FileNotFoundException e) {
+            novabotLog.log(WARNING, String.format("Couldn't find formatting file %s", fileName));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void loadPokemonChannels() {
-        if (!Geofencing.loaded) Geofencing.loadGeofences();
-
-        File file = new File("pokechannels.ini");
-
-        try (Scanner in = new Scanner(file)) {
-
-            String channelId = null;
-            String filterName = null;
-            String formattingName = "formatting.ini";
-            HashSet<GeofenceIdentifier> geofenceIdentifiers = null;
-
-            boolean first = true;
-
-            while (in.hasNext()) {
-                String line = in.nextLine().toLowerCase();
-
-                if (line.length() == 0 || line.charAt(0) == ';') {
-                    continue;
-                }
-
-                if (line.charAt(0) == '[') {
-                    AlertChannel channel;
-
-                    if (channelId != null) {
-                        channel = new AlertChannel(channelId);
-
-                        if (filterName != null) {
-                            channel.filterName = filterName;
-
-                            channel.geofences = geofenceIdentifiers;
-
-                            channel.formattingName = formattingName;
-
-                            pokeChannels.add(channel);
-                        } else {
-                            System.out.println("couldn't find filter name");
-                        }
-
-                    } else if (!first) {
-                        System.out.println("couldn't find channel id");
-                    }
-
-                    int end = line.indexOf("]");
-                    channelId = line.substring(1, end).trim();
-
-                    first = false;
-                } else {
-                    int equalsIndex = line.indexOf("=");
-
-                    if (!(equalsIndex == -1)) {
-                        String parameter = line.substring(0, equalsIndex).trim();
-                        String value = line.substring(equalsIndex + 1).trim();
-
-                        if (parameter.equals("geofences")) {
-                            if (value.equals("all")) {
-                                geofenceIdentifiers = null;
-                                continue;
-                            }
-                            geofenceIdentifiers = new HashSet<>();
-
-                            ArrayList<String> geofences;
-
-                            if (value.charAt(0) == '[') {
-                                geofences = Util.parseList(value);
-                            } else {
-                                geofences = new ArrayList<>();
-                                geofences.add(value);
-                            }
-
-                            for (String s : geofences) {
-                                geofenceIdentifiers.addAll(GeofenceIdentifier.fromString(s));
-                            }
-                        } else if (parameter.equals("filter")) {
-                            filterName = value;
-
-                            if (!pokeFilters.containsKey(filterName)) {
-                                loadFilter(filterName, pokeFilters);
-                            }
-                        } else if (parameter.equals("formatting")) {
-                            formattingName = value;
-
-                            if (!formats.containsKey(formattingName)) {
-                                loadFormatting(formattingName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            AlertChannel channel;
-            if (channelId != null) {
-                channel = new AlertChannel(channelId);
-
-                if (filterName != null) {
-                    channel.filterName = filterName;
-
-                    channel.geofences = geofenceIdentifiers;
-
-                    channel.formattingName = formattingName;
-
-                    pokeChannels.add(channel);
-                } else {
-                    System.out.println("couldn't find filter name");
-                }
-
-            } else {
-                System.out.println("couldn't find channel id");
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        loadChannels("pokechannels.ini",pokeChannels,pokeFilters);
     }
 
     private JsonElement searchFilter(JsonObject filter, String search) {
@@ -633,9 +517,9 @@ public class Config {
     }
 
     private HashMap<GeofenceIdentifier, String> loadGeofencedChannels(File file, HashMap<GeofenceIdentifier, String> map) {
+        Scanner sc = null;
         try {
-            Scanner sc = new Scanner(file);
-
+            sc = new Scanner(file);
             while (sc.hasNext()) {
                 String line = sc.nextLine().toLowerCase();
 
@@ -651,8 +535,9 @@ public class Config {
 
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novabotLog.log(WARNING, String.format("Couldn't find %s", file.toString()));
         }
+
 
         return map;
     }
@@ -680,17 +565,6 @@ public class Config {
         return keys;
     }
 
-    public static void main(String[] args) {
-        try {
-            Config config = new Config(
-                    new Ini(new File("config.ini")),
-                    new File("gkeys.txt"));
-
-            System.out.println(config.matchesFilter(config.raidFilters.get("raidfilter.json"),new RaidSpawn(3,true)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public boolean useGeofences() {
         return geofences;
@@ -742,10 +616,6 @@ public class Config {
 
     public long getPokePollingRate() {
         return pokePollingRate;
-    }
-
-    public boolean isSupporterOnly() {
-        return supporterOnly;
     }
 
     public ArrayList<String> getSupporterRoles() {
@@ -873,7 +743,7 @@ public class Config {
                 return notificationLimit;
             }
         }
-        return null;
+        return nonSupporterLimit;
     }
 
     public ArrayList<GeofenceIdentifier> getRaidChatGeofences(String id) {
@@ -888,15 +758,15 @@ public class Config {
         return geofenceIdentifiers;
     }
 
-    public String raidChatsList() {
-        StringBuilder str = new StringBuilder();
-
-        for (String s : geofencedChannelIds.values()) {
-            str.append(String.format("  %s%n", guild.getTextChannelById(s).getAsMention()));
-        }
-
-        return str.toString();
-    }
+//    public String raidChatsList() {
+//        StringBuilder str = new StringBuilder();
+//
+//        for (String s : geofencedChannelIds.values()) {
+//            str.append(String.format("  %s%n", guild.getTextChannelById(s).getAsMention()));
+//        }
+//
+//        return str.toString();
+//    }
 
     public String[] getRaidChats(ArrayList<GeofenceIdentifier> geofences) {
         HashSet<String> chatIds = new HashSet<>();
@@ -954,56 +824,21 @@ public class Config {
         }
     }
 
-    public ArrayList<AlertChannel> getAlertChannels(GeofenceIdentifier identifier) {
-        ArrayList<AlertChannel> channels = null;
 
-        for (AlertChannel alertChannel : pokeChannels) {
-            if (alertChannel.geofences != null && alertChannel.geofences.contains(identifier)) {
-                if (channels == null) channels = new ArrayList<>();
-                channels.add(alertChannel);
-            }
-        }
-        return channels;
+    public ArrayList<AlertChannel> getPokeChannels(GeofenceIdentifier identifier) {
+        return pokeChannels.getChannelsByGeofence(identifier);
     }
 
     public ArrayList<AlertChannel> getRaidChannels(GeofenceIdentifier identifier) {
-        ArrayList<AlertChannel> channels = null;
-
-        for (AlertChannel alertChannel : raidChannels) {
-            if (alertChannel.geofences != null && alertChannel.geofences.contains(identifier)) {
-                if (channels == null) channels = new ArrayList<>();
-                channels.add(alertChannel);
-            }
-        }
-        return channels;
+        return raidChannels.getChannelsByGeofence(identifier);
     }
 
     public ArrayList<AlertChannel> getNonGeofencedPokeChannels() {
-        ArrayList<AlertChannel> channels = null;
-
-        for (AlertChannel alertChannel : pokeChannels) {
-            if (alertChannel.geofences == null) {
-                if (channels == null) channels = new ArrayList<>();
-                channels.add(alertChannel);
-            }
-
-        }
-
-        return channels;
+        return pokeChannels.getNonGeofencedChannels();
     }
 
     public ArrayList<AlertChannel> getNonGeofencedRaidChannels() {
-        ArrayList<AlertChannel> channels = null;
-
-        for (AlertChannel alertChannel : raidChannels) {
-            if (alertChannel.geofences == null) {
-                if (channels == null) channels = new ArrayList<>();
-                channels.add(alertChannel);
-            }
-
-        }
-
-        return channels;
+        return raidChannels.getNonGeofencedChannels();
     }
 
     public ArrayList<String> findMatchingPresets(RaidSpawn raidSpawn) {
@@ -1151,5 +986,13 @@ public class Config {
 
     public boolean presetsEnabled() {
         return presets.size() > 0;
+    }
+
+    public int getRaidThreads() {
+        return raidThreads;
+    }
+
+    public int getPokemonThreads() {
+        return pokemonThreads;
     }
 }

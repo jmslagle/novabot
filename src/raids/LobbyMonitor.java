@@ -1,12 +1,13 @@
 package raids;
 
-import core.DBManager;
+import core.Util;
 import net.dv8tion.jda.core.utils.SimpleLog;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 
+import static core.MessageListener.config;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
@@ -42,13 +43,13 @@ public class LobbyMonitor implements Runnable {
         for (RaidLobby lobby : lobbyManager.activeLobbies.values()) {
             lobbyMonitorLog.log(INFO, String.format("Commencing check for lobby %s", lobby.lobbyCode));
 
-            if(lobby.shutDownService == null && lobby.spawn.raidEnd.before(DBManager.getCurrentTime())){
+            if(lobby.shutDownService == null && lobby.spawn.raidEnd.before(Util.getCurrentTime(config.getTimeZone()))){
                 lobbyMonitorLog.log(INFO,String.format("Lobby %s's raid has ended and is not already shutting down, ending raid.",lobby.lobbyCode));
                 lobby.end(15);
                 continue;
             }
 
-            double timeLeft = lobby.spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+            double timeLeft = lobby.spawn.raidEnd.getTime() - Util.getCurrentTime(config.getTimeZone()).getTime();
 
             if(timeLeft < 0 && lobby.nextTimeLeftUpdate <= 0){
                 continue;
@@ -71,8 +72,8 @@ public class LobbyMonitor implements Runnable {
 
     public static void main(String[] args) {
 
-        Timestamp time1 = new Timestamp(DBManager.getCurrentTime().getTime() + 504000);
-        Timestamp time2 = new Timestamp(DBManager.getCurrentTime().getTime() + 6000000);
+        Timestamp time1 = new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 504000);
+        Timestamp time2 = new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 6000000);
 
         System.out.println(time1);
         System.out.println(time2);

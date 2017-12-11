@@ -3,6 +3,7 @@ package raids;
 import core.DBManager;
 import core.MessageListener;
 import core.ScheduledExecutor;
+import core.Util;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -50,7 +51,7 @@ public class RaidLobby {
         this.spawn = raidSpawn;
         this.lobbyCode = lobbyCode;
 
-        long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+        long timeLeft = spawn.raidEnd.getTime() - Util.getCurrentTime(config.getTimeZone()).getTime();
 
         double minutes = timeLeft / 1000 / 60;
 
@@ -67,7 +68,7 @@ public class RaidLobby {
         this.roleId = roleId;
         this.inviteCode = inviteCode;
 
-        long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+        long timeLeft = spawn.raidEnd.getTime() - Util.getCurrentTime(config.getTimeZone()).getTime();
 
         if(channelId != null && roleId != null){
             created = true;
@@ -87,7 +88,7 @@ public class RaidLobby {
     }
 
     public void joinLobby(String userId){
-        if(spawn.raidEnd.before(DBManager.getCurrentTime())) return;
+        if(spawn.raidEnd.before(Util.getCurrentTime(config.getTimeZone()))) return;
 
         memberIds.add(userId);
 
@@ -130,7 +131,7 @@ public class RaidLobby {
             raidLobbyLog.log(INFO,String.format("First join for lobbyCode %s, created channel",lobbyCode));
 
 
-            long timeLeft = spawn.raidEnd.getTime() - DBManager.getCurrentTime().getTime();
+            long timeLeft = spawn.raidEnd.getTime() - Util.getCurrentTime(config.getTimeZone()).getTime();
             double minutes = timeLeft / 1000 / 60;
 
             if(nextTimeLeftUpdate == 15){

@@ -1,8 +1,7 @@
 package parser;
 
-import core.*;
-import nests.NestSearch;
-import nests.NestStatus;
+import core.Location;
+import core.MessageListener;
 import pokemon.Pokemon;
 import raids.Raid;
 
@@ -27,7 +26,7 @@ public class UserCommand
     }
 
     public Pokemon[] buildPokemon() {
-        Location[] locations = { new Location(Region.All) };
+        Location[] locations = {Location.ALL};
         float miniv = 0.0f;
         float maxiv = 100.0f;
         String[] pokeNames = new String[0];
@@ -110,28 +109,6 @@ public class UserCommand
         return malformed;
     }
 
-    public NestSearch buildNestSearch() {
-        NestStatus[] statuses = { NestStatus.Confirmed, NestStatus.Suspected };
-        Pokemon[] pokemons = new Pokemon[0];
-        for (final Argument arg : this.args) {
-            switch (arg.getType()) {
-                case Status:
-                    statuses = new NestStatus[arg.getParams().length];
-                    for (int i = 0; i < arg.getParams().length; ++i) {
-                        statuses[i] = (NestStatus)arg.getParams()[i];
-                    }
-                    break;
-                case Pokemon:
-                    pokemons = new Pokemon[arg.getParams().length];
-                    for (int i = 0; i < arg.getParams().length; ++i) {
-                        pokemons[i] = new Pokemon((String)arg.getParams()[i]);
-                    }
-                    break;
-            }
-        }
-        return new NestSearch(pokemons, statuses);
-    }
-
     public boolean containsArg(final ArgType argType) {
         for (final Argument arg : this.args) {
             if (arg.getType() == argType) {
@@ -208,7 +185,7 @@ public class UserCommand
 
 
     public Raid[] buildRaids() {
-        Location[] locations = { new Location(Region.All) };
+        Location[] locations = { Location.ALL };
         String[] bossNames = new String[0];
         for (final Argument arg : this.args) {
             switch (arg.getType()) {

@@ -86,14 +86,6 @@ class Commands
             Commands.commands.put("!clearraidlocation", clearLocation);
         }
 
-        if(config.nestsEnabled()) {
-            final Command nest = new Command()
-                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Status)))
-                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                    .setArgRange(1, 2);
-            Commands.commands.put("!nest", nest);
-        }
-
         if(config.statsEnabled()) {
             final Command stats = new Command()
                     .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)))

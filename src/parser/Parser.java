@@ -3,7 +3,6 @@ package parser;
 import core.*;
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
-import nests.NestStatus;
 import pokemon.Pokemon;
 
 import java.util.ArrayList;
@@ -13,14 +12,13 @@ import java.util.regex.Pattern;
 
 import static core.MessageListener.config;
 
-public class Parser
-{
+public class Parser {
     private static final Pattern PATTERN;
 
     public static UserCommand parseInput(final String input, boolean supporter) {
         final UserCommand command = new UserCommand();
-        final Argument[] args = getArgs(input,supporter);
-        final String firstArg = (String)args[0].getParams()[0];
+        final Argument[] args = getArgs(input, supporter);
+        final String firstArg = (String) args[0].getParams()[0];
         command.setArgs(args);
         if (!Commands.isCommandWithArgs(firstArg)) {
             command.addException(InputError.InvalidCommand);
@@ -54,16 +52,16 @@ public class Parser
             return command;
         }
         for (Argument arg : args) {
-            if(arg.getType() == ArgType.Locations){
+            if (arg.getType() == ArgType.Locations) {
                 for (Object o : arg.getParams()) {
                     Location l = (Location) o;
 
                     ArrayList<String> unusable = new ArrayList<>();
 
-                    if(!l.usable){
+                    if (!l.usable) {
                         unusable.add(l.getSuburb());
                     }
-                    if(unusable.size() > 0) {
+                    if (unusable.size() > 0) {
                         arg.setMalformed(unusable);
                         command.addException(InputError.UnusableLocation);
                         return command;
@@ -87,9 +85,8 @@ public class Parser
         while (matcher.find()) {
             final String group = matcher.group();
             if (group.charAt(0) == '<') {
-                args.add(parseList(group,supporter));
-            }
-            else {
+                args.add(parseList(group, supporter));
+            } else {
                 args.add(getArg(group, supporter));
             }
         }
@@ -101,53 +98,42 @@ public class Parser
         final Argument argument = new Argument();
         if (Commands.isCommandWithArgs(s.trim())) {
             argument.setType(ArgType.CommandStr);
-            argument.setParams(new Object[] { s });
-        }
-        else if (Pokemon.nameToID(s.trim()) != 0) {
+            argument.setParams(new Object[]{s});
+        } else if (Pokemon.nameToID(s.trim()) != 0) {
             argument.setType(ArgType.Pokemon);
-            argument.setParams(new Object[] { s.trim() });
-        }
-        else {
+            argument.setParams(new Object[]{s.trim()});
+        } else {
             final Location location;
             if ((location = Location.fromString(s.trim())) != null) {
                 argument.setType(ArgType.Locations);
 
                 ArrayList<Location> locations = new ArrayList<>();
 
-                if(location.locationType == LocationType.Geofence){
+                if (location.locationType == LocationType.Geofence) {
                     for (GeofenceIdentifier geofenceIdentifier : location.geofenceIdentifiers) {
                         locations.add(new Location(geofenceIdentifier));
                     }
                 }
 
-                if(locations.size() == 0){
+                if (locations.size() == 0) {
                     locations.add(location);
                 }
                 argument.setParams(locations.toArray());
-            }
-            else if (NestStatus.fromString(s.trim()) != null) {
-                argument.setType(ArgType.Status);
-                argument.setParams(new Object[] { NestStatus.fromString(s.trim()) });
-            }
-            else if(TimeUnit.fromString(s.trim()) != null){
+            } else if (TimeUnit.fromString(s.trim()) != null) {
                 argument.setType(ArgType.TimeUnit);
-                argument.setParams(new Object[] { TimeUnit.fromString(s.trim())});
-            }
-            else if (getInt(s.trim()) != null) {
+                argument.setParams(new Object[]{TimeUnit.fromString(s.trim())});
+            } else if (getInt(s.trim()) != null) {
                 argument.setType(ArgType.Int);
-                argument.setParams(new Object[] { getInt(s.trim()) });
-            }
-            else if (getFloat(s.trim()) != null) {
+                argument.setParams(new Object[]{getInt(s.trim())});
+            } else if (getFloat(s.trim()) != null) {
                 argument.setType(ArgType.Float);
-                argument.setParams(new Object[] { getFloat(s.trim()) });
-            }
-            else if (config.presets.get(s.trim()) != null){
+                argument.setParams(new Object[]{getFloat(s.trim())});
+            } else if (config.presets.get(s.trim()) != null) {
                 argument.setType(ArgType.Preset);
-                argument.setParams(new Object[] { s.trim()});
-            }
-            else {
+                argument.setParams(new Object[]{s.trim()});
+            } else {
                 argument.setType(ArgType.Unknown);
-                argument.setParams(new Object[] { null });
+                argument.setParams(new Object[]{null});
                 argument.setMalformed(new ArrayList<String>(Arrays.asList(s)));
             }
         }
@@ -158,8 +144,7 @@ public class Parser
     private static Integer getInt(String s) {
         try {
             return Integer.parseInt(s.trim());
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return null;
         }
     }
@@ -167,8 +152,7 @@ public class Parser
     private static Float getFloat(final String s) {
         try {
             return Float.parseFloat(s.trim());
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return null;
         }
     }
@@ -209,8 +193,7 @@ public class Parser
             }
             if (!allNull(args.toArray())) {
                 argument.setType(ArgType.Pokemon);
-            }
-            else {
+            } else {
                 args.clear();
                 malformed.clear();
                 if (strings.length == 1 || strings.length == 2) {
@@ -219,7 +202,7 @@ public class Parser
                     }
                     if (!allNull(new ArrayList[]{args})) {
                         argument.setType(ArgType.Int);
-                    }else{
+                    } else {
                         for (String string : strings) {
                             args.add(getFloat(string.trim()));
                         }
@@ -227,43 +210,30 @@ public class Parser
                             argument.setType(ArgType.Float);
                         }
                     }
-                }else{
+                } else {
+                    args.clear();
+                    malformed.clear();
+
                     for (String string : strings) {
-                        NestStatus status = NestStatus.fromString(string.trim());
-                        args.add(status);
-                        if (status == null) {
+                        String presetFilter = config.presets.get(string.trim());
+                        args.add(string.trim());
+                        if (presetFilter == null) {
                             malformed.add(string.trim());
                         }
                     }
+
                     if (!allNull(args.toArray())) {
-                        argument.setType(ArgType.Status);
-                    }else {
-                        args.clear();
-                        malformed.clear();
-
-                        for (String string : strings) {
-                            String presetFilter = config.presets.get(string.trim());
-                            args.add(string.trim());
-                            if(presetFilter == null){
-                                malformed.add(string.trim());
-                            }
-                        }
-
-                        if (!allNull(args.toArray())) {
-                            argument.setType(ArgType.Preset);
-                        }
+                        argument.setType(ArgType.Preset);
                     }
                 }
             }
-        }
-        else {
+        } else {
             argument.setType(ArgType.Locations);
         }
         if (argument.getType() != null) {
             argument.setParams(args.toArray());
             argument.setMalformed(malformed);
-        }
-        else {
+        } else {
             argument.setType(ArgType.Unknown);
             argument.setParams(args.toArray());
             argument.setMalformed(new ArrayList<String>(Arrays.asList(strings)));
@@ -283,13 +253,13 @@ public class Parser
     public static void main(String[] args) {
         MessageListener.loadConfig();
 
-        if(config.useGeofences()){
+        if (config.useGeofences()) {
             Geofencing.loadGeofences();
         }
 
         MessageListener.loadSuburbs();
 //        System.out.println(Location.fromString("turner",true));
-        UserCommand command = parseInput("!loadpreset 100iv",true);
+        UserCommand command = parseInput("!loadpreset 100iv", true);
 //        command.buildPokemon();
         System.out.println(command.getExceptions());
     }

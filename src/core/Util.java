@@ -1,6 +1,9 @@
 package core;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class Util
 {
@@ -21,5 +24,11 @@ public class Util
         }
 
         return list;
+    }
+
+    public static Timestamp getCurrentTime(String timezone) {
+        TimeZone.setDefault(TimeZone.getTimeZone(timezone));
+
+        return new Timestamp(new Date().getTime());
     }
 }
