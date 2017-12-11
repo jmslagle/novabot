@@ -30,7 +30,7 @@ public class RotatingSet<E> extends HashSet<E> {
     }
 
     public static void main(String[] args) {
-        RotatingSet<Integer> set = new RotatingSet<Integer>(10);
+        RotatingSet<Integer> set = new RotatingSet<>(10);
 
         for (int i = 0; i < 1000; i++) {
             set.add(i);

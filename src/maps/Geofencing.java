@@ -136,12 +136,12 @@ public class Geofencing
     }
 
     public static String getListMessage() {
-        String str = "";
+        StringBuilder str = new StringBuilder();
 
         for (GeofenceIdentifier identifier : geofencesMap.keySet()) {
-            str += String.format("  %s, aliases: %s%n",identifier.name,identifier.getAliasList());
+            str.append(String.format("  %s, aliases: %s%n", identifier.name, identifier.getAliasList()));
         }
 
-        return str;
+        return str.toString();
     }
 }

@@ -10,7 +10,7 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 /**
  * Created by Owner on 27/06/2017.
  */
-public class RaidNotifier implements Runnable
+class RaidNotifier implements Runnable
 {
     private final JDA jda;
     private final boolean testing;

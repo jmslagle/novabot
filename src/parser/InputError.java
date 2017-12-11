@@ -62,11 +62,11 @@ public enum InputError
 //                return str;
 //            }
             case BlacklistedPokemon: {
-                String str = "One or more pokemon you entered aren't being scanned for: \n\n";
+                StringBuilder str = new StringBuilder("One or more pokemon you entered aren't being scanned for: \n\n");
                 for (final String s : userCommand.getBlacklisted()) {
-                    str = str + "  " + s + "\n";
+                    str.append("  ").append(s).append("\n");
                 }
-                return str;
+                return str.toString();
             }
             case TooManyArgs: {
                 int max = Commands.get((String)userCommand.getArg(0).getParams()[0]).getMaxArgs();

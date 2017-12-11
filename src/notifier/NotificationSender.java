@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.User;
 import static core.MessageListener.config;
 import static core.MessageListener.guild;
 
-public class NotificationSender {
+class NotificationSender {
 
     void checkSupporterStatus(User user) {
         NotificationLimit limit = config.getNotificationLimit(guild.getMember(user));
@@ -38,13 +38,11 @@ public class NotificationSender {
         }
     }
 
-    void resetUser(User user, NotificationLimit newLimit) {
+    private void resetUser(User user, NotificationLimit newLimit) {
         DBManager.resetUser(user.getId());
 
-        user.openPrivateChannel().queue(channel -> {
-            channel.sendMessageFormat("Hi %s, I noticed that recently your supporter status has changed." +
-                    " As a result I have cleared your settings. At your current level you can add up to %s to your settings.",user,newLimit.toWords()).queue();
-        });
+        user.openPrivateChannel().queue(channel -> channel.sendMessageFormat("Hi %s, I noticed that recently your supporter status has changed." +
+                " As a result I have cleared your settings. At your current level you can add up to %s to your settings.",user,newLimit.toWords()).queue());
 
         if(config.loggingEnabled()){
             MessageListener.roleLog.sendMessageFormat("%s's supporter status has changed, requiring a reset of their settings. They have been informed via PM.",user).queue();

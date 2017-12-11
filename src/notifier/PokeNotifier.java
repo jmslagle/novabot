@@ -9,7 +9,7 @@ import java.lang.management.ManagementFactory;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
 import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
-public class PokeNotifier implements Runnable
+class PokeNotifier implements Runnable
 {
     private final JDA jda;
     private final boolean testing;

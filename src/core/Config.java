@@ -106,9 +106,8 @@ public class Config {
     public final HashMap<String, String> presets = new HashMap<>();
 
     public Config(Ini configIni, File gkeys) {
-        Ini ini = configIni;
 
-        Ini.Section config = ini.get("config");
+        Ini.Section config = configIni.get("config");
 
         token = config.get("token");
 
@@ -180,14 +179,14 @@ public class Config {
 
         novabotRoleId = config.get("novabotRole");
 
-        Ini.Section rocketmapDb = ini.get("rocketmap db");
+        Ini.Section rocketmapDb = configIni.get("rocketmap db");
         rmUser = rocketmapDb.get("user");
         rmPass = rocketmapDb.get("password");
         rmIp = rocketmapDb.get("ip");
         rmPort = rocketmapDb.get("port");
         rmDbName = rocketmapDb.get("dbName");
 
-        Ini.Section novabotDb = ini.get("novabot db");
+        Ini.Section novabotDb = configIni.get("novabot db");
         nbUser = novabotDb.get("user");
         nbPass = novabotDb.get("password");
         nbIp = novabotDb.get("ip");
@@ -665,9 +664,7 @@ public class Config {
     public String formatStr(HashMap<String, String> properties, String toFormat) {
         final String[] str = {toFormat};
 
-        properties.forEach((key, value) -> {
-            str[0] = str[0].replace(String.format("<%s>", key), value);
-        });
+        properties.forEach((key, value) -> str[0] = str[0].replace(String.format("<%s>", key), value));
 
         return str[0];
     }

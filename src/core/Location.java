@@ -9,9 +9,9 @@ import static core.MessageListener.config;
 
 public class Location
 {
-    public static final Location ALL = new Location(LocationType.All);
+    public static final Location ALL = new Location();
     public ArrayList<GeofenceIdentifier> geofenceIdentifiers;
-    public LocationType locationType;
+    public final LocationType locationType;
     private String suburb;
     public final boolean usable = true;
 //    public Reason reason;
@@ -33,8 +33,8 @@ public class Location
         this.geofenceIdentifiers = identifiers;
     }
 
-    public Location(LocationType type) {
-        this.locationType = type;
+    private Location() {
+        this.locationType = LocationType.All;
     }
 
 
@@ -58,19 +58,19 @@ public class Location
     }
 
     public static String listToString(final Location[] locations) {
-        String str = "";
+        StringBuilder str = new StringBuilder();
         if (locations.length == 1) {
             return locations[0].toWords();
         }
         for (int i = 0; i < locations.length; ++i) {
             if (i == locations.length - 1) {
-                str = str + "and " + locations[i].toWords();
+                str.append("and ").append(locations[i].toWords());
             }
             else {
-                str += ((i == locations.length - 2) ? (locations[i].toWords() + " ") : (locations[i].toWords() + ", "));
+                str.append((i == locations.length - 2) ? (locations[i].toWords() + " ") : (locations[i].toWords() + ", "));
             }
         }
-        return str;
+        return str.toString();
     }
 
     public static Location fromString(final String str) {

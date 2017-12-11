@@ -12,8 +12,8 @@ public class Command
     private Argument[] arguments;
 
     public Command() {
-        this.validArgTypes = new HashSet<ArgType>();
-        this.requiredArgTypes = new HashSet<ArgType>();
+        this.validArgTypes = new HashSet<>();
+        this.requiredArgTypes = new HashSet<>();
         this.allowDuplicateArgs = false;
     }
 

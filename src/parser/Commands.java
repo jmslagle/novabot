@@ -1,6 +1,7 @@
 package parser;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -19,10 +20,10 @@ class Commands
     }
 
     static {
-        commands = new HashMap<String, Command>();
+        commands = new HashMap<>();
         final Command clearLocation = new Command()
-                .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
-                .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
+                .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
+                .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
                 .setArgRange(1, 1);
 
         Commands.commands.put("!clearlocation", clearLocation);
@@ -44,8 +45,8 @@ class Commands
 
         if(config.pokemonEnabled()) {
             final Command addPokemon = new Command()
-                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Float, ArgType.Int)))
-                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.Float, ArgType.Int)))
+                    .setRequiredArgTypes(new HashSet<>(Collections.singletonList(ArgType.Pokemon)))
                     .setArgRange(1, 3);
 
             final Command delPokemon = new Command()
@@ -54,8 +55,8 @@ class Commands
                     .setArgRange(1, 3);
 
             final Command clearPokemon = new Command()
-                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
                     .setArgRange(1, 1);
 
             Commands.commands.put("!addpokemon", addPokemon);
@@ -66,8 +67,8 @@ class Commands
 
         if(config.raidsEnabled()){
             final Command addRaid = new Command()
-                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations)))
-                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.Pokemon)))
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations)))
+                    .setRequiredArgTypes(new HashSet<>(Collections.singletonList(ArgType.Pokemon)))
                     .setArgRange(1, 3);
 
             final Command delRaid = new Command()
@@ -76,8 +77,8 @@ class Commands
                     .setArgRange(1, 3);
 
             Command clearRaid = new Command()
-                    .setValidArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                    .setRequiredArgTypes(new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
                     .setArgRange(1, 1);
 
             Commands.commands.put("!addraid", addRaid);

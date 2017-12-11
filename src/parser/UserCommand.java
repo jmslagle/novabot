@@ -14,7 +14,7 @@ public class UserCommand
     private final ArrayList<InputError> exceptions;
 
     public UserCommand() {
-        this.exceptions = new ArrayList<InputError>();
+        this.exceptions = new ArrayList<>();
     }
 
     public ArrayList<InputError> getExceptions() {
@@ -54,7 +54,7 @@ public class UserCommand
                     break;
             }
         }
-        final ArrayList<Pokemon> pokemons = new ArrayList<Pokemon>();
+        final ArrayList<Pokemon> pokemons = new ArrayList<>();
         for (final String pokeName : pokeNames) {
             for (final Location location : locations) {
                 System.out.println(pokeName);
@@ -94,11 +94,11 @@ public class UserCommand
     }
 
     public HashMap<ArgType, ArrayList<String>> getMalformedArgs() {
-        final HashMap<ArgType, ArrayList<String>> malformed = new HashMap<ArgType, ArrayList<String>>();
+        final HashMap<ArgType, ArrayList<String>> malformed = new HashMap<>();
         for (final Argument arg : this.args) {
-            if (!arg.fullyParsed()) {
+            if (arg.notFullyParsed()) {
                 if (!malformed.containsKey(arg.getType())) {
-                    final ArrayList<String> newList = new ArrayList<String>();
+                    final ArrayList<String> newList = new ArrayList<>();
                     malformed.put(arg.getType(), newList);
                 }
                 for (final String s : arg.getMalformed()) {
@@ -148,7 +148,7 @@ public class UserCommand
     }
 
     public ArrayList<String> getBlacklisted() {
-        final ArrayList<String> blacklisted = new ArrayList<String>();
+        final ArrayList<String> blacklisted = new ArrayList<>();
         for (final Object o : this.getArg(ArgType.Pokemon).getParams()) {
             if (MessageListener.config.getBlacklist().contains(Pokemon.nameToID((String)o))) {
                 blacklisted.add((String)o);

@@ -14,7 +14,7 @@ public enum ArgType
     Int, Preset;
 
     public static void main(final String[] args) {
-        final HashSet<ArgType> hashSet = new HashSet<ArgType>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
+        final HashSet<ArgType> hashSet = new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
         System.out.println(setToString(hashSet));
     }
 
@@ -45,7 +45,7 @@ public enum ArgType
     }
 
     public static String setToString(final HashSet<ArgType> argTypes) {
-        String str = "";
+        StringBuilder str = new StringBuilder();
         argTypes.remove(ArgType.CommandStr);
         final ArgType[] argsArray = new ArgType[argTypes.size()];
         argTypes.toArray(argsArray);
@@ -54,12 +54,12 @@ public enum ArgType
         }
         for (int i = 0; i < argsArray.length; ++i) {
             if (i == argsArray.length - 1) {
-                str = str + "and " + argsArray[i].toString();
+                str.append("and ").append(argsArray[i].toString());
             }
             else {
-                str += ((i == argsArray.length - 2) ? (argsArray[i].toString() + " ") : (argsArray[i].toString() + ", "));
+                str.append((i == argsArray.length - 2) ? (argsArray[i].toString() + " ") : (argsArray[i].toString() + ", "));
             }
         }
-        return str;
+        return str.toString();
     }
 }

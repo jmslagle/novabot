@@ -7,6 +7,7 @@ import pokemon.Pokemon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class Parser {
         }
         final Command cmd = Commands.get(firstArg);
         for (final Argument arg : args) {
-            if (!arg.fullyParsed()) {
+            if (arg.notFullyParsed()) {
                 command.addException(InputError.MalformedArg);
                 return command;
             }
@@ -80,7 +81,7 @@ public class Parser {
     }
 
     private static Argument[] getArgs(final String input, boolean supporter) {
-        final ArrayList<Argument> args = new ArrayList<Argument>();
+        final ArrayList<Argument> args = new ArrayList<>();
         final Matcher matcher = Parser.PATTERN.matcher(input);
         while (matcher.find()) {
             final String group = matcher.group();
@@ -134,7 +135,7 @@ public class Parser {
             } else {
                 argument.setType(ArgType.Unknown);
                 argument.setParams(new Object[]{null});
-                argument.setMalformed(new ArrayList<String>(Arrays.asList(s)));
+                argument.setMalformed(new ArrayList<>(Collections.singletonList(s)));
             }
         }
         return argument;
@@ -162,7 +163,7 @@ public class Parser {
         final String toSplit = group.substring(1, group.length() - 1);
         final String[] strings = toSplit.split(",");
         final ArrayList<Object> args = new ArrayList<>();
-        final ArrayList<String> malformed = new ArrayList<String>();
+        final ArrayList<String> malformed = new ArrayList<>();
         for (String string2 : strings) {
             Location loc = Location.fromString(string2.trim());
 
@@ -236,7 +237,7 @@ public class Parser {
         } else {
             argument.setType(ArgType.Unknown);
             argument.setParams(args.toArray());
-            argument.setMalformed(new ArrayList<String>(Arrays.asList(strings)));
+            argument.setMalformed(new ArrayList<>(Arrays.asList(strings)));
         }
         return argument;
     }

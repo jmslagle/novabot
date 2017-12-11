@@ -107,7 +107,6 @@ public class RaidSpawn extends Spawn
         this.lon = lon;
         properties.put("lng", String.valueOf(lon));
 
-        Team team1 = team;
         properties.put("team_name",team.toString());
 
         this.geofenceIdentifiers = getGeofence(lat,lon);
@@ -117,9 +116,7 @@ public class RaidSpawn extends Spawn
         properties.put("gmaps",getGmapsLink());
         properties.put("applemaps",getAppleMapsLink());
 
-        ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach((key,value)->{
-            properties.put(key,value);
-        });
+        ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach(properties::put);
 
         this.raidEnd = raidEnd;
         properties.put("24h_end",getDisappearTime());

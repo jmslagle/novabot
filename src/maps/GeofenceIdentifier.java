@@ -34,16 +34,16 @@ public class GeofenceIdentifier {
     }
 
     public static String listToString(ArrayList<GeofenceIdentifier> geofenceIdentifiers) {
-        String str = "";
+        StringBuilder str = new StringBuilder();
 
         for (int i = 0; i < geofenceIdentifiers.size(); i++) {
-            str += geofenceIdentifiers.get(i).name;
+            str.append(geofenceIdentifiers.get(i).name);
 
             if(i != geofenceIdentifiers.size()-1){
-                 str += ", ";
+                 str.append(", ");
             }
         }
-        return str;
+        return str.toString();
     }
 
     public static ArrayList<GeofenceIdentifier> fromString(String str) {
@@ -67,14 +67,14 @@ public class GeofenceIdentifier {
     }
 
     public String getAliasList() {
-        String str = "";
+        StringBuilder str = new StringBuilder();
 
         for (int i = 0; i < aliases.size(); i++) {
-            str += aliases.get(i);
+            str.append(aliases.get(i));
             if(i != aliases.size() - 1){
-                str += ", ";
+                str.append(", ");
             }
         }
-        return str;
+        return str.toString();
     }
 }

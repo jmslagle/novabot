@@ -24,13 +24,13 @@ public class Argument
         return this.params;
     }
 
-    public boolean fullyParsed() {
+    public boolean notFullyParsed() {
         for (final Object param : this.params) {
             if (param == null) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public static ArgType getDuplicateArg(final Argument[] args) {

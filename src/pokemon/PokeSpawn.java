@@ -25,7 +25,6 @@ import static maps.Geofencing.loadGeofences;
 public class PokeSpawn extends Spawn
 {
     private static final String STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap?";
-    private String imageUrl;
     public Timestamp disappearTime;
     private float weight;
     private float height;
@@ -94,7 +93,7 @@ public class PokeSpawn extends Spawn
 
     public PokeSpawn(final int id, final double lat, final double lon, final Timestamp disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
         super();
-        this.imageUrl = null;
+        String imageUrl = null;
         this.disappearTime = null;
         this.form = null;
         this.suburb = null;
@@ -119,9 +118,7 @@ public class PokeSpawn extends Spawn
         this.lon = lon;
         properties.put("lng", String.valueOf(lon));
 
-        ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach((key,value)->{
-            properties.put(key,value);
-        });
+        ReverseGeocoder.geocodedLocation(lat,lon).getProperties().forEach(properties::put);
 
         this.geofenceIdentifiers = getGeofence(lat,lon);
 

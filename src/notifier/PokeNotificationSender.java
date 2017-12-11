@@ -22,14 +22,12 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 public class PokeNotificationSender extends NotificationSender implements Runnable {
     private final JDA jda;
     private final ArrayList<PokeSpawn> newPokemon;
-    private final boolean testing;
 
     public static final SimpleLog notificationLog = SimpleLog.getLog("Poke-Notif-Sender");
 
     public PokeNotificationSender(final JDA jda, final ArrayList<PokeSpawn> newPokemon, boolean testing) {
         this.jda = jda;
         this.newPokemon = newPokemon;
-        this.testing = testing;
     }
 
     private void notifyUser(final String userID, final Message message) {

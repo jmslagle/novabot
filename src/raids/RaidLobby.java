@@ -239,25 +239,25 @@ public class RaidLobby {
                     false);
             embedBuilder.addField("Boss Moveset", String.format("%s - %s", spawn.move_1, spawn.move_2), false);
 
-            String weaknessEmoteStr = "";
+            StringBuilder weaknessEmoteStr = new StringBuilder();
 
             for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
                 Emote emote = Raid.emotes.get(s);
                 if(emote != null) {
-                    weaknessEmoteStr += emote.getAsMention();
+                    weaknessEmoteStr.append(emote.getAsMention());
                 }
             }
 
-            embedBuilder.addField("Weak To", weaknessEmoteStr, true);
+            embedBuilder.addField("Weak To", weaknessEmoteStr.toString(), true);
 
-            String strengthEmoteStr = "";
+            StringBuilder strengthEmoteStr = new StringBuilder();
 
             for (String s : Raid.getBossStrengthsEmote(spawn.move1Id,spawn.move2Id)) {
                 Emote emote = Raid.emotes.get(s);
-                strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
+                strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
             }
 
-            embedBuilder.addField("Strong Against", strengthEmoteStr, true);
+            embedBuilder.addField("Strong Against", strengthEmoteStr.toString(), true);
 
             embedBuilder.setThumbnail(spawn.getIcon());
             embedBuilder.setImage(spawn.getImage("formatting.ini"));
@@ -296,23 +296,23 @@ public class RaidLobby {
         embedBuilder.setTitle(String.format("%s - Level %s raid",spawn.properties.get("pkmn"),spawn.properties.get("level")));
         embedBuilder.addField("CP",spawn.properties.get("cp"),false);
         embedBuilder.addField("Moveset",String.format("%s - %s",spawn.move_1,spawn.move_2),false);
-        String weaknessEmoteStr = "";
+        StringBuilder weaknessEmoteStr = new StringBuilder();
 
         for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
             Emote emote = Raid.emotes.get(s);
-            weaknessEmoteStr += (emote == null ? "" :emote.getAsMention());
+            weaknessEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
-        embedBuilder.addField("Weak To",weaknessEmoteStr,true);
+        embedBuilder.addField("Weak To", weaknessEmoteStr.toString(),true);
 
-        String strengthEmoteStr = "";
+        StringBuilder strengthEmoteStr = new StringBuilder();
 
         for (String s : Raid.getBossStrengthsEmote(spawn.move1Id,spawn.move2Id)) {
             Emote emote = Raid.emotes.get(s);
-            strengthEmoteStr += (emote == null ? "" :emote.getAsMention());
+            strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
-        embedBuilder.addField("Strong Against",strengthEmoteStr,true);
+        embedBuilder.addField("Strong Against", strengthEmoteStr.toString(),true);
 
         embedBuilder.setThumbnail(spawn.getIcon());
 
@@ -322,13 +322,13 @@ public class RaidLobby {
     }
 
     public String getTeamMessage() {
-        String str = String.format("There are %s users in this raid team:\n\n", memberCount());
+        StringBuilder str = new StringBuilder(String.format("There are %s users in this raid team:\n\n", memberCount()));
 
         for (String memberId : memberIds) {
-            str += String.format("  %s%n",guild.getMemberById(memberId).getEffectiveName());
+            str.append(String.format("  %s%n", guild.getMemberById(memberId).getEffectiveName()));
         }
 
-        return str;
+        return str.toString();
     }
 
     public boolean containsUser(String id) {

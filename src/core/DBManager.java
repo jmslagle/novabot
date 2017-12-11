@@ -29,7 +29,7 @@ public class DBManager {
     public static final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
 
     private static final SimpleLog dbLog = SimpleLog.getLog("DB");
-    private static String blacklistQMarks;
+    private static StringBuilder blacklistQMarks = null;
 
     public static void main(final String[] args) {
 //        MessageListener.main(null);
@@ -111,17 +111,17 @@ public class DBManager {
         ArrayList<RaidSpawn> raidEggs = new ArrayList<>();
 
 
-        String knownIdQMarks = "";
+        StringBuilder knownIdQMarks = new StringBuilder();
 
         if (knownRaids.size() > 0) {
-            knownIdQMarks += "gym.gym_id NOT IN (";
+            knownIdQMarks.append("gym.gym_id NOT IN (");
             for (int i = 0; i < knownRaids.size(); ++i) {
-                knownIdQMarks += "?";
+                knownIdQMarks.append("?");
                 if (i != knownRaids.size() - 1) {
-                    knownIdQMarks += ",";
+                    knownIdQMarks.append(",");
                 }
             }
-            knownIdQMarks += ") AND";
+            knownIdQMarks.append(") AND");
         }
 
         ArrayList<String> knownIds = new ArrayList<>();
@@ -242,14 +242,14 @@ public class DBManager {
         final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
 
         if (blacklistQMarks == null) {
-            blacklistQMarks = "(";
+            blacklistQMarks = new StringBuilder("(");
             for (int i = 0; i < config.getBlacklist().size(); ++i) {
-                blacklistQMarks += "?";
+                blacklistQMarks.append("?");
                 if (i != config.getBlacklist().size() - 1) {
-                    blacklistQMarks += ",";
+                    blacklistQMarks.append(",");
                 }
             }
-            blacklistQMarks += ")";
+            blacklistQMarks.append(")");
         }
 
         try (Connection connection = getConnection(rocketmapDataSource);
@@ -319,7 +319,7 @@ public class DBManager {
         return pokeSpawns;
     }
 
-    public static boolean containsUser(final String userID) {
+    public static boolean notContainsUser(final String userID) {
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT * FROM users WHERE id = %s;", "'" + userID + "'"));
@@ -327,12 +327,12 @@ public class DBManager {
             if (!rs.next()) {
                 connection.close();
                 statement.close();
-                return false;
+                return true;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return true;
+        return false;
     }
 
     public static void logNewUser(final String userID) {
@@ -410,19 +410,19 @@ public class DBManager {
     }
 
     public static void clearRaid(final String id, final ArrayList<Raid> raids) {
-        String idsString = "(";
+        StringBuilder idsString = new StringBuilder("(");
         for (int i = 0; i < raids.size(); ++i) {
             if (i == raids.size() - 1) {
-                idsString += raids.get(i).bossId;
+                idsString.append(raids.get(i).bossId);
             } else {
-                idsString = idsString + raids.get(i).bossId + ",";
+                idsString.append(raids.get(i).bossId).append(",");
             }
         }
-        idsString += ")";
+        idsString.append(")");
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement()) {
-            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND boss_id IN %s;", "'" + id + "'", idsString));
+            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND boss_id IN %s;", "'" + id + "'", idsString.toString()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -433,21 +433,21 @@ public class DBManager {
 
         int geofences = raidSpawn.getGeofences().size();
 
-        String geofenceQMarks = "";
+        StringBuilder geofenceQMarks = new StringBuilder();
         for (int i = 0; i < geofences; ++i) {
-            geofenceQMarks += "?";
+            geofenceQMarks.append("?");
             if (i != geofences - 1) {
-                geofenceQMarks += ",";
+                geofenceQMarks.append(",");
             }
         }
-        if (geofences > 0) geofenceQMarks += ",";
+        if (geofences > 0) geofenceQMarks.append(",");
 
         String sql = String.format(
                 "SELECT DISTINCT(user_id) " +
                         "FROM raid " +
                         "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
                         "AND LOWER(location) IN (%s?,'all') " +
-                        "AND boss_id=?;", geofenceQMarks
+                        "AND boss_id=?;", geofenceQMarks.toString()
         );
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
@@ -554,19 +554,19 @@ public class DBManager {
     }
 
     public static void clearPokemon(final String id, final ArrayList<Pokemon> pokemons) {
-        String idsString = "(";
+        StringBuilder idsString = new StringBuilder("(");
         for (int i = 0; i < pokemons.size(); ++i) {
             if (i == pokemons.size() - 1) {
-                idsString += pokemons.get(i).getID();
+                idsString.append(pokemons.get(i).getID());
             } else {
-                idsString = idsString + pokemons.get(i).getID() + ",";
+                idsString.append(pokemons.get(i).getID()).append(",");
             }
         }
-        idsString += ")";
+        idsString.append(")");
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement()) {
-            statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString));
+            statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString.toString()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -928,38 +928,38 @@ public class DBManager {
 
 
     public static void clearLocationsRaids(String id, Location[] locations) {
-        String locationsString = "(";
+        StringBuilder locationsString = new StringBuilder("(");
         for (int i = 0; i < locations.length; ++i) {
             if (i == locations.length - 1) {
-                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "'";
+                locationsString.append("'").append(locations[i].toString().replace("'", "\\'")).append("'");
             } else {
-                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "',";
+                locationsString.append("'").append(locations[i].toString().replace("'", "\\'")).append("',");
             }
         }
-        locationsString += ")";
+        locationsString.append(")");
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement()) {
-            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString));
+            statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString.toString()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public static void clearLocationsPokemon(final String id, final Location[] locations) {
-        String locationsString = "(";
+        StringBuilder locationsString = new StringBuilder("(");
         for (int i = 0; i < locations.length; ++i) {
             if (i == locations.length - 1) {
-                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "'";
+                locationsString.append("'").append(locations[i].toString().replace("'", "\\'")).append("'");
             } else {
-                locationsString = locationsString + "'" + locations[i].toString().replace("'", "\\'") + "',";
+                locationsString.append("'").append(locations[i].toString().replace("'", "\\'")).append("',");
             }
         }
-        locationsString += ")";
+        locationsString.append(")");
 
         try (Connection connection = getConnection(DBManager.novabotDataSource);
              Statement statement = connection.createStatement()) {
-            statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString));
+            statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString.toString()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1118,11 +1118,11 @@ public class DBManager {
 
     private static void endLobbies(ArrayList<String> toDelete) {
 
-        String qMarks = "";
+        StringBuilder qMarks = new StringBuilder();
         for (int i = 0; i < toDelete.size(); ++i) {
-            qMarks += "?";
+            qMarks.append("?");
             if (i != toDelete.size() - 1) {
-                qMarks += ",";
+                qMarks.append(",");
             }
         }
 

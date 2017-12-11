@@ -51,7 +51,6 @@ public class MessageListener extends ListenerAdapter
 
     public static Config config;
     public static SuburbManager suburbs;
-    private static NotificationsManager notificationsManager;
 
     private final HashMap<Long, Message> messageMap = new HashMap<>();
     public static ArrayList<Invite> invites = new ArrayList<>();
@@ -62,7 +61,7 @@ public class MessageListener extends ListenerAdapter
 
     public static LobbyManager lobbyManager;
 
-    public static ConcurrentHashMap<String,Timestamp> lastUserRoleChecks = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String,Timestamp> lastUserRoleChecks = new ConcurrentHashMap<>();
 
     public static void main(final String[] args) {
         testing = false;
@@ -129,7 +128,7 @@ public class MessageListener extends ListenerAdapter
             }
 
             if(config.useRmDb()){
-                notificationsManager = new NotificationsManager(config,jda,testing);
+                NotificationsManager notificationsManager = new NotificationsManager(config, jda, testing);
             }
 
             if(config.isRaidOrganisationEnabled()){
@@ -623,7 +622,7 @@ public class MessageListener extends ListenerAdapter
         return false;
     }
 
-    public static boolean isSupporter(final String userID) {
+    private static boolean isSupporter(final String userID) {
         final Member member = MessageListener.guild.getMemberById(userID);
 
         if(member == null || member.getRoles() == null) return false;
@@ -962,7 +961,7 @@ public class MessageListener extends ListenerAdapter
                             novabotLog.fatal(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), true));
                         }
 
-                        if (!DBManager.containsUser(author.getId())) {
+                        if (DBManager.notContainsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }
 
@@ -984,7 +983,7 @@ public class MessageListener extends ListenerAdapter
                         return;
                     }
                     case "!delraid": {
-                        if (!DBManager.containsUser(author.getId())) {
+                        if (DBManager.notContainsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }
 
@@ -1006,7 +1005,7 @@ public class MessageListener extends ListenerAdapter
                         return;
                     }
                     case "!clearraid": {
-                        if (!DBManager.containsUser(author.getId())) {
+                        if (DBManager.notContainsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }
                         novabotLog.log(DEBUG, "clearing raids " + Arrays.toString(raids));
@@ -1043,7 +1042,7 @@ public class MessageListener extends ListenerAdapter
                             novabotLog.fatal(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
                         }
 
-                        if (!DBManager.containsUser(author.getId())) {
+                        if (DBManager.notContainsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }
                         for (final Pokemon pokemon : pokemons) {
