@@ -2,10 +2,6 @@ package core;
 
 import maps.GeofenceIdentifier;
 import maps.Geofencing;
-import nests.Nest;
-import nests.NestSearch;
-import nests.NestSheetManager;
-import nests.NestStatus;
 import net.dv8tion.jda.client.entities.Group;
 import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
@@ -44,10 +40,7 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 public class MessageListener extends ListenerAdapter
 {
-    private static final String NEST_FB_GROUP = "https://www.facebook.com/groups/PogoCBRNests/";
-    private static final String NEST_MAP = "http://www.google.com/maps/d/u/0/viewer?mid=1d-QuaDK1tJRiHKODXErTQIDqIAY";
     private static TextChannel roleLog;
-    private static TextChannel nestsReports;
     public static Guild guild;
     public static boolean testing;
     private static MessageChannel userUpdatesLog;
@@ -130,10 +123,6 @@ public class MessageListener extends ListenerAdapter
             if(config.loggingEnabled()) {
                 MessageListener.roleLog = MessageListener.guild.getTextChannelById(config.getRoleLogId());
                 MessageListener.userUpdatesLog = MessageListener.guild.getTextChannelById(config.getUserUpdatesId());
-            }
-
-            if(config.nestsEnabled()) {
-                MessageListener.nestsReports = MessageListener.guild.getTextChannelsByName("nests-reports", true).get(0);
             }
 
             if(!testing && config.useRmDb() && config.pokemonEnabled()) {
@@ -387,11 +376,11 @@ public class MessageListener extends ListenerAdapter
         if(!config.loggingEnabled()) return;
 
         final User user = event.getMember().getUser();
-        String roleStr = "";
+        StringBuilder roleStr = new StringBuilder();
         for (final Role role : event.getRoles()) {
             if(lobbyManager.isLobbyRoleId(role.getId())) continue;
 
-            roleStr = roleStr + role.getName() + " ";
+            roleStr.append(role.getName()).append(" ");
         }
 
         if(roleStr.length() != 0) {
@@ -404,10 +393,10 @@ public class MessageListener extends ListenerAdapter
         if(!config.loggingEnabled()) return;
 
         final User user = event.getMember().getUser();
-        String roleStr = "";
+        StringBuilder roleStr = new StringBuilder();
         for (final Role role : event.getRoles()) {
             if(lobbyManager.isLobbyRoleId(role.getId())) continue;
-            roleStr = roleStr + role.getName() + " ";
+            roleStr.append(role.getName()).append(" ");
         }
 
         if(roleStr.length() != 0) {
@@ -520,12 +509,10 @@ public class MessageListener extends ListenerAdapter
             }else if (channel.getId().equals(config.getUserUpdatesId())) {
                 this.parseModMsg(message, textChannel);
 //            }else if(config){
-            }else if(channel.getId().equals(config.getCommandChannelId())){
+            }else if(channel.getId().equals(config.getCommandChannelId())) {
                 this.parseMsg(msg.toLowerCase().trim(), author, textChannel);
-            }else if (config.nestsEnabled() && channel.getName().equals(MessageListener.testing ? "nests-testing" : "nests")) {
-                this.parseNestMsg(msg.toLowerCase().trim(), author, channel, event.getChannelType());
-            }
-            else if (!config.isSupporterOnly()){
+//            }
+//            else if (!config.isSupporterOnly()){
 //                if (MessageListener.testing) {
 //                    if (message.isWebhookMessage()) {
 //                        return;
@@ -549,23 +536,11 @@ public class MessageListener extends ListenerAdapter
             }
         }
         else if (event.isFromType(ChannelType.PRIVATE)) {
-            final PrivateChannel privateChannel = event.getPrivateChannel();
             novabotLog.log(INFO,String.format("[PRIV]<%s>: %s\n", author.getName(), msg));
 
             if(config.isSupporterOnly() && !isSupporter(author.getId())){
                 channel.sendMessage(author.getAsMention() + ", sorry, I can only accept commands from supporters").queue();
                 return;
-            }
-
-            if (!msg.startsWith("!nest") && !msg.startsWith("!map") && !msg.startsWith("!suspected") && !msg.startsWith("!confirmed")) {
-                if (!msg.startsWith("!fb")) {
-                    this.parseMsg(msg.toLowerCase().trim(), author, privateChannel);
-                }
-            }else{
-                if (config.nestsEnabled()) {
-                    parseNestMsg(msg,author,channel,ChannelType.PRIVATE);
-//                channel.sendMessage("My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```").queue();
-                }
             }
         }
         else if (event.isFromType(ChannelType.GROUP)) {
@@ -601,15 +576,6 @@ public class MessageListener extends ListenerAdapter
                         lobby.lobbyCode
                 ));
 
-//                if(lobby.spawn.bossId == 249){
-//                    jda.getTextChannelById(338321961040084992L).sendMessageFormat(
-//                            "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
-//                            guild.getMember(author),
-//                            lobby.getChannel(),
-//                            lobby.memberCount(),
-//                            lobby.lobbyCode).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue());
-//                }
-
             }
 
 
@@ -618,7 +584,7 @@ public class MessageListener extends ListenerAdapter
 
             if (geofences.size() > 0 || textChannel.getType() == ChannelType.PRIVATE) {
 
-                String noLobbiesMsg = null;
+                StringBuilder noLobbiesMsg = null;
 
                 for (GeofenceIdentifier geofence : geofences) {
 
@@ -626,9 +592,9 @@ public class MessageListener extends ListenerAdapter
 
                     if (lobbies.size() == 0) {
                         if (noLobbiesMsg == null) {
-                            noLobbiesMsg = String.format("%s, there are no active lobbies in %s", author.getAsMention(), geofence.name);
+                            noLobbiesMsg = new StringBuilder(String.format("%s, there are no active lobbies in %s", author.getAsMention(), geofence.name));
                         } else {
-                            noLobbiesMsg += String.format(", %s", geofence.name);
+                            noLobbiesMsg.append(String.format(", %s", geofence.name));
                         }
                         continue;
                     }
@@ -641,7 +607,7 @@ public class MessageListener extends ListenerAdapter
                 }
 
                 if (noLobbiesMsg != null) {
-                    textChannel.sendMessage(noLobbiesMsg).queue();
+                    textChannel.sendMessage(noLobbiesMsg.toString()).queue();
                 }
 
             }
@@ -715,7 +681,7 @@ public class MessageListener extends ListenerAdapter
     private void parseModMsg(Message msg, TextChannel channel) {
         if(msg.getContent().startsWith("!joindate")) {
 
-            String response = String.format("%s, the results of your search are:\n\n", msg.getAuthor().getAsMention());
+            StringBuilder response = new StringBuilder(String.format("%s, the results of your search are:\n\n", msg.getAuthor().getAsMention()));
 
             List<User> mentionedUsers = msg.getMentionedUsers();
 
@@ -723,10 +689,10 @@ public class MessageListener extends ListenerAdapter
                 OffsetDateTime joinDate = guild.getMember(mentionedUser).getJoinDate();
                 String formattedDate = joinDate.toInstant().atZone(ZoneId.of(config.getTimeZone())).format(formatter);
 
-                response += String.format("  %s joined at %s", mentionedUser.getAsMention(),formattedDate);
+                response.append(String.format("  %s joined at %s", mentionedUser.getAsMention(), formattedDate));
             }
 
-            channel.sendMessage(response).queue();
+            channel.sendMessage(response.toString()).queue();
         }
     }
 
@@ -800,137 +766,6 @@ public class MessageListener extends ListenerAdapter
 //            jda.getUserById("107730875596169216").openPrivateChannel().queue(success -> success.sendMessage(message).queue());
 //        }
 //    }
-
-    private void parseNestMsg(final String msg, final User author, final MessageChannel channel, final ChannelType channelType) {
-        if (!msg.startsWith("!")) {
-            return;
-        }
-        switch (msg) {
-            case "!fb":
-            case "!nestfb":
-                channel.sendMessage(NEST_FB_GROUP).queue();
-                break;
-            case "!map":
-            case "!nestmap":
-                channel.sendMessage(NEST_MAP).queue();
-                break;
-            case "!help":
-                channel.sendMessage("My nest commands are: \n```!nest <pokemon list> <status list>\n!nest pokemon status\n!nest pokemon\n!reportnest [your text here]\n!confirmed\n!suspected\n!fb or !nestfb\n!map or !nestmap\n!help\n```").queue();
-                break;
-            case "!reload":
-                if(isAdmin(author)){
-                    loadConfig();
-                    loadSuburbs();
-                }
-                break;
-            default:
-                if (msg.startsWith("!reportnest")) {
-                    final String report = msg.substring(msg.indexOf(" ") + 1);
-                    MessageListener.nestsReports.sendMessage(author.getAsMention() + " reported: \"" + report + "\"").queue();
-                    channel.sendMessageFormat("Thanks for your report, %s! It's been passed on to our team.",author).queue();
-                    return;
-                }
-                if (msg.startsWith("!confirmed")) {
-                    final MessageBuilder builder = new MessageBuilder();
-                    builder.append(author.getAsMention()).append("");
-                    final ArrayList<Nest> nests = NestSheetManager.getNestsByStatus(new NestStatus[] { NestStatus.Confirmed });
-                    if (nests.size() == 0) {
-                        builder.append(" sorry, I couldn't find any confirmed nests");
-                        channel.sendMessage(builder.build()).queue();
-                    }
-                    else {
-                        if (channelType != ChannelType.PRIVATE) {
-                            channel.sendMessage(author.getAsMention() + " I have PM'd you your search results").queue();
-                        }
-                        builder.append(" I found ").append(nests.size()).append(" confirmed nests:\n\n");
-                        for (final Nest nest : nests) {
-                            builder.append(nest).append("\n");
-                            builder.append("<").append(nest.getGMapsLink()).append(">\n\n");
-                        }
-                        if (!author.hasPrivateChannel()) {
-                            author.openPrivateChannel().complete();
-                        }
-                        for (final Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-                            author.openPrivateChannel().queue(success -> success.sendMessage(message).queue());
-                        }
-                    }
-                    return;
-                }
-                if (msg.equals("!suspected")) {
-                    final MessageBuilder builder = new MessageBuilder();
-                    builder.append(author.getAsMention()).append("");
-                    final ArrayList<Nest> nests = NestSheetManager.getNestsByStatus(new NestStatus[] { NestStatus.Suspected });
-                    if (nests.size() == 0) {
-                        builder.append(" sorry, I couldn't find any suspected nests");
-                        channel.sendMessage(builder.build()).queue();
-                    }
-                    else {
-                        if (channelType != ChannelType.PRIVATE) {
-                            channel.sendMessage(author.getAsMention() + " I have PM'd you your search results").queue();
-                        }
-                        builder.append(" I found ").append(nests.size()).append(" suspected nests:\n\n");
-                        for (final Nest nest : nests) {
-                            builder.append(nest).append("\n");
-                            builder.append("<").append(nest.getGMapsLink()).append(">\n\n");
-                        }
-                        if (!author.hasPrivateChannel()) {
-                            author.openPrivateChannel().complete();
-                        }
-                        for (final Message message : builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-                            author.openPrivateChannel().queue(success -> success.sendMessage(message).queue());
-                        }
-                    }
-                    return;
-                }
-                final UserCommand userCommand = Parser.parseInput(msg,isSupporter(author.getId()));
-                final ArrayList<InputError> exceptions = userCommand.getExceptions();
-                final String cmdStr = (String)userCommand.getArg(0).getParams()[0];
-                if (exceptions.size() > 0) {
-                    String errorMessage = author.getAsMention() + ", I had " + ((exceptions.size() == 1) ? "a problem" : "problems") + " reading your input.\n\n";
-                    final InputError error = InputError.mostSevere(exceptions);
-                    errorMessage += error.getErrorMessage(userCommand);
-                    channel.sendMessage(errorMessage).queue();
-                    break;
-                }
-                if (!cmdStr.startsWith("!nest")) {
-                    break;
-                }
-                final NestSearch nestSearch = userCommand.buildNestSearch();
-                final MessageBuilder builder2 = new MessageBuilder();
-                builder2.append(author.getAsMention()).append("");
-                final ArrayList<Nest> nests2 = NestSheetManager.getNests(nestSearch);
-                if (nests2.size() == 0) {
-                    builder2.append(" sorry, I couldn't find any ").append(NestStatus.listToString(nestSearch.getStatuses())).append(" nests for ").append(Pokemon.listToString(nestSearch.getPokemon()));
-                    channel.sendMessage(builder2.build()).queue();
-                    break;
-                }
-                if (channelType != ChannelType.PRIVATE) {
-                    channel.sendMessage(author.getAsMention() + " I have PM'd you your search results").queue();
-                }
-                builder2.append(" I found ").append(nests2.size()).append(" results for ").append(NestStatus.listToString(nestSearch.getStatuses())).append(" ").append(Pokemon.listToString(nestSearch.getPokemon())).append(" nests :\n\n");
-                for (final Pokemon poke : nestSearch.getPokemon()) {
-                    builder2.append("**").append(poke.name).append("**\n");
-                    boolean foundPoke = false;
-                    for (final Nest nest2 : nests2) {
-                        if (nest2.pokemon.name.equals(poke.name)) {
-                            foundPoke = true;
-                            builder2.append("  ").append(nest2).append("\n");
-                            builder2.append("  <").append(nest2.getGMapsLink()).append(">\n\n");
-                        }
-                    }
-                    if (!foundPoke) {
-                        builder2.append("  No results found\n");
-                    }
-                }
-                if (!author.hasPrivateChannel()) {
-                    author.openPrivateChannel().complete();
-                }
-                for (final Message message2 : builder2.buildAll(MessageBuilder.SplitPolicy.NEWLINE)) {
-                    author.openPrivateChannel().queue(success -> success.sendMessage(message2).queue());
-                }
-                break;
-        }
-    }
 
     private boolean isAdmin(User author) {
         for (Role role : guild.getMember(author).getRoles()) {
@@ -1007,11 +842,6 @@ public class MessageListener extends ListenerAdapter
             return;
         }
 
-        if (config.nestsEnabled() && msg.startsWith("!nest")) {
-            channel.sendMessage(author.getAsMention() + " I only accept nest commands in the " + MessageListener.guild.getTextChannelsByName("nests", true).get(0).getAsMention() + " channel or via PM").queue();
-            return;
-        }
-
         if(msg.equals("!reload")) {
             if (isAdmin(author)) {
                 loadConfig();
@@ -1058,15 +888,6 @@ public class MessageListener extends ListenerAdapter
                         lobby.memberCount(),
                         lobby.lobbyCode
                 ));
-
-//                if(lobby.spawn.bossId == 249){
-//                    jda.getTextChannelById(338321961040084992L).sendMessageFormat(
-//                            "%s joined %s. There are now %s users in the lobby. Join the lobby by clicking the ✅ or by typing `!joinraid %s`.",
-//                            guild.getMember(author).getAsMention(),
-//                            lobby.getChannel().getAsMention(),
-//                            lobby.memberCount(),
-//                            lobby.lobbyCode).queue(m->m.addReaction(WHITE_GREEN_CHECK).queue());
-//                }
 
                 channel.sendMessageFormat("%s you have been placed in %s. There are now %s users in the lobby.",author,lobby.getChannel(),lobby.memberCount()).queue();
             }
@@ -1152,16 +973,21 @@ public class MessageListener extends ListenerAdapter
         }
         else if (msg.equals("!reset")) {
             DBManager.resetUser(author.getId());
-            channel.sendMessage(author.getAsMention() + ", all your notification settings have been reset").queue();
+            channel.sendMessageFormat("%s, all of your notification settings have been reset",author).queue();
             return;
         }else if(msg.equals("!resetpokemon") && config.pokemonEnabled()){
             DBManager.resetPokemon(author.getId());
-            channel.sendMessage(author.getAsMention() + ", your pokemon notification settings have been reset").queue();
+            channel.sendMessageFormat("%s, your pokemon notification settings have been reset",author).queue();
             return;
-        }else if(msg.equals("!resetraids") && config.raidsEnabled()){
+        }else if(msg.equals("!resetraids") && config.raidsEnabled()) {
             DBManager.resetRaids(author.getId());
-            channel.sendMessage(author.getAsMention() + ", your raid notification settings have been reset").queue();
+            channel.sendMessageFormat("%s, your raid notification settings have been reset",author).queue();
             return;
+        } else if (msg.equals("!resetpresets") && config.presetsEnabled()) {
+            DBManager.resetPresets(author.getId());
+            channel.sendMessageFormat("%s, your preset notification settings have been reset",author).queue();
+            return;
+//        }
 //        }else if(msg.equals("!activeraids")){
 //            ArrayList<GeofenceIdentifier> geofences = config.getRaidChatGeofences(channel.getId());
 //
@@ -1228,7 +1054,8 @@ public class MessageListener extends ListenerAdapter
                             "```!loadpreset <preset name> <location list>\n" +
                             "!delpreset <preset name> <location list>\n" +
                             "!presetsettings\n" +
-                            "!presetlist or !presets```" : "") +
+                            "!presetlist or !presets\n" +
+                            "!resetpresets```" : "") +
                     "**Other Commands:**" +
                     "```!clearlocation <location list>\n" +
                     "!pause\n" +
@@ -1356,7 +1183,7 @@ public class MessageListener extends ListenerAdapter
                         String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }
@@ -1378,7 +1205,7 @@ public class MessageListener extends ListenerAdapter
                         String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }
@@ -1391,7 +1218,7 @@ public class MessageListener extends ListenerAdapter
                         if (!DBManager.containsUser(author.getId())) {
                             DBManager.addUser(author.getId());
                         }
-                        novabotLog.log(DEBUG, "clearing raids " + raids);
+                        novabotLog.log(DEBUG, "clearing raids " + Arrays.toString(raids));
                         DBManager.clearRaid(author.getId(), new ArrayList<>(Arrays.asList(raids)));
 
                         String message2 = String.format("%s you will no longer be notified of %s in any location", author.getAsMention(), Pokemon.listToString(userCommand.getUniquePokemon()));
@@ -1444,7 +1271,7 @@ public class MessageListener extends ListenerAdapter
                         message2 += userCommand.getIvMessage();
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }
@@ -1460,7 +1287,7 @@ public class MessageListener extends ListenerAdapter
                         message2 += userCommand.getIvMessage();
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }
@@ -1470,7 +1297,7 @@ public class MessageListener extends ListenerAdapter
                     }
                     case "!clearpokemon": {
                         DBManager.clearPokemon(author.getId(), new ArrayList<>(Arrays.asList(pokemons)));
-                        final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any channels";
+                        final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any locations";
                         channel.sendMessage(message2).queue();
                         return;
                     }
@@ -1488,7 +1315,7 @@ public class MessageListener extends ListenerAdapter
                         String message = String.format("%s you will now be notified of anything in the %s preset", author.getAsMention(), presetName);
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }
@@ -1506,7 +1333,7 @@ public class MessageListener extends ListenerAdapter
                         String message = String.format("%s you will no longer be notified of anything in the %s preset",author.getAsMention(),presetName);
 
                         final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[] locations = {new Location(Region.All)};
+                        Location[] locations = {Location.ALL};
                         if (locationsArg != null) {
                             locations = userCommand.getLocations();
                         }

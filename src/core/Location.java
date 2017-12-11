@@ -9,7 +9,7 @@ import static core.MessageListener.config;
 
 public class Location
 {
-    private static final Location ALL = new Location(LocationType.All);
+    public static final Location ALL = new Location(LocationType.All);
     public ArrayList<GeofenceIdentifier> geofenceIdentifiers;
     public LocationType locationType;
     private String suburb;

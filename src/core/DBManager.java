@@ -575,6 +575,16 @@ public class DBManager {
     public static void resetUser(final String id) {
         resetRaids(id);
         resetPokemon(id);
+        resetPresets(id);
+    }
+
+    public static void resetPresets(String id)
+        {try (Connection connection = getConnection(DBManager.novabotDataSource);
+              Statement statement = connection.createStatement()) {
+            statement.executeUpdate(String.format("DELETE FROM preset WHERE user_id = %s;", id));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void resetRaids(String id) {

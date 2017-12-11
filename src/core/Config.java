@@ -48,7 +48,6 @@ public class Config {
     private final String token;
     private final boolean geofences;
     private final boolean logging;
-    private final boolean nests;
     private final boolean stats;
     private final boolean startupMessage;
     private final boolean supporterOnly;
@@ -140,13 +139,9 @@ public class Config {
 
         pokemonEnabled = Boolean.parseBoolean(config.get("pokemon"));
 
-//        waitForIV = Integer.parseInt(config.get("waitForIV"));
-
         pokePollingRate = Long.parseLong(config.get("pokePollingRate"));
 
         raidPollingRate = Long.parseLong(config.get("raidPollingRate"));
-
-        nests = Boolean.parseBoolean(config.get("nests"));
 
         supporterOnly = Boolean.parseBoolean(config.get("supporterOnly"));
 
@@ -749,10 +744,6 @@ public class Config {
         return pokePollingRate;
     }
 
-    public boolean nestsEnabled() {
-        return nests;
-    }
-
     public boolean isSupporterOnly() {
         return supporterOnly;
     }
@@ -1158,4 +1149,7 @@ public class Config {
         return list.toString();
     }
 
+    public boolean presetsEnabled() {
+        return presets.size() > 0;
+    }
 }
