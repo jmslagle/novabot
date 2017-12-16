@@ -346,6 +346,37 @@ Which field of the Google reverse geocoding response is used to compare suburbs 
 
 ####<a name="formatting.ini"></a>formatting.ini
 
+`formatting.ini` is used to define how messages for pokemon, raid boss, and raid egg notifications will be formatted.
+Formatting files are divided into three sections `pokemon`,`raidBoss`, and `raidEgg`, to determine the formatting for each spawn type.
+The possible fields shared by all sections are:
+
+##### title :: String
+The title text of the embed.
+##### titleUrl :: String
+The title url of the embed.
+##### body :: String
+The body text of the embed. In the case of pokemon, this is the body text to use when the pokemon's IV etc is unknown.
+##### content :: String
+The content text of the embed.
+##### showMap :: Boolean
+Whether to show the Google Maps image of the spawn location.
+##### mapZoom :: Integer
+The zoom level to use for the map image.
+##### mapWidth :: Integer
+The width of the map image.
+##### mapHeight :: Integer
+The heigh of the map image.
+
+The pokemon section has two additional fields:
+
+##### encounteredTitle :: String
+The title text of the embed to use when the IV etc of the pokemon is known.
+##### encounteredBody :: String
+The body text of the embed to use when the IV etc of the pokemon is known.
+
+Any of the String fields (`encounteredTitle`, `title`, `titleUrl`, `encounteredBody`, `body`, and `content`)
+may make use of [text substitution](#text-substitution) to provide information specific to the spawn such as IV and move set.
+
 [example file](formatting.txt)
 
 ####<a name="gkeys.txt"></a> gkeys.txt
@@ -774,6 +805,7 @@ n can be used to denote unlimited notifications of that type, for example:
 [n,20,5] would give unlimited pokemon, 20 raids, and 5 preset notifications
 
 ## <a name="raid-organisation-info"></a> Raid Organisation
+TBD
 
 ## <a name="usage"></a> Usage
 

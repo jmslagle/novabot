@@ -24,7 +24,7 @@ public enum InputError
                 return str;
             }
             case BlacklistedPokemon: {
-                StringBuilder str = new StringBuilder("One or more pokemon you entered aren't being scanned for: \n\n");
+                StringBuilder str = new StringBuilder("One or more pokemon you entered have been blacklisted by the server owner: \n\n");
                 for (final String s : userCommand.getBlacklisted()) {
                     str.append("  ").append(s).append("\n");
                 }
