@@ -1,7 +1,7 @@
 package parser;
 
 import core.Location;
-import core.MessageListener;
+import core.NovaBot;
 import pokemon.Pokemon;
 import raids.Raid;
 
@@ -10,11 +10,13 @@ import java.util.HashMap;
 
 public class UserCommand
 {
+    public final NovaBot novaBot;
     private Argument[] args;
     private final ArrayList<InputError> exceptions;
 
-    public UserCommand() {
+    public UserCommand(NovaBot novaBot) {
         this.exceptions = new ArrayList<>();
+        this.novaBot = novaBot;
     }
 
     public ArrayList<InputError> getExceptions() {
@@ -150,7 +152,7 @@ public class UserCommand
     public ArrayList<String> getBlacklisted() {
         final ArrayList<String> blacklisted = new ArrayList<>();
         for (final Object o : this.getArg(ArgType.Pokemon).getParams()) {
-            if (MessageListener.config.getBlacklist().contains(Pokemon.nameToID((String)o))) {
+            if (novaBot.config.getBlacklist().contains(Pokemon.nameToID((String) o))) {
                 blacklisted.add((String)o);
             }
         }

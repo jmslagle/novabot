@@ -1,8 +1,7 @@
 package notifier;
 
-import core.Config;
+import core.NovaBot;
 import core.ScheduledExecutor;
-import net.dv8tion.jda.core.JDA;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,21 +14,21 @@ public class NotificationsManager {
 
     ExecutorService raidNotifSenderExecutor;
 
-    public NotificationsManager (Config config, JDA jda, boolean testing){
-        if(config.useRmDb() && config.pokemonEnabled()) {
+    public NotificationsManager(NovaBot novaBot, boolean testing) {
+        if (novaBot.config.useRmDb() && novaBot.config.pokemonEnabled()) {
 
             final ScheduledExecutor executor = new ScheduledExecutor(1);
-            executor.scheduleAtFixedRate(new PokeNotifier(this,jda, testing), 0L, config.getPokePollingRate(), TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(new PokeNotifier(this, novaBot, testing), 0L, novaBot.config.getPokePollingDelay(), TimeUnit.SECONDS);
 
-            pokeNotifSenderExecutor = Executors.newFixedThreadPool(config.getPokemonThreads());
+            pokeNotifSenderExecutor = Executors.newFixedThreadPool(novaBot.config.getPokemonThreads());
         }
 
-        if(config.useRmDb() && config.raidsEnabled()){
+        if (novaBot.config.useRmDb() && novaBot.config.raidsEnabled()) {
 
             ScheduledExecutor executorService = new ScheduledExecutor(1);
-            executorService.scheduleAtFixedRate(new RaidNotifier(this, jda, testing),0,config.getRaidPollingRate(), TimeUnit.SECONDS);
+            executorService.scheduleAtFixedRate(new RaidNotifier(this, novaBot), 0, novaBot.config.getRaidPollingDelay(), TimeUnit.SECONDS);
 
-            raidNotifSenderExecutor = Executors.newFixedThreadPool(config.getRaidThreads());
+            raidNotifSenderExecutor = Executors.newFixedThreadPool(novaBot.config.getRaidThreads());
         }
     }
 

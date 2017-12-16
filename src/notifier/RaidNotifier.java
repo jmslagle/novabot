@@ -1,33 +1,29 @@
 package notifier;
 
 import core.DBManager;
+import core.NovaBot;
 import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.utils.SimpleLog;
-
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Owner on 27/06/2017.
  */
 class RaidNotifier implements Runnable
 {
-    private final JDA jda;
-    private final boolean testing;
+    private static final Logger notifierLog = LoggerFactory.getLogger("RaidNotifier");
     private final NotificationsManager manager;
+    private final NovaBot novaBot;
 
-    private static final SimpleLog notifierLog = SimpleLog.getLog("RaidNotifier");
-
-    public RaidNotifier(NotificationsManager manager, final JDA jda, boolean testing) {
+    public RaidNotifier(NotificationsManager manager, NovaBot novaBot) {
         this.manager = manager;
-        this.jda = jda;
-        this.testing = testing;
+        this.novaBot = novaBot;
     }
 
     @Override
     public void run() {
-        notifierLog.log(INFO,"checking for raids to notify");
-        manager.raidNotifSenderExecutor.submit(new RaidNotificationSender(this.jda, DBManager.getCurrentRaids(),testing));
-        notifierLog.log(DEBUG,"Done checking and adding to queue for processing");
+        notifierLog.info("checking for raids to notify");
+        manager.raidNotifSenderExecutor.submit(new RaidNotificationSender(novaBot, novaBot.dbManager.getCurrentRaids()));
+        notifierLog.debug("Done checking and adding to queue for processing");
     }
 }

@@ -1,16 +1,10 @@
 package raids;
 
-import core.Util;
-import net.dv8tion.jda.core.utils.SimpleLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-
-import static core.MessageListener.config;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
+import java.time.Duration;
+import java.time.Instant;
 
 
 /**
@@ -20,36 +14,30 @@ public class LobbyMonitor implements Runnable {
 
     private final LobbyManager lobbyManager;
 
-    private static final SimpleLog lobbyMonitorLog = SimpleLog.getLog("Lobby-Monitor");
+    private static final Logger lobbyMonitorLog = LoggerFactory.getLogger("Lobby-Monitor");
 
     public LobbyMonitor(LobbyManager lobbyManager){
         this.lobbyManager = lobbyManager;
-        lobbyMonitorLog.setLevel(DEBUG);
-        try {
-            SimpleLog.addFileLogs(new File("std.log"),new File("err.log"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
     public void run() {
-        lobbyMonitorLog.log(INFO,"Checking all active lobbies");
+        lobbyMonitorLog.info("Checking all active lobbies");
 
         if(lobbyManager.activeLobbies.size() == 0){
-            lobbyMonitorLog.log(INFO,"No currently active lobbies");
+            lobbyMonitorLog.info("No currently active lobbies");
         }
 
         for (RaidLobby lobby : lobbyManager.activeLobbies.values()) {
-            lobbyMonitorLog.log(INFO, String.format("Commencing check for lobby %s", lobby.lobbyCode));
+            lobbyMonitorLog.info(String.format("Commencing check for lobby %s", lobby.lobbyCode));
 
-            if(lobby.shutDownService == null && lobby.spawn.raidEnd.before(Util.getCurrentTime(config.getTimeZone()))){
-                lobbyMonitorLog.log(INFO,String.format("Lobby %s's raid has ended and is not already shutting down, ending raid.",lobby.lobbyCode));
+            if (lobby.shutDownService == null && lobby.spawn.raidEnd.isBefore(Instant.now())) {
+                lobbyMonitorLog.info(String.format("Lobby %s's raid has ended and is not already shutting down, ending raid.", lobby.lobbyCode));
                 lobby.end(15);
                 continue;
             }
 
-            double timeLeft = lobby.spawn.raidEnd.getTime() - Util.getCurrentTime(config.getTimeZone()).getTime();
+            long timeLeft = Duration.between(lobby.spawn.raidEnd, Instant.now()).toMillis();
 
             if(timeLeft < 0 && lobby.nextTimeLeftUpdate <= 0){
                 continue;
@@ -57,35 +45,16 @@ public class LobbyMonitor implements Runnable {
 
             double minutes = timeLeft / 1000 / 60;
 
-            lobbyMonitorLog.log(DEBUG,String.format("%s minutes left until lobby %s ends",minutes,lobby.lobbyCode));
+            lobbyMonitorLog.debug(String.format("%s minutes left until lobby %s ends", minutes, lobby.lobbyCode));
             if(lobby.channelId != null && minutes <= lobby.nextTimeLeftUpdate){
-                lobbyMonitorLog.log(INFO,String.format("Lobby %s is going to end in %s minutes or less. Alerting the lobby.",
-                        lobby.lobbyCode,
-                        lobby.nextTimeLeftUpdate));
+                lobbyMonitorLog.info(String.format("Lobby %s is going to end in %s minutes or less. Alerting the lobby.",
+                                                   lobby.lobbyCode,
+                                                   lobby.nextTimeLeftUpdate));
                 lobby.nextTimeLeftUpdate -= 5;
                 lobby.alertRaidNearlyOver();
             }
         }
 
-        lobbyMonitorLog.log(INFO,"Done checking");
-    }
-
-    public static void main(String[] args) {
-
-        Timestamp time1 = new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 504000);
-        Timestamp time2 = new Timestamp(Util.getCurrentTime(config.getTimeZone()).getTime() + 6000000);
-
-        System.out.println(time1);
-        System.out.println(time2);
-
-        long timeLeft = time2.getTime() - time1.getTime();
-
-        System.out.println(timeLeft);
-
-        long minutes = MILLISECONDS.toMinutes(timeLeft);
-
-        System.out.println(minutes);
-
-
+        lobbyMonitorLog.info("Done checking");
     }
 }

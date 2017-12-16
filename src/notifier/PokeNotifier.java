@@ -1,33 +1,29 @@
 package notifier;
 
-import core.DBManager;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.utils.SimpleLog;
+import core.NovaBot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.DEBUG;
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
-
 class PokeNotifier implements Runnable
 {
-    private final JDA jda;
+    private static final Logger notifierLog = LoggerFactory.getLogger("PokeNotifier");
     private final boolean testing;
     private final NotificationsManager manager;
+    private final NovaBot novaBot;
 
-    private static final SimpleLog notifierLog = SimpleLog.getLog("PokeNotifier");
-
-    public PokeNotifier(NotificationsManager manager, final JDA jda, boolean testing) {
+    public PokeNotifier(NotificationsManager manager, final NovaBot novaBot, boolean testing) {
         this.manager = manager;
-        this.jda = jda;
+        this.novaBot = novaBot;
         this.testing = testing;
     }
 
     @Override
     public void run() {
-        notifierLog.log(DEBUG,"Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
-        notifierLog.log(INFO,"checking for pokemon to notify");
-        manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(this.jda, DBManager.getNewPokemon(),testing));
-        notifierLog.log(DEBUG,"Done checking and adding to queue for processing");
+        notifierLog.debug("Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
+        notifierLog.info("checking for pokemon to notify");
+        manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(novaBot, novaBot.dbManager.getNewPokemon()));
+        notifierLog.debug("Done checking and adding to queue for processing");
     }
 }

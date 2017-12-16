@@ -2,8 +2,6 @@ package maps;
 
 import java.util.ArrayList;
 
-import static core.MessageListener.config;
-
 /**
  * Created by Owner on 19/05/2017.
  */
@@ -16,6 +14,26 @@ public class GeofenceIdentifier {
     public GeofenceIdentifier(String name, ArrayList<String> aliases) {
         this.name = name;
         this.aliases = aliases;
+    }
+
+    public static ArrayList<GeofenceIdentifier> fromString(String str) {
+
+//        if(Geofencing.geofencesMap.size() == 0){
+//            Geofencing.loadGeofences();
+//        }
+
+        ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
+
+        if (str.equalsIgnoreCase("none")) {
+            geofenceIdentifiers.add(null);
+            return geofenceIdentifiers;
+        }
+
+        for (GeofenceIdentifier identifier : Geofencing.geofencesMap.keySet()) {
+            if (str.equals(identifier.name) || identifier.aliases.contains(str)) geofenceIdentifiers.add(identifier);
+        }
+
+        return geofenceIdentifiers;
     }
 
     @Override
@@ -46,24 +64,8 @@ public class GeofenceIdentifier {
         return str.toString();
     }
 
-    public static ArrayList<GeofenceIdentifier> fromString(String str) {
-
-        if(Geofencing.geofencesMap.size() == 0 && config.useGeofences()){
-            Geofencing.loadGeofences();
-        }
-
-        ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
-
-        if(str.equalsIgnoreCase("none")){
-            geofenceIdentifiers.add(null);
-            return geofenceIdentifiers;
-        }
-
-        for (GeofenceIdentifier identifier : Geofencing.geofencesMap.keySet()) {
-            if(str.equals(identifier.name) || identifier.aliases.contains(str)) geofenceIdentifiers.add(identifier);
-        }
-
-        return geofenceIdentifiers;
+    public boolean hasAliases() {
+        return aliases.size() > 0;
     }
 
     public String getAliasList() {

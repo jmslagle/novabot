@@ -13,19 +13,19 @@ public class RotatingSet<E> extends HashSet<E> {
 
     private final ArrayList<E> objects;
 
-    public RotatingSet(int size){
+    public RotatingSet(int size) {
         this.maxSize = size;
         objects = new ArrayList<>(size);
     }
 
     @Override
     public boolean add(E o) {
-        if(size() >= maxSize){
+        if (size() >= maxSize) {
             remove(objects.get(size() - 1));
             objects.remove(objects.size() - 1);
         }
 
-        objects.add(0,o);
+        objects.add(0, o);
         return super.add(o);
     }
 

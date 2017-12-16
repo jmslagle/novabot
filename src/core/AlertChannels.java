@@ -4,7 +4,7 @@ import maps.GeofenceIdentifier;
 
 import java.util.ArrayList;
 
-public class AlertChannels extends ArrayList<AlertChannel>{
+public class AlertChannels extends ArrayList<AlertChannel> {
 
     public AlertChannels getChannelsByGeofence(GeofenceIdentifier identifier) {
         AlertChannels channels = null;

@@ -1,32 +1,23 @@
 package parser;
 
+import core.Config;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import static core.MessageListener.config;
+public class Commands {
+    private HashMap<String, Command> commands;
 
-class Commands
-{
-    private static final HashMap<String, Command> commands;
-
-    public static boolean isCommandWithArgs(final String s) {
-        return Commands.commands.get(s) != null;
-    }
-
-    public static Command get(final String firstArg) {
-        return Commands.commands.get(firstArg);
-    }
-
-    static {
+    public Commands(Config config) {
         commands = new HashMap<>();
         final Command clearLocation = new Command()
                 .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
                 .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
                 .setArgRange(1, 1);
 
-        Commands.commands.put("!clearlocation", clearLocation);
+        commands.put("!clearlocation", clearLocation);
 
         if(config.pokemonEnabled() || config.raidsEnabled()){
             Command loadPreset = new Command()
@@ -39,8 +30,8 @@ class Commands
                     .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
                     .setArgRange(1,3);
 
-            Commands.commands.put("!loadpreset",loadPreset);
-            Commands.commands.put("!delpreset",delPreset);
+            commands.put("!loadpreset", loadPreset);
+            commands.put("!delpreset", delPreset);
         }
 
         if(config.pokemonEnabled()) {
@@ -59,10 +50,10 @@ class Commands
                     .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
                     .setArgRange(1, 1);
 
-            Commands.commands.put("!addpokemon", addPokemon);
-            Commands.commands.put("!delpokemon", delPokemon);
-            Commands.commands.put("!clearpokemon", clearPokemon);
-            Commands.commands.put("!clearpokelocation", clearLocation);
+            commands.put("!addpokemon", addPokemon);
+            commands.put("!delpokemon", delPokemon);
+            commands.put("!clearpokemon", clearPokemon);
+            commands.put("!clearpokelocation", clearLocation);
         }
 
         if(config.raidsEnabled()){
@@ -81,10 +72,10 @@ class Commands
                     .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
                     .setArgRange(1, 1);
 
-            Commands.commands.put("!addraid", addRaid);
-            Commands.commands.put("!delraid", delRaid);
-            Commands.commands.put("!clearraid", clearRaid);
-            Commands.commands.put("!clearraidlocation", clearLocation);
+            commands.put("!addraid", addRaid);
+            commands.put("!delraid", delRaid);
+            commands.put("!clearraid", clearRaid);
+            commands.put("!clearraidlocation", clearLocation);
         }
 
         if(config.statsEnabled()) {
@@ -92,8 +83,16 @@ class Commands
                     .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)))
                     .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
                     .setArgRange(1, 3);
-            Commands.commands.put("!stats", stats);
+            commands.put("!stats", stats);
         }
+    }
+
+    public Command get(final String firstArg) {
+        return commands.get(firstArg);
+    }
+
+    public boolean isCommandWithArgs(final String s) {
+        return commands.get(s) != null;
     }
 
 }

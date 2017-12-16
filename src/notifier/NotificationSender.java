@@ -1,51 +1,53 @@
 package notifier;
 
-import core.DBManager;
-import core.MessageListener;
 import core.NotificationLimit;
+import core.NovaBot;
 import net.dv8tion.jda.core.entities.User;
-
-import static core.MessageListener.config;
-import static core.MessageListener.guild;
 
 class NotificationSender {
 
-    void checkSupporterStatus(User user) {
-        NotificationLimit limit = config.getNotificationLimit(guild.getMember(user));
+    public final String WHITE_GREEN_CHECK = "\u2705";
+
+    NovaBot novaBot;
+
+    boolean checkSupporterStatus(User user) {
+        NotificationLimit limit = novaBot.config.getNotificationLimit(novaBot.guild.getMember(user));
 
         boolean passedChecks = true;
 
-        int pokeCount = DBManager.countPokemon(user.getId(), config.countLocationsInLimits());
-        if (pokeCount > limit.pokemonLimit){
+        int pokeCount = novaBot.dbManager.countPokemon(user.getId(), novaBot.config.countLocationsInLimits());
+        if (limit.pokemonLimit != null && pokeCount > limit.pokemonLimit) {
             resetUser(user,limit);
             passedChecks = false;
         }
 
         if (passedChecks) {
-            int presetCount = DBManager.countPresets(user.getId(), config.countLocationsInLimits());
-            if (presetCount > limit.presetLimit) {
+            int presetCount = novaBot.dbManager.countPresets(user.getId(), novaBot.config.countLocationsInLimits());
+            if (limit.presetLimit != null && presetCount > limit.presetLimit) {
                 resetUser(user,limit);
                 passedChecks = false;
 
             }
 
             if (passedChecks) {
-                int raidCount = DBManager.countRaids(user.getId(), config.countLocationsInLimits());
-                if (raidCount > limit.raidLimit) {
+                int raidCount = novaBot.dbManager.countRaids(user.getId(), novaBot.config.countLocationsInLimits());
+                if (limit.raidLimit != null && raidCount > limit.raidLimit) {
                     resetUser(user,limit);
+                    passedChecks = false;
                 }
             }
         }
+        return passedChecks;
     }
 
     private void resetUser(User user, NotificationLimit newLimit) {
-        DBManager.resetUser(user.getId());
+        novaBot.dbManager.resetUser(user.getId());
 
         user.openPrivateChannel().queue(channel -> channel.sendMessageFormat("Hi %s, I noticed that recently your supporter status has changed." +
                 " As a result I have cleared your settings. At your current level you can add up to %s to your settings.",user,newLimit.toWords()).queue());
 
-        if(config.loggingEnabled()){
-            MessageListener.roleLog.sendMessageFormat("%s's supporter status has changed, requiring a reset of their settings. They have been informed via PM.",user).queue();
+        if (novaBot.config.loggingEnabled()) {
+            novaBot.roleLog.sendMessageFormat("%s's supporter status has changed, requiring a reset of their settings. They have been informed via PM.", user).queue();
         }
     }
 }

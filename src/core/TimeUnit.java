@@ -10,8 +10,27 @@ public enum TimeUnit {
     Weeks,
     Months;
 
+    public static TimeUnit fromString(String str) {
+        if (str.equals("minute") || str.equals("minutes"))
+            return Minutes;
+
+        if (str.equals("hour") || str.equals("hours"))
+            return Hours;
+
+        if (str.equals("day") || str.equals("days"))
+            return Days;
+
+        if (str.equals("week") || str.equals("weeks"))
+            return Weeks;
+
+        if (str.equals("month") || str.equals("months"))
+            return Months;
+
+        return null;
+    }
+
     public String toDbString() {
-        switch(this){
+        switch (this) {
             case Minutes:
                 return "MINUTE";
             case Hours:
@@ -23,25 +42,6 @@ public enum TimeUnit {
             case Months:
                 return "MONTH";
         }
-        return null;
-    }
-
-    public static TimeUnit fromString(String str){
-        if(str.equals("minute") || str.equals("minutes"))
-            return Minutes;
-
-        if(str.equals("hour") || str.equals("hours"))
-            return Hours;
-
-        if(str.equals("day") || str.equals("days"))
-            return Days;
-
-        if(str.equals("week") || str.equals("weeks"))
-            return Weeks;
-
-        if(str.equals("month") || str.equals("months"))
-            return Months;
-
         return null;
     }
 }

@@ -6,31 +6,32 @@ import com.google.maps.model.AddressComponent;
 import com.google.maps.model.AddressComponentType;
 import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.LatLng;
-import core.DBManager;
-import core.MessageListener;
+import core.NovaBot;
 
-import static core.MessageListener.config;
-import static core.MessageListener.loadConfig;
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 public class ReverseGeocoder {
 
     private static int lastKey;
+    private final NovaBot novaBot;
 
-    public static void main(final String[] args) {
-//        DBManager.novabotdbConnect();
-        MessageListener.testing = true;
-        loadConfig();
-
-        DBManager.novabotdbConnect();
-
-        geocodedLocation(-43.4939774,172.7176463);
-//        DBManager.setGeocodedLocation(-35.405055,149.1270075,geocodedLocation(-35.405055, 149.1270075));
+    public ReverseGeocoder(NovaBot novaBot) {
+        this.novaBot = novaBot;
     }
 
-    public static GeocodedLocation geocodedLocation(double lat, double lon){
+//    public static void main(final String[] args) {
+////        novaBot.dbManager.novabotdbConnect();
+//        novaBot.testing = true;
+//        loadConfig();
+//
+//        novaBot.dbManager.novabotdbConnect();
+//
+//        geocodedLocation(-43.4939774,172.7176463);
+////        novaBot.dbManager.setGeocodedLocation(-35.405055,149.1270075,geocodedLocation(-35.405055, 149.1270075));
+//    }
 
-        GeocodedLocation location = DBManager.getGeocodedLocation(lat,lon);
+    public GeocodedLocation geocodedLocation(double lat, double lon) {
+
+        GeocodedLocation location = novaBot.dbManager.getGeocodedLocation(lat, lon);
 
         if(location != null)  return location;
 
@@ -81,22 +82,22 @@ public class ReverseGeocoder {
                     }
                 }
             }
+
+            novaBot.dbManager.setGeocodedLocation(lat, lon, location);
         }
         catch (com.google.maps.errors.OverDailyLimitException e){
-            MessageListener.novabotLog.log(INFO, String.format("Exceeded daily limit with key %s", key));
+            novaBot.novabotLog.info(String.format("Exceeded daily limit with key %s", key));
         }
         catch (Exception e) {
             e.printStackTrace();
         }
 
-        DBManager.setGeocodedLocation(lat,lon,location);
-
         return location;
     }
 
-    public static String getSuburb(final double lat, final double lon) {
+    public String getSuburb(final double lat, final double lon) {
 
-        String suburb = DBManager.getSuburb(lat, lon);
+        String suburb = novaBot.dbManager.getSuburb(lat, lon);
         if (suburb == null) {
             final GeoApiContext context = new GeoApiContext();
             try {
@@ -124,17 +125,17 @@ public class ReverseGeocoder {
             if (suburb == null) {
                 suburb = "Unknown";
             }
-            DBManager.setSuburb(lat, lon, suburb);
+            novaBot.dbManager.setSuburb(lat, lon, suburb);
         }
         return suburb;
     }
 
-    private static String getNextKey() {
-        if (ReverseGeocoder.lastKey == config.getKeys().size() - 1) {
+    private String getNextKey() {
+        if (ReverseGeocoder.lastKey == novaBot.config.getKeys().size() - 1) {
             ReverseGeocoder.lastKey = 0;
-            return config.getKeys().get(ReverseGeocoder.lastKey);
+            return novaBot.config.getKeys().get(ReverseGeocoder.lastKey);
         }
         ++ReverseGeocoder.lastKey;
-        return config.getKeys().get(ReverseGeocoder.lastKey);
+        return novaBot.config.getKeys().get(ReverseGeocoder.lastKey);
     }
 }

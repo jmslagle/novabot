@@ -6,20 +6,8 @@ public enum Team {
     Instinct,
     Mystic;
 
-    public Team fromString (String s) {
-        switch (s.toLowerCase()){
-            case "valor":
-                return Valor;
-            case "instinct":
-                return Instinct;
-            case "mystic":
-                return Mystic;
-        }
-        return null;
-    }
-
     public static Team fromId(int i) {
-        switch (i){
+        switch (i) {
             case 0:
                 return Uncontested;
             case 1:
@@ -32,9 +20,21 @@ public enum Team {
         return null;
     }
 
+    public Team fromString(String s) {
+        switch (s.toLowerCase()) {
+            case "valor":
+                return Valor;
+            case "instinct":
+                return Instinct;
+            case "mystic":
+                return Mystic;
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
-        switch (this){
+        switch (this) {
             case Uncontested:
                 return "Uncontested";
             case Valor:

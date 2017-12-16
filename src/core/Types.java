@@ -5,13 +5,13 @@ import java.util.Arrays;
 
 public class Types {
 
-    public static ArrayList<String> getStrengths (String type){
+    public static ArrayList<String> getStrengths(String type) {
         String types[] = new String[0];
         switch (type.toLowerCase()) {
             case "normal":
                 break;
             case "fighting":
-                types = new String[]{"normal","rock","steel","ice","dark"};
+                types = new String[]{"normal", "rock", "steel", "ice", "dark"};
                 break;
             case "flying":
                 types = new String[]{"fighting", "bug", "grass"};
@@ -20,52 +20,52 @@ public class Types {
                 types = new String[]{"grass", "fairy"};
                 break;
             case "ground":
-                types = new String[]{"poison", "rock", "steel","fire","electric"};
+                types = new String[]{"poison", "rock", "steel", "fire", "electric"};
                 break;
             case "rock":
                 types = new String[]{"flying", "bug", "fire", "ice"};
                 break;
             case "bug":
-                types = new String[]{"grass","psychic","dark"};
+                types = new String[]{"grass", "psychic", "dark"};
                 break;
             case "ghost":
-                types = new String[]{"ghost","psychic"};
+                types = new String[]{"ghost", "psychic"};
                 break;
             case "steel":
-                types = new String[]{"rock","ice"};
+                types = new String[]{"rock", "ice"};
                 break;
             case "fire":
-                types = new String[]{"bug","steel","grass","ice"};
+                types = new String[]{"bug", "steel", "grass", "ice"};
                 break;
             case "water":
-                types = new String[]{"ground","rock","fire"};
+                types = new String[]{"ground", "rock", "fire"};
                 break;
             case "grass":
-                types = new String[]{"ground","rock","water"};
+                types = new String[]{"ground", "rock", "water"};
                 break;
             case "electric":
-                types = new String[]{"flying","water"};
+                types = new String[]{"flying", "water"};
                 break;
             case "psychic":
-                types = new String[]{"fighting","poison"};
+                types = new String[]{"fighting", "poison"};
                 break;
             case "ice":
-                types = new String[]{"flying","ground","grass","dragon"};
+                types = new String[]{"flying", "ground", "grass", "dragon"};
                 break;
             case "dragon":
                 types = new String[]{"dragon"};
                 break;
             case "dark":
-                types = new String[]{"ghost","psychic"};
+                types = new String[]{"ghost", "psychic"};
                 break;
             case "fairy":
-                types = new String[]{"fighting","dragon","dark"};
+                types = new String[]{"fighting", "dragon", "dark"};
                 break;
         }
         return new ArrayList<>(Arrays.asList(types));
     }
 
-    public static ArrayList<String> getWeaknesses (String type){
+    public static ArrayList<String> getWeaknesses(String type) {
         String types[] = new String[0];
         switch (type.toLowerCase()) {
             case "normal":

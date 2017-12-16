@@ -24,7 +24,7 @@ public enum ArgType
             case Float:
                 return "number";
             case Locations:
-                return "channel or location";
+                return "location";
             case Pokemon:
                 return "pokemon";
             case Unknown:

@@ -10,42 +10,42 @@ import core.Types;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public class Pokemon
-{
-    private static final ArrayList<String> VALID_NAMES;
-    public final String name;
-    public float miniv;
-    public float maxiv;
-    private Location location;
-
-    private static final JsonObject baseStats;
-    private static final JsonObject pokemonInfo;
-    private static final JsonObject movesInfo;
+public class Pokemon {
+    private static final double[] cpMultipliers = new double[]{0.094, 0.16639787, 0.21573247, 0.25572005, 0.29024988,
+                                                               0.3210876, 0.34921268, 0.37523559, 0.39956728, 0.42250001,
+                                                               0.44310755, 0.46279839, 0.48168495, 0.49985844, 0.51739395,
+                                                               0.53435433, 0.55079269, 0.56675452, 0.58227891, 0.59740001,
+                                                               0.61215729, 0.62656713, 0.64065295, 0.65443563, 0.667934,
+                                                               0.68116492, 0.69414365, 0.70688421, 0.71939909, 0.7317,
+                                                               0.73776948, 0.74378943, 0.74976104, 0.75568551, 0.76156384,
+                                                               0.76739717, 0.7731865, 0.77893275, 0.78463697, 0.79030001};
+    private static ArrayList<String> VALID_NAMES;
+    private static JsonObject baseStats;
+    private static JsonObject pokemonInfo;
+    private static JsonObject movesInfo;
 
     static {
-//        VALID_NAMES = new ArrayList<String>(Arrays.asList("bulbasaur", "ivysaur", "venusaur", "charmander", "charmeleon", "charizard", "squirtle", "wartortle", "blastoise", "caterpie", "metapod", "butterfree", "weedle", "kakuna", "beedrill", "pidgey", "pidgeotto", "pidgeot", "rattata", "raticate", "spearow", "fearow", "ekans", "arbok", "pikachu", "raichu", "sandshrew", "sandslash", "nidoran\u2640", "nidorina", "nidoqueen", "nidoran\u2642", "nidorino", "nidoking", "clefairy", "clefable", "vulpix", "ninetales", "jigglypuff", "wigglytuff", "zubat", "golbat", "oddish", "gloom", "vileplume", "paras", "parasect", "venonat", "venomoth", "diglett", "dugtrio", "meowth", "persian", "psyduck", "golduck", "mankey", "primeape", "growlithe", "arcanine", "poliwag", "poliwhirl", "poliwrath", "abra", "kadabra", "alakazam", "machop", "machoke", "machamp", "bellsprout", "weepinbell", "victreebel", "tentacool", "tentacruel", "geodude", "graveler", "golem", "ponyta", "rapidash", "slowpoke", "slowbro", "magnemite", "magneton", "farfetch'd", "doduo", "dodrio", "seel", "dewgong", "grimer", "muk", "shellder", "cloyster", "gastly", "haunter", "gengar", "onix", "drowzee", "krabby", "kingler","hypno", "voltorb", "electrode", "exeggcute", "exeggutor", "cubone", "marowak", "hitmonlee", "hitmonchan", "lickitung", "koffing", "weezing", "rhyhorn", "rhydon", "chansey", "tangela", "kangaskhan", "horsea", "seadra", "goldeen", "seaking", "staryu", "starmie", "mr. mime", "scyther", "jynx", "electabuzz", "magmar", "pinsir", "tauros", "magikarp", "gyarados", "lapras", "ditto", "eevee", "vaporeon", "jolteon", "flareon", "porygon", "omanyte", "omastar", "kabuto", "kabutops", "aerodactyl", "snorlax", "articuno", "zapdos", "moltres", "dratini", "dragonair", "dragonite", "mewtwo", "mew", "chikorita", "bayleef", "meganium", "cyndaquil", "quilava", "typhlosion", "totodile", "croconaw", "feraligatr", "sentret", "furret", "hoothoot", "noctowl", "ledyba", "ledian", "spinarak", "ariados", "crobat", "chinchou", "lanturn", "pichu", "cleffa", "igglybuff", "togepi", "togetic", "natu", "xatu", "mareep", "flaaffy", "ampharos", "bellossom", "marill", "azumarill", "sudowoodo", "politoed", "hoppip", "skiploom", "jumpluff", "aipom", "sunkern", "sunflora", "yanma", "wooper", "quagsire", "espeon", "umbreon", "murkrow", "slowking", "misdreavus", "unown", "wobbuffet", "girafarig", "pineco", "forretress", "dunsparce", "gligar", "steelix", "snubbull", "granbull", "qwilfish", "scizor", "shuckle", "heracross", "sneasel", "teddiursa", "ursaring", "slugma", "magcargo", "swinub", "piloswine", "corsola", "remoraid", "octillery", "delibird", "mantine", "skarmory", "houndour", "houndoom", "kingdra", "phanpy", "donphan", "porygon2", "stantler", "smeargle", "tyrogue", "hitmontop", "smoochum", "elekid", "magby", "miltank", "blissey", "raikou", "entei", "suicune", "larvitar", "pupitar", "tyranitar", "lugia", "ho-oh", "celebi", "treecko", "grovyle", "sceptile", "torchic", "combusken", "blaziken", "mudkip", "marshtomp", "swampert", "poochyena", "mightyena", "zigzagoon", "linoone", "wurmple", "silcoon", "beautifly", "cascoon", "dustox", "lotad", "lombre", "ludicolo", "seedot", "nuzleaf", "shiftry", "taillow", "swellow", "wingull", "pelipper", "ralts", "kirlia", "gardevoir", "surskit", "masquerain", "shroomish", "breloom", "slakoth", "vigoroth", "slaking", "nincada", "ninjask", "shedinja", "whismur", "loudred", "exploud", "makuhita", "hariyama", "azurill", "nosepass", "skitty", "delcatty", "sableye", "mawile", "aron", "lairon", "aggron", "meditite", "medicham", "electrike", "manectric", "plusle", "minun", "volbeat", "illumise", "roselia", "gulpin", "swalot", "carvanha", "sharpedo", "wailmer", "wailord", "numel", "camerupt", "torkoal", "spoink", "grumpig", "spinda", "trapinch", "vibrava", "flygon", "cacnea", "cacturne", "swablu", "altaria", "zangoose", "seviper", "lunatone", "solrock", "barboach", "whiscash", "corphish", "crawdaunt", "baltoy", "claydol", "lileep", "cradily", "anorith", "armaldo", "feebas", "milotic", "castform", "kecleon", "shuppet", "banette", "duskull", "dusclops", "tropius", "chimecho", "absol", "wynaut", "snorunt", "glalie", "spheal", "sealeo", "walrein", "clamperl", "huntail", "gorebyss", "relicanth", "luvdisc", "bagon", "shelgon", "salamence", "beldum", "metang", "metagross", "regirock", "regice", "registeel", "latias", "latios", "kyogre", "groudon", "rayquaza", "jirachi", "deoxys", "turtwig", "grotle", "torterra", "chimchar", "monferno", "infernape", "piplup", "prinplup", "empoleon", "starly", "staravia", "staraptor", "bidoof", "bibarel", "kricketot", "kricketune", "shinx", "luxio", "luxray", "budew", "roserade", "cranidos", "rampardos", "shieldon", "bastiodon", "burmy", "wormadam", "mothim", "combee", "vespiquen", "pachirisu", "buizel", "floatzel", "cherubi", "cherrim", "shellos", "gastrodon", "ambipom", "drifloon", "drifblim", "buneary", "lopunny", "mismagius", "honchkrow", "glameow", "purugly", "chingling", "stunky", "skuntank", "bronzor", "bronzong", "bonsly", "mime jr.", "happiny", "chatot", "spiritomb", "gible", "gabite", "garchomp", "munchlax", "riolu", "lucario", "hippopotas", "hippowdon", "skorupi", "drapion", "croagunk", "toxicroak", "carnivine", "finneon", "lumineon", "mantyke", "snover", "abomasnow", "weavile", "magnezone", "lickilicky", "rhyperior", "tangrowth", "electivire", "magmortar", "togekiss", "yanmega", "leafeon", "glaceon", "gliscor", "mamoswine", "porygon-z", "gallade", "probopass", "dusknoir", "froslass", "rotom", "uxie", "mesprit", "azelf", "dialga", "palkia", "heatran", "regigigas", "giratina", "cresselia", "phione", "manaphy", "darkrai", "shaymin", "arceus", "victini", "snivy", "servine", "serperior", "tepig", "pignite", "emboar", "oshawott", "dewott", "samurott", "patrat", "watchog", "lillipup", "herdier", "stoutland", "purrloin", "liepard", "pansage", "simisage", "pansear", "simisear", "panpour", "simipour", "munna", "musharna", "pidove", "tranquill", "unfezant", "blitzle", "zebstrika", "roggenrola", "boldore", "gigalith", "woobat", "swoobat", "drilbur", "excadrill", "audino", "timburr", "gurdurr", "conkeldurr", "tympole", "palpitoad", "seismitoad", "throh", "sawk", "sewaddle", "swadloon", "leavanny", "venipede", "whirlipede", "scolipede", "cottonee", "whimsicott", "petilil", "lilligant", "basculin", "sandile", "krokorok", "krookodile", "darumaka", "darmanitan", "maractus", "dwebble", "crustle", "scraggy", "scrafty", "sigilyph", "yamask", "cofagrigus", "tirtouga", "carracosta", "archen", "archeops", "trubbish", "garbodor", "zorua", "zoroark", "minccino", "cinccino", "gothita", "gothorita", "gothitelle", "solosis", "duosion", "reuniclus", "ducklett", "swanna", "vanillite", "vanillish", "vanilluxe", "deerling", "sawsbuck", "emolga", "karrablast", "escavalier", "foongus", "amoonguss", "frillish", "jellicent", "alomomola", "joltik", "galvantula", "ferroseed", "ferrothorn", "klink", "klang", "klinklang", "tynamo", "eelektrik", "eelektross", "elgyem", "beheeyem", "litwick", "lampent", "chandelure", "axew", "fraxure", "haxorus", "cubchoo", "beartic", "cryogonal", "shelmet", "accelgor", "stunfisk", "mienfoo", "mienshao", "druddigon", "golett", "golurk", "pawniard", "bisharp", "bouffalant", "rufflet", "braviary", "vullaby", "mandibuzz", "heatmor", "durant", "deino", "zweilous", "hydreigon", "larvesta", "volcarona", "cobalion", "terrakion", "virizion", "tornadus", "thundurus", "reshiram", "zekrom", "landorus", "kyurem", "keldeo", "meloetta", "genesect", "chespin", "quilladin", "chesnaught", "fennekin", "braixen", "delphox", "froakie", "frogadier", "greninja", "bunnelby", "diggersby", "fletchling", "fletchinder", "talonflame", "scatterbug", "spewpa", "vivillon", "litleo", "pyroar", "flab\u00e9b\u00e9", "floette", "florges", "skiddo", "gogoat", "pancham", "pangoro", "furfrou", "espurr", "meowstic", "honedge", "doublade", "aegislash", "spritzee", "aromatisse", "swirlix", "slurpuff", "inkay", "malamar", "binacle", "barbaracle", "skrelp", "dragalge", "clauncher", "clawitzer", "helioptile", "heliolisk", "tyrunt", "tyrantrum", "amaura", "aurorus", "sylveon", "hawlucha", "dedenne", "carbink", "goomy", "sliggoo", "goodra", "klefki", "phantump", "trevenant", "pumpkaboo", "gourgeist", "bergmite", "avalugg", "noibat", "noivern", "xerneas", "yveltal", "zygarde", "diancie", "hoopa", "volcanion"));
-        VALID_NAMES = new ArrayList<>(Arrays.asList("bulbasaur", "ivysaur", "venusaur", "charmander", "charmeleon", "charizard", "squirtle", "wartortle", "blastoise", "caterpie", "metapod", "butterfree", "weedle", "kakuna", "beedrill", "pidgey", "pidgeotto", "pidgeot", "rattata", "raticate", "spearow", "fearow", "ekans", "arbok", "pikachu", "raichu", "sandshrew", "sandslash", "nidoran♀", "nidorina", "nidoqueen", "nidoran♂", "nidorino", "nidoking", "clefairy", "clefable", "vulpix", "ninetales", "jigglypuff", "wigglytuff", "zubat", "golbat", "oddish", "gloom", "vileplume", "paras", "parasect", "venonat", "venomoth", "diglett", "dugtrio", "meowth", "persian", "psyduck", "golduck", "mankey", "primeape", "growlithe", "arcanine", "poliwag", "poliwhirl", "poliwrath", "abra", "kadabra", "alakazam", "machop", "machoke", "machamp", "bellsprout", "weepinbell", "victreebel", "tentacool", "tentacruel", "geodude", "graveler", "golem", "ponyta", "rapidash", "slowpoke", "slowbro", "magnemite", "magneton", "farfetch'd", "doduo", "dodrio", "seel", "dewgong", "grimer", "muk", "shellder", "cloyster", "gastly", "haunter", "gengar", "onix", "drowzee", "hypno", "krabby", "kingler", "voltorb", "electrode", "exeggcute", "exeggutor", "cubone", "marowak", "hitmonlee", "hitmonchan", "lickitung", "koffing", "weezing", "rhyhorn", "rhydon", "chansey", "tangela", "kangaskhan", "horsea", "seadra", "goldeen", "seaking", "staryu", "starmie", "mr. mime", "scyther", "jynx", "electabuzz", "magmar", "pinsir", "tauros", "magikarp", "gyarados", "lapras", "ditto", "eevee", "vaporeon", "jolteon", "flareon", "porygon", "omanyte", "omastar", "kabuto", "kabutops", "aerodactyl", "snorlax", "articuno", "zapdos", "moltres", "dratini", "dragonair", "dragonite", "mewtwo", "mew", "chikorita", "bayleef", "meganium", "cyndaquil", "quilava", "typhlosion", "totodile", "croconaw", "feraligatr", "sentret", "furret", "hoothoot", "noctowl", "ledyba", "ledian", "spinarak", "ariados", "crobat", "chinchou", "lanturn", "pichu", "cleffa", "igglybuff", "togepi", "togetic", "natu", "xatu", "mareep", "flaaffy", "ampharos", "bellossom", "marill", "azumarill", "sudowoodo", "politoed", "hoppip", "skiploom", "jumpluff", "aipom", "sunkern", "sunflora", "yanma", "wooper", "quagsire", "espeon", "umbreon", "murkrow", "slowking", "misdreavus", "unown", "wobbuffet", "girafarig", "pineco", "forretress", "dunsparce", "gligar", "steelix", "snubbull", "granbull", "qwilfish", "scizor", "shuckle", "heracross", "sneasel", "teddiursa", "ursaring", "slugma", "magcargo", "swinub", "piloswine", "corsola", "remoraid", "octillery", "delibird", "mantine", "skarmory", "houndour", "houndoom", "kingdra", "phanpy", "donphan", "porygon2", "stantler", "smeargle", "tyrogue", "hitmontop", "smoochum", "elekid", "magby", "miltank", "blissey", "raikou", "entei", "suicune", "larvitar", "pupitar", "tyranitar", "lugia", "ho-oh", "celebi", "treecko", "grovyle", "sceptile", "torchic", "combusken", "blaziken", "mudkip", "marshtomp", "swampert", "poochyena", "mightyena", "zigzagoon", "linoone", "wurmple", "silcoon", "beautifly", "cascoon", "dustox", "lotad", "lombre", "ludicolo", "seedot", "nuzleaf", "shiftry", "taillow", "swellow", "wingull", "pelipper", "ralts", "kirlia", "gardevoir", "surskit", "masquerain", "shroomish", "breloom", "slakoth", "vigoroth", "slaking", "nincada", "ninjask", "shedinja", "whismur", "loudred", "exploud", "makuhita", "hariyama", "azurill", "nosepass", "skitty", "delcatty", "sableye", "mawile", "aron", "lairon", "aggron", "meditite", "medicham", "electrike", "manectric", "plusle", "minun", "volbeat", "illumise", "roselia", "gulpin", "swalot", "carvanha", "sharpedo", "wailmer", "wailord", "numel", "camerupt", "torkoal", "spoink", "grumpig", "spinda", "trapinch", "vibrava", "flygon", "cacnea", "cacturne", "swablu", "altaria", "zangoose", "seviper", "lunatone", "solrock", "barboach", "whiscash", "corphish", "crawdaunt", "baltoy", "claydol", "lileep", "cradily", "anorith", "armaldo", "feebas", "milotic", "castform", "kecleon", "shuppet", "banette", "duskull", "dusclops", "tropius", "chimecho", "absol", "wynaut", "snorunt", "glalie", "spheal", "sealeo", "walrein", "clamperl", "huntail", "gorebyss", "relicanth", "luvdisc", "bagon", "shelgon", "salamence", "beldum", "metang", "metagross", "regirock", "regice", "registeel", "latias", "latios", "kyogre", "groudon", "rayquaza", "jirachi", "deoxys"));
-
         JsonParser parser = new JsonParser();
 
         try {
-            JsonElement element = parser.parse(new FileReader("data/base_stats.json"));
+            JsonElement element = parser.parse(new FileReader("static/data/base_stats.json"));
 
             if (element.isJsonObject()) {
                 baseStats = element.getAsJsonObject();
             }
 
-            element = parser.parse(new FileReader("data/pokemon.json"));
+            element = parser.parse(new FileReader("static/data/pokemon.json"));
 
-            if (element.isJsonObject()){
+            if (element.isJsonObject()) {
                 pokemonInfo = element.getAsJsonObject();
             }
 
-            element = parser.parse(new FileReader("data/moves.json"));
+            VALID_NAMES = getPokemonNames(pokemonInfo);
 
-            if (element.isJsonObject()){
+            element = parser.parse(new FileReader("static/data/moves.json"));
+
+            if (element.isJsonObject()) {
                 movesInfo = element.getAsJsonObject();
             }
         } catch (FileNotFoundException e) {
@@ -53,21 +53,23 @@ public class Pokemon
         }
     }
 
+    public final String name;
+    public float miniv;
+    public float maxiv;
+    private Location location;
+
     public Pokemon(final String name) {
         this.miniv = 0.0f;
         this.maxiv = 100.0f;
         if (nameToID(name.toLowerCase()) == 0) {
             if (name.toLowerCase().equals("nidoran f")) {
                 this.name = "nidoranf";
-            }
-            else if (name.toLowerCase().equals("nidoran m")) {
+            } else if (name.toLowerCase().equals("nidoran m")) {
                 this.name = "nidoranm";
-            }
-            else {
+            } else {
                 this.name = null;
             }
-        }
-        else {
+        } else {
             this.name = name.toLowerCase();
         }
     }
@@ -98,94 +100,86 @@ public class Pokemon
         this.maxiv = maxiv;
     }
 
-    public static void main(final String[] args) {
-        System.out.println(Types.getStrengths(getMoveType(279)));
+    public static String getFilterName(int id) {
+
+        if (id > 2010) return "Unown";
+
+        return Pokemon.pokemonInfo.getAsJsonObject(Integer.toString(id)).get("name").getAsString();
     }
 
-    public static int nameToID(final String pokeName) {
-        switch (pokeName) {
-            case "unowna": {
-                return 2011;
-            }
-            case "unownb": {
-                return 2012;
-            }
-            case "unownc": {
-                return 2013;
-            }
-            case "unownd": {
-                return 2014;
-            }
-            case "unowne": {
-                return 2015;
-            }
-            case "unownf": {
-                return 2016;
-            }
-            case "unowng": {
-                return 2017;
-            }
-            case "unownh": {
-                return 2018;
-            }
-            case "unowni": {
-                return 2019;
-            }
-            case "unownj": {
-                return 2020;
-            }
-            case "unownk": {
-                return 2021;
-            }
-            case "unownl": {
-                return 2022;
-            }
-            case "unownm": {
-                return 2023;
-            }
-            case "unownn": {
-                return 2024;
-            }
-            case "unowno": {
-                return 2025;
-            }
-            case "unownp": {
-                return 2026;
-            }
-            case "unownq": {
-                return 2027;
-            }
-            case "unownr": {
-                return 2028;
-            }
-            case "unowns": {
-                return 2029;
-            }
-            case "unownt": {
-                return 2030;
-            }
-            case "unownu": {
-                return 2031;
-            }
-            case "unownv": {
-                return 2032;
-            }
-            case "unownw": {
-                return 2033;
-            }
-            case "unownx": {
-                return 2034;
-            }
-            case "unowny": {
-                return 2035;
-            }
-            case "unownz": {
-                return 2036;
-            }
-            default: {
-                return Pokemon.VALID_NAMES.indexOf(pokeName) + 1;
-            }
+    public int getID() {
+//        System.out.println("getting id of " + this.name);
+        return nameToID(this.name);
+    }
+
+    public static String getIcon(final int id) {
+        String url = "https://bytebucket.org/anzmap/sprites/raw/7f31b4ddb8a3ca6c942c7a1f39e3143de0f1a8d8/";
+        if (id >= 2011) {
+            final int form = id % 201;
+            url = url + "201-" + form;
+        } else {
+            url += id;
         }
+        return url + ".png";
+    }
+
+    public Location getLocation() {
+        return this.location;
+    }
+
+    public static String getMoveType(int moveId) {
+        return movesInfo.getAsJsonObject(Integer.toString(moveId)).get("type").getAsString();
+    }
+
+    public static String getSize(int id, float height, float weight) {
+        float baseStats[] = getBaseStats(id);
+
+        float weightRatio = weight / baseStats[0];
+        float heightRatio = height / baseStats[1];
+
+        float size = heightRatio + weightRatio;
+
+        if (size < 1.5) {
+            return "tiny";
+        }
+        if (size <= 1.75) {
+            return "small";
+        }
+        if (size < 2.25) {
+            return "normal";
+        }
+        if (size <= 2.5) {
+            return "large";
+        }
+        return "big";
+    }
+
+    public static ArrayList<String> getTypes(int bossId) {
+        JsonArray types = pokemonInfo.getAsJsonObject(Integer.toString(bossId)).getAsJsonArray("types");
+
+        ArrayList<String> typesList = new ArrayList<>();
+
+        for (JsonElement type : types) {
+            typesList.add(type.getAsString());
+        }
+        return typesList;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        assert obj.getClass().getName().equals("pokemon.Pokemon");
+        final Pokemon poke = (Pokemon) obj;
+        return poke.name.equals(this.name);
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
     }
 
     public static String idToName(final int id) {
@@ -274,34 +268,147 @@ public class Pokemon
         }
     }
 
-    public static String getFilterName(int id){
-
-        if (id > 2010) return "Unown";
-
-        return Pokemon.pokemonInfo.getAsJsonObject(Integer.toString(id)).get("name").getAsString();
+    public static Character intToForm(final int i) {
+        if (i == 0) {
+            return null;
+        }
+        if (i <= 26) {
+            return (char) (64 + i);
+        }
+        if (i == 27) {
+            return '?';
+        }
+        if (i == 28) {
+            return '!';
+        }
+        return null;
     }
 
-    public static String getSize(int id, float height, float weight){
-        float baseStats[] = getBaseStats(id);
+    public static String listToString(final Pokemon[] pokemon) {
+        StringBuilder str = new StringBuilder();
+        if (pokemon.length == 1) {
+            return pokemon[0].toString();
+        }
+        for (int i = 0; i < pokemon.length; ++i) {
+            if (i == pokemon.length - 1) {
+                str.append("and ").append(pokemon[i].toString());
+            } else {
+                str.append((i == pokemon.length - 2) ? (pokemon[i].toString() + " ") : (pokemon[i].toString() + ", "));
+            }
+        }
+        return str.toString();
+    }
 
-        float weightRatio = weight / baseStats[0];
-        float heightRatio = height / baseStats[1];
+    public static void main(final String[] args) {
+        System.out.println(Types.getStrengths(getMoveType(279)));
+        System.out.println(idToName(5));
+        System.out.println("Max cp for " + idToName(250) + " at level " + 25 + " is " + maxCpAtLevel(250, 25));
+    }
 
-        float size = heightRatio + weightRatio;
+    public static int maxCpAtLevel(int id, int level) {
+        double multiplier = cpMultipliers[level - 1];
+        double attack     = (baseAtk(id) + 15) * multiplier;
+        double defense    = (baseDef(id) + 15) * multiplier;
+        double stamina    = (baseSta(id) + 15) * multiplier;
+        return (int) Math.max(10, Math.floor(Math.sqrt(attack * attack * defense * stamina) / 10));
+    }
 
-        if (size < 1.5){
-            return "tiny";
+    public static int nameToID(final String pokeName) {
+        switch (pokeName) {
+            case "unowna": {
+                return 2011;
+            }
+            case "unownb": {
+                return 2012;
+            }
+            case "unownc": {
+                return 2013;
+            }
+            case "unownd": {
+                return 2014;
+            }
+            case "unowne": {
+                return 2015;
+            }
+            case "unownf": {
+                return 2016;
+            }
+            case "unowng": {
+                return 2017;
+            }
+            case "unownh": {
+                return 2018;
+            }
+            case "unowni": {
+                return 2019;
+            }
+            case "unownj": {
+                return 2020;
+            }
+            case "unownk": {
+                return 2021;
+            }
+            case "unownl": {
+                return 2022;
+            }
+            case "unownm": {
+                return 2023;
+            }
+            case "unownn": {
+                return 2024;
+            }
+            case "unowno": {
+                return 2025;
+            }
+            case "unownp": {
+                return 2026;
+            }
+            case "unownq": {
+                return 2027;
+            }
+            case "unownr": {
+                return 2028;
+            }
+            case "unowns": {
+                return 2029;
+            }
+            case "unownt": {
+                return 2030;
+            }
+            case "unownu": {
+                return 2031;
+            }
+            case "unownv": {
+                return 2032;
+            }
+            case "unownw": {
+                return 2033;
+            }
+            case "unownx": {
+                return 2034;
+            }
+            case "unowny": {
+                return 2035;
+            }
+            case "unownz": {
+                return 2036;
+            }
+            default: {
+                return Pokemon.VALID_NAMES.indexOf(pokeName) + 1;
+            }
         }
-        if (size <= 1.75){
-            return "small";
-        }
-        if (size < 2.25){
-            return "normal";
-        }
-        if (size <= 2.5){
-            return "large";
-        }
-        return "big";
+    }
+
+    private static double baseAtk(int id) {
+        return baseStats.getAsJsonObject(Integer.toString(id)).get("attack").getAsDouble();
+    }
+
+    private static double baseDef(int id) {
+        return baseStats.getAsJsonObject(Integer.toString(id)).get("defense").getAsDouble();
+    }
+
+    private static double baseSta(int id) {
+        return baseStats.getAsJsonObject(Integer.toString(id)).get("stamina").getAsDouble();
     }
 
     private static float[] getBaseStats(int id) {
@@ -315,88 +422,25 @@ public class Pokemon
         return stats;
     }
 
-    public static String listToString(final Pokemon[] pokemon) {
-        StringBuilder str = new StringBuilder();
-        if (pokemon.length == 1) {
-            return pokemon[0].toString();
+    static int getLevel(double cpModifier) {
+        double unRoundedLevel;
+
+        if (cpModifier < 0.734) {
+            unRoundedLevel = (58.35178527 * cpModifier * cpModifier - 2.838007664 * cpModifier + 0.8539209906);
+        } else {
+            unRoundedLevel = 171.0112688 * cpModifier - 95.20425243;
         }
-        for (int i = 0; i < pokemon.length; ++i) {
-            if (i == pokemon.length - 1) {
-                str.append("and ").append(pokemon[i].toString());
-            }
-            else {
-                str.append((i == pokemon.length - 2) ? (pokemon[i].toString() + " ") : (pokemon[i].toString() + ", "));
-            }
-        }
-        return str.toString();
+
+        return (int) Math.round(unRoundedLevel);
     }
 
-    public static String getIcon(final int id) {
-        String url = "https://bytebucket.org/anzmap/sprites/raw/7f31b4ddb8a3ca6c942c7a1f39e3143de0f1a8d8/";
-        if (id >= 2011) {
-            final int form = id % 201;
-            url = url + "201-" + form;
+    private static ArrayList<String> getPokemonNames(JsonObject pokemonInfo) {
+        ArrayList<String> names = new ArrayList<>();
+
+        for (int i = 1; i <= 721; i++) {
+            JsonObject pokeObj = pokemonInfo.getAsJsonObject(Integer.toString(i));
+            if (pokeObj != null) names.add(pokeObj.get("name").getAsString().toLowerCase());
         }
-        else {
-            url += id;
-        }
-        return url + ".png";
-    }
-
-    public static Character intToForm(final int i) {
-        if (i == 0) {
-            return null;
-        }
-        if (i <= 26) {
-            return (char)(64 + i);
-        }
-        if (i == 27) {
-            return '?';
-        }
-        if (i == 28) {
-            return '!';
-        }
-        return null;
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        assert obj.getClass().getName().equals("pokemon.Pokemon");
-        final Pokemon poke = (Pokemon)obj;
-        return poke.name.equals(this.name);
-    }
-
-    public int getID() {
-//        System.out.println("getting id of " + this.name);
-        return nameToID(this.name);
-    }
-
-    public Location getLocation() {
-        return this.location;
-    }
-
-    public static ArrayList<String> getTypes(int bossId) {
-        JsonArray types = pokemonInfo.getAsJsonObject(Integer.toString(bossId)).getAsJsonArray("types");
-
-        ArrayList<String> typesList = new ArrayList<>();
-
-        for (JsonElement type : types) {
-            typesList.add(type.getAsString());
-        }
-        return typesList;
-    }
-
-    public static String getMoveType(int moveId) {
-         return movesInfo.getAsJsonObject(Integer.toString(moveId)).get("type").getAsString();
+        return names;
     }
 }

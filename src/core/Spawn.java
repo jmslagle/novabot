@@ -3,39 +3,30 @@ package core;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.entities.Message;
 
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static core.MessageListener.config;
-
 public class Spawn {
-    public final HashMap<String,String> properties = new HashMap<>();
-
-    private String imageUrl;
-
-    protected double lat;
-    protected double lon;
-
-    public String move_1;
-    public String move_2;
-    protected String formatKey = "pokemon";
-
-    protected ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
-
+    protected static final DateTimeFormatter printFormat24hr = DateTimeFormatter.ofPattern("HH:mm:ss");
+    protected static final DateTimeFormatter printFormat12hr = DateTimeFormatter.ofPattern("hh:mm:ss a");
+    public static NovaBot novaBot = null;
     private static int lastKey;
-
-    protected final HashMap<String, Message> builtMessages = new HashMap<>();
-
-    protected static final SimpleDateFormat printFormat = new SimpleDateFormat("HH:mm:ss");
 
     static {
         lastKey = 0;
     }
 
-    public String getSuburb() {
-        return properties.get("city");
-    }
+    public final HashMap<String, String> properties = new HashMap<>();
+    protected final HashMap<String, Message> builtMessages = new HashMap<>();
+    public String move_1;
+    public String move_2;
+    protected double lat;
+    protected double lon;
+    protected String formatKey = "pokemon";
+    protected ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
+    private String imageUrl;
 
     public ArrayList<GeofenceIdentifier> getGeofences() {
         return geofenceIdentifiers;
@@ -43,18 +34,17 @@ public class Spawn {
 
     public String getImage(String formatFile) {
         if (this.imageUrl == null) {
-            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", config.getMapZoom(formatFile, formatKey), config.getMapWidth(formatFile, formatKey), config.getMapHeight(formatFile, formatKey), this.lat, this.lon, getNextKey());
+            return this.imageUrl = "https://maps.googleapis.com/maps/api/staticmap?" + String.format("zoom=%s&size=%sx%s&markers=color:red|%s,%s&key=%s", novaBot.config.getMapZoom(formatFile, formatKey), novaBot.config.getMapWidth(formatFile, formatKey), novaBot.config.getMapHeight(formatFile, formatKey), this.lat, this.lon, getNextKey());
         }
         return this.imageUrl;
     }
 
-    private static String getNextKey() {
-        if (lastKey == config.getKeys().size() - 1) {
-            lastKey = 0;
-            return config.getKeys().get(lastKey);
-        }
-        ++lastKey;
-        return config.getKeys().get(lastKey);
+    public String getSuburb() {
+        return properties.get("city");
+    }
+
+    public static void main(String[] args) {
+        System.out.println(printFormat24hr.format(Util.getCurrentTime(ZoneId.of("UTC"))));
     }
 
     protected String getAppleMapsLink() {
@@ -63,5 +53,18 @@ public class Spawn {
 
     protected String getGmapsLink() {
         return String.format("https://www.google.com/maps?q=loc:%s,%s", this.lat, this.lon);
+    }
+
+    public static void setNovaBot(NovaBot novaBot) {
+        Spawn.novaBot = novaBot;
+    }
+
+    private static String getNextKey() {
+        if (lastKey == novaBot.config.getKeys().size() - 1) {
+            lastKey = 0;
+            return novaBot.config.getKeys().get(lastKey);
+        }
+        ++lastKey;
+        return novaBot.config.getKeys().get(lastKey);
     }
 }

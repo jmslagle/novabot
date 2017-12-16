@@ -1,15 +1,15 @@
 package raids;
 
 import core.DBManager;
+import core.NovaBot;
 import core.RotatingSet;
 import maps.GeofenceIdentifier;
-import net.dv8tion.jda.core.utils.SimpleLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 
 /**
  * Created by Owner on 2/07/2017.
@@ -17,20 +17,35 @@ import static net.dv8tion.jda.core.utils.SimpleLog.Level.INFO;
 public class LobbyManager {
 
     final HashMap<String, RaidLobby> activeLobbies = new HashMap<>();
-    private static final SimpleLog lobbyManagerLog = SimpleLog.getLog("Lobby-Manager");
+    private static final Logger lobbyManagerLog = LoggerFactory.getLogger("Lobby-Manager");
 
     private final RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
+    private final NovaBot novaBot;
 
-    public LobbyManager(){
-
+    public LobbyManager(NovaBot novaBot) {
+        this.novaBot = novaBot;
     }
 
     public RaidLobby getLobby(String lobbyCode) {
         return activeLobbies.get(lobbyCode);
     }
 
-    public void newRaid(String lobbyCode, RaidSpawn raidSpawn){
-        activeLobbies.put(lobbyCode,new RaidLobby(raidSpawn,lobbyCode));
+    public void getLobbiesFromDb(HashMap<String, String> activeLobbyCodes) {
+
+        lobbyManagerLog.info("Loading active lobbies based on lobby codes found in the DB");
+
+        for (Map.Entry<String, String> entry : activeLobbyCodes.entrySet()) {
+            String lobbyCode = entry.getKey();
+            String gymId     = entry.getValue();
+
+            RaidSpawn raidSpawn = DBManager.knownRaids.get(gymId);
+
+            if (raidSpawn != null) {
+                lobbyManagerLog.info("Found an active raid/egg for gymId: %s, previous lobby code %s. Restoring the lobby");
+                raidSpawn.setLobbyCode(lobbyCode);
+            }
+        }
+
     }
 
     public boolean isLobbyChannel(String id) {
@@ -89,22 +104,8 @@ public class LobbyManager {
         return lobbies;
     }
 
-    public void getLobbiesFromDb(HashMap<String,String> activeLobbyCodes) {
-
-        lobbyManagerLog.log(INFO,"Loading active lobbies based on lobby codes found in the DB");
-
-        for (Map.Entry<String, String> entry : activeLobbyCodes.entrySet()) {
-            String lobbyCode = entry.getKey();
-            String gymId = entry.getValue();
-
-            RaidSpawn raidSpawn = DBManager.knownRaids.get(gymId);
-
-            if(raidSpawn != null){
-                lobbyManagerLog.log(INFO,"Found an active raid/egg for gymId: %s, previous lobby code %s. Restoring the lobby");
-                raidSpawn.setLobbyCode(lobbyCode);
-            }
-        }
-
+    public void newRaid(String lobbyCode, RaidSpawn raidSpawn) {
+        activeLobbies.put(lobbyCode, new RaidLobby(raidSpawn, lobbyCode, novaBot));
     }
 
     public void addLobbies(ArrayList<RaidLobby> lobbies) {
