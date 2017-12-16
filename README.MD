@@ -377,7 +377,7 @@ The body text of the embed to use when the IV etc of the pokemon is known.
 Any of the String fields (`encounteredTitle`, `title`, `titleUrl`, `encounteredBody`, `body`, and `content`)
 may make use of [text substitution](#text-substitution) to provide information specific to the spawn such as IV and move set.
 
-[example file](formatting.txt)
+[example file](formatting.ini)
 
 #### <a name="gkeys.txt"></a> gkeys.txt
 
@@ -455,6 +455,19 @@ formatting = filename of formatting file eg: specialformat.ini
 ```
 
 [example file](pokechannels.ini)
+
+#### <a name="presets.ini"></a>presets.ini
+`presets.ini` is an optional file that is formatted in blocks like this:
+
+```
+[preset name]
+type = pokemon OR  raid
+filter = name of filter file
+```
+
+Users will be able to add any presets using the `!loadpreset` command, so they will be notified of anything that passes the filter.
+
+[example file](presets.ini)
 
 ### <a name="config-parameters"></a>config.ini [config] parameters
 
