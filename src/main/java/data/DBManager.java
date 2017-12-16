@@ -1,7 +1,8 @@
-package core;
+package data;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import core.*;
 import maps.GeocodedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

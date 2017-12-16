@@ -1,5 +1,6 @@
 package core;
 
+import data.DBManager;
 import maps.Geofencing;
 import maps.ReverseGeocoder;
 import net.dv8tion.jda.core.AccountType;

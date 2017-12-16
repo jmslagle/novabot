@@ -1,6 +1,6 @@
 package raids;
 
-import core.DBManager;
+import data.DBManager;
 import core.NovaBot;
 import core.RotatingSet;
 import maps.GeofenceIdentifier;

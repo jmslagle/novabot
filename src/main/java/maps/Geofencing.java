@@ -2,8 +2,10 @@ package maps;
 
 import core.NovaBot;
 import core.Util;
-import org.opengts.util.GeoPoint;
-import org.opengts.util.GeoPolygon;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.impl.CoordinateArraySequence;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,9 @@ public class Geofencing
 //    private static final GeoPolygon tuggeranong;
 //    private static final HashMap<GeoPolygon, Region> geofences;
 
-    static final HashMap<GeofenceIdentifier,GeoPolygon> geofencesMap = new HashMap<>();
+    static final HashMap<GeofenceIdentifier,Polygon> geofencesMap = new HashMap<>();
+
+    final static GeometryFactory gf = new GeometryFactory();
 
     private static final Logger geofenceLog = LoggerFactory.getLogger("Geofencing");
     private final NovaBot novaBot;
@@ -60,12 +64,12 @@ public class Geofencing
 //    }
 
     public static ArrayList<GeofenceIdentifier> getGeofence(double lat, double lon) {
-        GeoPoint point = new GeoPoint(lat, lon);
+        Point point = gf.createPoint(new Coordinate(lat, lon));
 
         ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
 
-        geofencesMap.forEach((identifier, geoPolygon) -> {
-            if (geoPolygon.containsPoint(point)) {
+        geofencesMap.forEach((identifier, polygon) -> {
+            if (polygon.contains(point)) {
                 geofenceIdentifiers.add(identifier);
             }
         });
@@ -81,7 +85,7 @@ public class Geofencing
 
             String name = null;
             ArrayList<String> aliases = new ArrayList<>();
-            ArrayList<GeoPoint> points = new ArrayList<>();
+            ArrayList<Point> points = new ArrayList<>();
 
             while(in.hasNext()){
                 String line = in.nextLine().toLowerCase();
@@ -92,7 +96,8 @@ public class Geofencing
 
                 if(line.charAt(0) == '['){
                     if(name != null && !points.isEmpty()) {
-                        geofencesMap.put(new GeofenceIdentifier(name,aliases),new GeoPolygon(points));
+                        geofencesMap.put(new GeofenceIdentifier(name,aliases),
+                                gf.createPolygon(new LinearRing(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()])),gf), null));
                     }
 
                     ArrayList<String> names = Util.parseList(line);
@@ -109,10 +114,12 @@ public class Geofencing
                     double lat = Double.parseDouble(split[0].trim());
                     double lon = Double.parseDouble(split[1].trim());
 
-                    points.add(new GeoPoint(lat,lon));
+                    Point p = gf.createPoint(new Coordinate(lat,lon));
+                    points.add(p);
                 }
             }
-            geofencesMap.put(new GeofenceIdentifier(name,aliases),new GeoPolygon(points));
+            Polygon pgon = gf.createPolygon(new LinearRing(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()])),gf), null);
+            geofencesMap.put(new GeofenceIdentifier(name,aliases), pgon);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
