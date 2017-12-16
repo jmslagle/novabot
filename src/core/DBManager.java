@@ -640,10 +640,8 @@ public class DBManager {
             while (rs.next()) {
                 final int    id  = rs.getInt(1);
                 final double lat = rs.getDouble(2);
-                final double lon = rs.getDouble(3);
-                dbLog.info("disappear_time: " + rs.getTimestamp(4));
+                final double lon = rs.getDouble(3); 
                 final Instant disappearTime = rs.getTimestamp(4).toInstant();
-                dbLog.info("instant disappear_time: " + disappearTime);
                 final int    attack  = rs.getInt(5);
                 final int    defense = rs.getInt(6);
                 final int    stamina = rs.getInt(7);

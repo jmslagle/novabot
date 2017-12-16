@@ -41,7 +41,7 @@ public class RaidLobby {
         this.lobbyCode = lobbyCode;
         this.novaBot = novaBot;
 
-        long timeLeft = Duration.between(spawn.raidEnd, Instant.now()).toMillis();
+        long timeLeft = Duration.between(Instant.now(), spawn.raidEnd).toMillis();
 
         double minutes = timeLeft / 1000 / 60;
 
@@ -52,7 +52,7 @@ public class RaidLobby {
     }
 
     public static void main(String[] args) {
-        String channelName = "O'Connor 2".replace(" ", "-").replaceAll("[^\\w-_ A-Z]", "");
+        String channelName = "O'Connor 2".replace(" ", "-").replaceAll("[^\\w-]", "");
 
         channelName = channelName.substring(0, Math.min(25, channelName.length()));
         System.out.println(channelName);
@@ -64,7 +64,7 @@ public class RaidLobby {
         this.roleId = roleId;
         this.inviteCode = inviteCode;
 
-        long timeLeft = Duration.between(spawn.raidEnd, Instant.now()).toMillis();
+        long timeLeft = Duration.between(Instant.now(), spawn.raidEnd).toMillis();
 
         if(channelId != null && roleId != null){
             created = true;
@@ -270,7 +270,7 @@ public class RaidLobby {
             Role role = novaBot.guild.getRoleById(roleId);
 
 
-            String channelName = spawn.properties.get("gym_name").replace(" ", "-").replaceAll("[^\\w-_ A-Z]", "");
+            String channelName = spawn.properties.get("gym_name").replace(" ", "-").replaceAll("[^\\w-]", "");
 
             channelName = channelName.substring(0, Math.min(25, channelName.length()));
 
@@ -296,9 +296,9 @@ public class RaidLobby {
                 novaBot.dbManager.newLobby(lobbyCode, spawn.gymId, memberCount(), channelId, roleId, nextTimeLeftUpdate, inviteCode);
             });
 
-            raidLobbyLog.info(String.format("First join for lobbyCode %s, created channel", lobbyCode));
+            long timeLeft = Duration.between(Instant.now(),spawn.raidEnd).toMillis();
 
-            long timeLeft = Duration.between(spawn.raidEnd, Instant.now()).toMillis();
+            raidLobbyLog.info(String.format("First join for lobbyCode %s, created channel.", lobbyCode));
 
             if (nextTimeLeftUpdate == 15) {
                 getChannel().sendMessageFormat("%s the raid is going to end in %s minutes!", getRole(), 15).queueAfter(

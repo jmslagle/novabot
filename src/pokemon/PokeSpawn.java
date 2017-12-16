@@ -315,9 +315,7 @@ public class PokeSpawn extends Spawn
     }
 
     private String timeLeft() {
-        ZonedDateTime currentTime = Util.getCurrentTime(novaBot.config.getTimeZone());
-
-        long diff = Duration.between(disappearTime, currentTime).toMillis();
+        long diff = Duration.between(Instant.now(), disappearTime).toMillis();
 
         String time = String.format("%02dm %02ds",
                                     MILLISECONDS.toMinutes(Math.abs(diff)),
@@ -325,7 +323,7 @@ public class PokeSpawn extends Spawn
                                     (MILLISECONDS.toMinutes(Math.abs(diff)) * 60)
                                    );
 
-        if (diff > 0) {
+        if (diff < 0) {
             time = "-" + time;
         }
 

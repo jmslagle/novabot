@@ -37,7 +37,7 @@ public class LobbyMonitor implements Runnable {
                 continue;
             }
 
-            long timeLeft = Duration.between(lobby.spawn.raidEnd, Instant.now()).toMillis();
+            long timeLeft = Duration.between(Instant.now(), lobby.spawn.raidEnd).toMillis();
 
             if(timeLeft < 0 && lobby.nextTimeLeftUpdate <= 0){
                 continue;

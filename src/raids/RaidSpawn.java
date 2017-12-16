@@ -215,9 +215,8 @@ public class RaidSpawn extends Spawn {
     }
 
     public String timeLeft(Instant untilTime) {
-        ZonedDateTime currentTime = Util.getCurrentTime(novaBot.config.getTimeZone());
 
-        long diff = Duration.between(untilTime, currentTime).toMillis();
+        long diff = Duration.between(Instant.now(),untilTime).toMillis();
 
         String time;
         if (MILLISECONDS.toHours(diff) > 0) {
