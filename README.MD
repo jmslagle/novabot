@@ -190,7 +190,7 @@ Run novabot from cmd.exe (or alternative shell) with:
 
 `java -jar novabot.jar`
 
-###<a name="linux-install"></a> Linux
+### <a name="linux-install"></a> Linux
 
 Tested on Ubuntu 16.04
 
@@ -280,17 +280,17 @@ Run novabot from a terminal with:
 
 `java -jar novabot.jar`
 
-##<a name="configuration"></a> Configuration
+## <a name="configuration"></a> Configuration
 
-###<a name="configuration-files"></a> Configuration Files
+### <a name="configuration-files"></a> Configuration Files
 
-####<a name="config.ini"></a> config.ini
+#### <a name="config.ini"></a> config.ini
 
 `config.ini` is novabot's core configuration file. See [config.ini paramaters](#config-parameters) for more info on the different parameters.
 
 [example file](config.example.ini)
 
-####<a name="geofences.txt"></a> geofences.txt
+#### <a name="geofences.txt"></a> geofences.txt
 
 The `geofences.txt` file is formatted in blocks like this:
 
@@ -344,7 +344,7 @@ Which field of the Google reverse geocoding response is used to compare suburbs 
 
 [example file](suburbs.txt)
 
-####<a name="formatting.ini"></a>formatting.ini
+#### <a name="formatting.ini"></a>formatting.ini
 
 `formatting.ini` is used to define how messages for pokemon, raid boss, and raid egg notifications will be formatted.
 Formatting files are divided into three sections `pokemon`,`raidBoss`, and `raidEgg`, to determine the formatting for each spawn type.
@@ -379,7 +379,7 @@ may make use of [text substitution](#text-substitution) to provide information s
 
 [example file](formatting.txt)
 
-####<a name="gkeys.txt"></a> gkeys.txt
+#### <a name="gkeys.txt"></a> gkeys.txt
 
 `gkeys.txt` is one Google API key per line.
 
@@ -387,7 +387,7 @@ The Google API keys will be rotated when accessing Google's APIs.
 
 [example file](gkeys.txt)
 
-####<a name="supporterlevels.txt"></a> supporterlevels.txt
+#### <a name="supporterlevels.txt"></a> supporterlevels.txt
 ***Note:*** not sure how to get the a Discord role's ID? See the [faq](#faq-roleid)
 
 `supporterlevels.txt` is formatted like this:
