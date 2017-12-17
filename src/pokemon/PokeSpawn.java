@@ -45,8 +45,7 @@ public class PokeSpawn extends Spawn
         this.id = i;
     }
 
-
-    public PokeSpawn(final int id, final double lat, final double lon, final Instant disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
+    public PokeSpawn(final int id, final double lat, final double lon, final Instant disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp) {
         super();
         this.disappearTime = null;
         this.form = null;
@@ -124,8 +123,17 @@ public class PokeSpawn extends Spawn
 
         properties.put("lvl30cp", cp == 0 ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 30)));
         properties.put("lvl35cp", cp == 0 ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 35)));
+    }
 
+    public PokeSpawn(final int id, final double lat, final double lon, final Instant disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp);
         level = Pokemon.getLevel(cpModifier);
+        properties.put("level", String.valueOf(level));
+    }
+
+    public PokeSpawn(final int id, final double lat, final double lon, final Instant disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, Integer level) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp);
+        this.level = level;
         properties.put("level", String.valueOf(level));
     }
 

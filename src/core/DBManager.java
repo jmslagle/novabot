@@ -1,7 +1,5 @@
 package core;
 
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import maps.GeocodedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +17,17 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class DBManager {
-    private static final MysqlDataSource rocketmapDataSource = new MysqlDataSource();
-    private static final MysqlDataSource novabotDataSource = new MysqlDataSource();
-    private static final Logger dbLog = LoggerFactory.getLogger("DB");
-    private static Instant lastChecked;
+    private final Logger dbLog = LoggerFactory.getLogger("DB");
+    private Instant lastChecked;
 
-    private static final RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
+    private final RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
-    public static final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
-    private static Instant lastCheckedRaids;
-    private static StringBuilder blacklistQMarks = null;
+    public final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
+    private Instant lastCheckedRaids;
+    private StringBuilder blacklistQMarks = null;
     private final NovaBot novaBot;
+    private java.lang.String scanUrl;
+    private String nbUrl;
 
     public DBManager(NovaBot novaBot) {
         this.novaBot = novaBot;
@@ -39,7 +37,7 @@ public class DBManager {
 
     public void addPokemon(final String userID, final Pokemon pokemon) {
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getScanConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "INSERT INTO pokemon (user_id, id, location, max_iv, min_iv) " +
                                                                        "VALUES (?,?,?,?,?)")) {
@@ -51,15 +49,16 @@ public class DBManager {
 
             dbLog.debug(statement.toString());
             statement.executeUpdate();
-        } catch (MySQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             dbLog.warn(e.getMessage());
         } catch (SQLException e2) {
             e2.printStackTrace();
         }
     }
 
+
     public void addPreset(final String userID, String preset, Location location) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "INSERT INTO preset (user_id, preset_name, location) " +
                                                                        "VALUES (?,?,?)")) {
@@ -69,7 +68,7 @@ public class DBManager {
 
             dbLog.info(statement.toString());
             statement.executeUpdate();
-        } catch (MySQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             dbLog.warn(e.getMessage());
         } catch (SQLException e2) {
             e2.printStackTrace();
@@ -77,7 +76,7 @@ public class DBManager {
     }
 
     public void addRaid(final String userID, final Raid raid) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("INSERT INTO raid VALUES (?,?,?)")) {
             statement.setString(1, userID);
             statement.setDouble(2, raid.bossId);
@@ -85,7 +84,7 @@ public class DBManager {
 
             dbLog.debug(statement.toString());
             statement.executeUpdate();
-        } catch (MySQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             dbLog.warn(e.getMessage());
         } catch (SQLException e2) {
             e2.printStackTrace();
@@ -93,10 +92,10 @@ public class DBManager {
     }
 
     public void addUser(final String userID) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("INSERT INTO users (id) VALUES (%s);", "'" + userID + "'"));
-        } catch (MySQLIntegrityConstraintViolationException e3) {
+        } catch (SQLIntegrityConstraintViolationException e3) {
             dbLog.warn("Cannot add duplicate");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -114,7 +113,7 @@ public class DBManager {
         }
         locationsString.append(")");
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString.toString()));
         } catch (SQLException e) {
@@ -133,7 +132,7 @@ public class DBManager {
         }
         locationsString.append(")");
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND location IN %s;", "'" + id + "'", locationsString.toString()));
         } catch (SQLException e) {
@@ -152,7 +151,7 @@ public class DBManager {
         }
         idsString.append(")");
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id=%s AND id IN %s;", "'" + id + "'", idsString.toString()));
         } catch (SQLException e) {
@@ -171,7 +170,7 @@ public class DBManager {
         }
         idsString.append(")");
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id=%s AND boss_id IN %s;", "'" + id + "'", idsString.toString()));
         } catch (SQLException e) {
@@ -190,7 +189,7 @@ public class DBManager {
             sql = "SELECT count(distinct(id)) FROM pokemon WHERE user_id=?";
         }
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, id);
@@ -207,7 +206,7 @@ public class DBManager {
 
 //    public boolean shouldNotify(final String userID, final PokeSpawn pokeSpawn) {
 //
-//        try (Connection connection = getConnection(DBManager.novabotDataSource);
+//        try (Connection connection = getNbConnection();
 //             Statement statement = connection.createStatement()) {
 //            statement.executeQuery(String.format("SELECT * FROM pokemon WHERE ((user_id=%s) AND ((location=%s) OR (location='All')) AND (id=%s) AND (min_iv <= %s) AND (max_iv >= %s));", "'" + userID + "'", "'" + pokeSpawn.region + "'", pokeSpawn.id, pokeSpawn.iv, pokeSpawn.iv));
 //            final ResultSet rs = statement.getResultSet();
@@ -233,7 +232,7 @@ public class DBManager {
             sql = "SELECT count(distinct(preset_name)) FROM preset WHERE user_id=?";
         }
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, userID);
@@ -259,7 +258,7 @@ public class DBManager {
             sql = "SELECT count(distinct(boss_id)) FROM raid WHERE user_id=?";
         }
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, id);
@@ -276,7 +275,7 @@ public class DBManager {
     public int countSpawns(int id, TimeUnit intervalType, int intervalLength) {
         int numSpawns = 0;
 
-        try (Connection connection = getConnection(DBManager.rocketmapDataSource);
+        try (Connection connection = getScanConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "SELECT COUNT(*) " +
                      "FROM pokemon " +
@@ -302,7 +301,7 @@ public class DBManager {
 
     public void deletePokemon(final String userID, final Pokemon pokemon) {
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "DELETE FROM pokemon " +
                                                                        "WHERE ((user_id=?) " +
@@ -322,7 +321,7 @@ public class DBManager {
     }
 
     public void deletePreset(String userId, String preset, Location location) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "DELETE FROM preset " +
                                                                        "WHERE ((user_id=?) " +
@@ -340,7 +339,7 @@ public class DBManager {
     }
 
     public void deleteRaid(final String userID, final Raid raid) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "DELETE FROM raid " +
                                                                        "WHERE ((user_id=?) " +
@@ -357,7 +356,7 @@ public class DBManager {
     }
 
     public void endLobby(String lobbyCode) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "DELETE FROM raidlobby WHERE lobby_id = ?")
         ) {
@@ -374,7 +373,7 @@ public class DBManager {
         ArrayList<String> toDelete = null;
 
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "SELECT lobby_id,gym_id,channel_id,role_id,next_timeleft_update,invite_code FROM raidlobby;")
         ) {
@@ -458,51 +457,87 @@ public class DBManager {
             System.out.println(knownRaids.get(null));
         }
 
-        try (Connection connection = getConnection(rocketmapDataSource);
-             PreparedStatement statement = connection.prepareStatement(novaBot.config.standardRaidTable()
-                                                                       ? "SELECT" +
-                                                                         "  `gymdetails`.name," +
-                                                                         "  `gymdetails`.gym_id," +
-                                                                         "  `gym`.latitude," +
-                                                                         "  `gym`.longitude," +
-                                                                         "  `gym`.team_id," +
-//                         "  (CONVERT_TZ(`raid`.end, 'UTC', '" + config.getTimeZone() + "')) AS end," +
-                                                                         "  `raid`.end AS end," +
-//                         "  (CONVERT_TZ(`raid`.start, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
-                                                                         "  `raid`.start AS battle," +
-                                                                         "  `raid`.pokemon_id," +
-                                                                         "  `raid`.cp, " +
-                                                                         "  `raid`.level, " +
-                                                                         "  `raid`.move_1, " +
-                                                                         "  `raid`.move_2 " +
-                                                                         "FROM `gym`" +
-                                                                         "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
-                                                                         "  INNER JOIN raid ON gym.gym_id = raid.gym_id " +
-//                         "WHERE " + knownIdQMarks + " `raid`.end > DATE_ADD(CONVERT_TZ(NOW(), '" + config.getTimeZone() +"', 'UTC'),INTERVAL 1 MINUTE)"
-                                                                         "WHERE " + knownIdQMarks + " `raid`.end > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)"
-                                                                       : "SELECT" +
-                                                                         "  `gymdetails`.name," +
-                                                                         "  `gymdetails`.gym_id," +
-                                                                         "  `gym`.latitude," +
-                                                                         "  `gym`.longitude," +
-                                                                         "  `gym`.team_id," +
-//                         "  (CONVERT_TZ(`raidinfo`.raid_end_ms, 'UTC', '" + config.getTimeZone() + "')) AS end," +
-                                                                         "  `raidinfo`.raid_end_ms AS end," +
-//                         "  (CONVERT_TZ(`raidinfo`.raid_battle_ms, 'UTC', '" + config.getTimeZone() + "')) AS battle," +
-                                                                         "  `raidinfo`.raid_battle_ms AS battle," +
-                                                                         "  `raidinfo`.pokemon_id," +
-                                                                         "  `raidinfo`.cp, " +
-                                                                         "  `raidinfo`.raid_level, " +
-                                                                         "  `raidinfo`.move_1, " +
-                                                                         "  `raidinfo`.move_2 " +
-                                                                         "FROM `gym`" +
-                                                                         "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
-                                                                         "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
-//                         "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(CONVERT_TZ(NOW(), '" + config.getTimeZone() + "', 'UTC'),INTERVAL 1 MINUTE)"
-                                                                         "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)"
-//                     "WHERE gym.last_scanned > ?" +
-//                     "      AND raid_end_ms > CONVERT_TZ(NOW(),'"+config.getTimeZone()+"','UTC')"
-                                                                      )
+        String sql = null;
+
+        switch (novaBot.config.getScannerType()){
+            case RocketMap:
+                sql =   "SELECT" +
+                        "  `gymdetails`.name," +
+                        "  `gymdetails`.gym_id," +
+                        "  `gym`.latitude," +
+                        "  `gym`.longitude," +
+                        "  `gym`.team_id," +
+                        "  `raid`.end AS end," +
+                        "  `raid`.start AS battle," +
+                        "  `raid`.pokemon_id," +
+                        "  `raid`.cp, " +
+                        "  `raid`.level, " +
+                        "  `raid`.move_1, " +
+                        "  `raid`.move_2 " +
+                        "FROM `gym`" +
+                        "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
+                        "  INNER JOIN raid ON gym.gym_id = raid.gym_id " +
+                        "WHERE " + knownIdQMarks + " `raid`.end > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)";
+                break;
+            case Monocle:
+                sql =   "SELECT" +
+                        "  `forts`.id," +
+                        "  `forts`.lat," +
+                        "  `forts`.lon," +
+                        "  `fort_sightings`.team," +
+                        "  `raids`.time_end AS end," +
+                        "  `raids`.time_battle AS battle," +
+                        "  `raids`.pokemon_id," +
+                        "  `raids`.level, " +
+                        "  `raids`.move_1, " +
+                        "  `raids`.move_2 " +
+                        "FROM `raids`" +
+                        "  INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id" +
+                        "  INNER JOIN raids ON forts.id = raids.fort_id " +
+                        "WHERE " + knownIdQMarks + " `raids`.time_end > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)";
+                break;
+            case Hydro7000Monocle:
+                sql =   "SELECT" +
+                        "  `forts`.name," +
+                        "  `forts`.id," +
+                        "  `forts`.lat," +
+                        "  `forts`.lon," +
+                        "  `fort_sightings`.team," +
+                        "  `raids`.time_end AS end," +
+                        "  `raids`.time_battle AS battle," +
+                        "  `raids`.pokemon_id," +
+                        "  `raids`.cp, " +
+                        "  `raids`.level, " +
+                        "  `raids`.move_1, " +
+                        "  `raids`.move_2 " +
+                        "FROM `raids`" +
+                        "  INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id" +
+                        "  INNER JOIN raids ON forts.id = raids.fort_id " +
+                        "WHERE " + knownIdQMarks + " `raids`.time_end > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)";
+                break;
+            case PhilMap:
+                sql = "SELECT" +
+                        "  `gymdetails`.name," +
+                        "  `gymdetails`.gym_id," +
+                        "  `gym`.latitude," +
+                        "  `gym`.longitude," +
+                        "  `gym`.team_id," +
+                        "  `raidinfo`.raid_end_ms AS end," +
+                        "  `raidinfo`.raid_battle_ms AS battle," +
+                        "  `raidinfo`.pokemon_id," +
+                        "  `raidinfo`.cp, " +
+                        "  `raidinfo`.raid_level, " +
+                        "  `raidinfo`.move_1, " +
+                        "  `raidinfo`.move_2 " +
+                        "FROM `gym`" +
+                        "  INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id" +
+                        "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
+                        "WHERE " + knownIdQMarks + " raid_end_ms > DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)";
+                break;
+        }
+
+        try (Connection connection = getScanConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             for (int i = 0; i < knownRaids.size(); i++) {
                 statement.setString(i + 1, knownIds.get(i));
@@ -514,23 +549,60 @@ public class DBManager {
             dbLog.info("Query complete");
 
             while (rs.next()) {
-                String name  = rs.getString(1);
-                String gymId = rs.getString(2);
-                double lat   = rs.getDouble(3);
-                double lon   = rs.getDouble(4);
-                Team   team  = Team.fromId(rs.getInt(5));
+                RaidSpawn raidSpawn = null;
+                String gymId = null;
+                switch (novaBot.config.getScannerType()) {
+                    case RocketMap:
+                    case PhilMap: {
+                        String name = rs.getString(1);
+                        gymId = rs.getString(2);
+                        double lat = rs.getDouble(3);
+                        double lon = rs.getDouble(4);
+                        Team team = Team.fromId(rs.getInt(5));
+                        Instant raidEnd = rs.getTimestamp(6).toInstant();
+                        Instant battleStart = rs.getTimestamp(7).toInstant();
+                        int bossId = rs.getInt(8);
+                        int bossCp = rs.getInt(9);
+                        int raidLevel = rs.getInt(10);
+                        int move_1 = rs.getInt(11);
+                        int move_2 = rs.getInt(12);
 
-                DBManager.lastChecked = Instant.now();
-                Instant raidEnd     = rs.getTimestamp(6).toInstant();
-                Instant battleStart = rs.getTimestamp(7).toInstant();
-                int     bossId      = rs.getInt(8);
-                int     bossCp      = rs.getInt(9);
-                int     raidLevel   = rs.getInt(10);
-                int     move_1      = rs.getInt(11);
-                int     move_2      = rs.getInt(12);
+                        raidSpawn = new RaidSpawn(name, gymId, lat, lon, team, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
+                        break;
+                    }
+                    case Hydro7000Monocle: {
+                        String name = rs.getString(1);
+                        gymId = String.valueOf(rs.getInt(2));
+                        double lat = rs.getDouble(3);
+                        double lon = rs.getDouble(4);
+                        Team team = Team.fromId(rs.getInt(5));
+                        Instant raidEnd = Instant.ofEpochSecond(rs.getInt(6));
+                        Instant battleStart = Instant.ofEpochSecond(rs.getInt(7));
+                        int bossId = rs.getInt(8);
+                        int bossCp = rs.getInt(9);
+                        int raidLevel = rs.getInt(10);
+                        int move_1 = rs.getInt(11);
+                        int move_2 = rs.getInt(12);
 
-                RaidSpawn raidSpawn = new RaidSpawn(name, gymId, lat, lon, team, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
+                        raidSpawn = new RaidSpawn(name, gymId, lat, lon, team, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
+                        break;
+                    }
+                    case Monocle: {
+                        gymId = String.valueOf(rs.getInt(1));
+                        double lat = rs.getDouble(2);
+                        double lon = rs.getDouble(3);
+                        Team team = Team.fromId(rs.getInt(4));
+                        Instant raidEnd = Instant.ofEpochSecond(rs.getInt(5));
+                        Instant battleStart = Instant.ofEpochSecond(rs.getInt(6));
+                        int bossId = rs.getInt(7);
+                        int raidLevel = rs.getInt(8);
+                        int move_1 = rs.getInt(9);
+                        int move_2 = rs.getInt(10);
 
+                        raidSpawn = new RaidSpawn("unkn", gymId, lat, lon, team, raidEnd, battleStart, bossId, Pokemon.getRaidBossCp(bossId,raidLevel), move_1, move_2, raidLevel);
+                        break;
+                    }
+                }
                 dbLog.debug(raidSpawn.toString());
 
                 knownRaids.put(gymId, raidSpawn);
@@ -540,7 +612,7 @@ public class DBManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        DBManager.lastCheckedRaids = Instant.now();
+        lastCheckedRaids = Instant.now();
         dbLog.info("Found: " + raidEggs.size());
 
         return raidEggs;
@@ -549,7 +621,7 @@ public class DBManager {
     public GeocodedLocation getGeocodedLocation(final double lat, final double lon) {
         GeocodedLocation geocodedLocation = null;
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "SELECT suburb,street_num,street,state,postal,neighbourhood,sublocality,country " +
                                                                        "FROM geocoding " +
@@ -609,52 +681,97 @@ public class DBManager {
             blacklistQMarks.append(")");
         }
 
-        try (Connection connection = getConnection(rocketmapDataSource);
-             PreparedStatement statement = connection.prepareStatement("" +
-                                                                       "SELECT pokemon_id," +
-                                                                       "       latitude," +
-                                                                       "       longitude," +
-                                                                       "       disappear_time," +
-                                                                       "       individual_attack, " +
-                                                                       "       individual_defense," +
-                                                                       "       individual_stamina," +
-                                                                       "       move_1," +
-                                                                       "       move_2," +
-                                                                       "       weight," +
-                                                                       "       height," +
-                                                                       "       gender," +
-                                                                       "       form," +
-                                                                       "       cp, " +
-                                                                       "       cp_multiplier " +
-                                                                       "FROM pokemon " +
-//                     "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(CONVERT_TZ(?,'" + config.getTimeZone() + "','UTC'),INTERVAL 1 SECOND)")) {
-                                                                       "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND)")) {
+        String sql = null;
+        switch (novaBot.config.getScannerType()){
+            case Monocle:
+            case Hydro7000Monocle:
+                sql = "" +
+                        "SELECT pokemon_id," +
+                        "       lat," +
+                        "       lon," +
+                        "       expire_timestamp," +
+                        "       atk_iv," +
+                        "       def_iv," +
+                        "       sta_iv," +
+                        "       move_1," +
+                        "       move_2," +
+                        "       gender," +
+                        "       form," +
+                        "       cp," +
+                        "       level " +
+                        "FROM sightings " +
+                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND updated >= DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND)";
+                break;
+            case RocketMap:
+            case PhilMap:
+                sql = "" +
+                        "SELECT pokemon_id," +
+                        "       latitude," +
+                        "       longitude," +
+                        "       disappear_time," +
+                        "       individual_attack, " +
+                        "       individual_defense," +
+                        "       individual_stamina," +
+                        "       move_1," +
+                        "       move_2," +
+                        "       weight," +
+                        "       height," +
+                        "       gender," +
+                        "       form," +
+                        "       cp, " +
+                        "       cp_multiplier " +
+                        "FROM pokemon " +
+                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " AND last_modified >= DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND)";
+                break;
+        }
+
+        try (Connection connection = getScanConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             for (int i = 1; i <= novaBot.config.getBlacklist().size(); ++i) {
                 statement.setString(i, String.valueOf(novaBot.config.getBlacklist().get(i - 1)));
             }
-//            statement.setTimestamp(config.getBlacklist().size() + 1, DBManager.lastChecked);
             dbLog.info("Executing query:" + statement);
             final ResultSet rs = statement.executeQuery();
             dbLog.debug(statement.toString());
             dbLog.info("Query complete");
             while (rs.next()) {
-                final int    id  = rs.getInt(1);
-                final double lat = rs.getDouble(2);
-                final double lon = rs.getDouble(3);
-                final Instant disappearTime = rs.getTimestamp(4).toInstant();
-                final int    attack  = rs.getInt(5);
-                final int    defense = rs.getInt(6);
-                final int    stamina = rs.getInt(7);
-                final String move1   = PokeMove.idToName(rs.getInt(8));
-                final String move2   = PokeMove.idToName(rs.getInt(9));
-                final float  weight  = rs.getFloat(10);
-                final float  height  = rs.getFloat(11);
-                final int    gender  = rs.getInt(12);
-                final int    form    = rs.getInt(13);
-                final int    cp      = rs.getInt(14);
-                final double cpMod   = rs.getDouble(15);
+                PokeSpawn pokeSpawn = null;
+
+                if(novaBot.config.getScannerType() != ScannerType.Monocle) {
+                    final int    id  = rs.getInt(1);
+                    final double lat = rs.getDouble(2);
+                    final double lon = rs.getDouble(3);
+                    final Instant disappearTime = rs.getTimestamp(4).toInstant();
+                    final int attack = rs.getInt(5);
+                    final int defense = rs.getInt(6);
+                    final int stamina = rs.getInt(7);
+                    final String move1 = PokeMove.idToName(rs.getInt(8));
+                    final String move2 = PokeMove.idToName(rs.getInt(9));
+                    final float weight = rs.getFloat(10);
+                    final float height = rs.getFloat(11);
+                    final int gender = rs.getInt(12);
+                    final int form = rs.getInt(13);
+                    final int cp = rs.getInt(14);
+                    final double cpMod = rs.getDouble(15);
+                    pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp, cpMod);
+                }else{
+                    int id = rs.getInt(1);
+                    double lat = rs.getDouble(2);
+                    double lon = rs.getDouble(3);
+                    Instant disappearTime = Instant.ofEpochSecond(rs.getLong(4));
+                    final int attack = rs.getInt(5);
+                    final int defense = rs.getInt(6);
+                    final int stamina = rs.getInt(7);
+                    final String move1 = PokeMove.idToName(rs.getInt(8));
+                    final String move2 = PokeMove.idToName(rs.getInt(9));
+                    final int gender = rs.getInt(10);
+                    final int form = rs.getInt(11);
+                    final int cp = rs.getInt(12);
+                    final int level = rs.getInt(13);
+                    pokeSpawn = new PokeSpawn(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,0,0,gender,form,cp,Integer.valueOf(level));
+                }
+
                 try {
-                    final PokeSpawn pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp, cpMod);
                     dbLog.info(pokeSpawn.toString());
                     dbLog.info(Integer.toString(pokeSpawn.hashCode()));
 
@@ -673,7 +790,7 @@ public class DBManager {
             e.printStackTrace();
         }
 
-        DBManager.lastChecked = Instant.now();
+        lastChecked = Instant.now();
         dbLog.info("Found: " + pokeSpawns.size());
         return pokeSpawns;
     }
@@ -681,7 +798,7 @@ public class DBManager {
     public String getSuburb(final double lat, final double lon) {
         String suburb = null;
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT suburb FROM geocoding WHERE lat = ? AND lon = ?")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
@@ -718,7 +835,7 @@ public class DBManager {
                 "AND boss_id=?;", geofenceQMarks.toString()
                                   );
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             for (int i = 0; i < geofences; i++) {
@@ -763,7 +880,7 @@ public class DBManager {
                 "AND (preset_name = ?)", geofenceQMarks.toString()
                                   );
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      sql)
         ) {
@@ -809,7 +926,7 @@ public class DBManager {
                 "AND (max_iv >= ?));", geofenceQMarks.toString()
                                   );
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             for (int i = 0; i < geofences; i++) {
@@ -844,7 +961,7 @@ public class DBManager {
     public UserPref getUserPref(final String id) {
         final UserPref userPref = new UserPref(novaBot);
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT id,location,max_iv,min_iv FROM pokemon WHERE user_id=%s", "'" + id + "'"));
             ResultSet rs = statement.getResultSet();
@@ -890,7 +1007,7 @@ public class DBManager {
 
         int highest = 0;
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "SELECT MAX(lobby_id) FROM raidlobby;")
         ) {
@@ -909,12 +1026,12 @@ public class DBManager {
     }
 
     public void logNewUser(final String userID) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             final Date      date      = new Date();
             final Timestamp timestamp = new Timestamp(date.getTime());
             statement.executeUpdate(String.format("INSERT INTO users (id,joindate) VALUES ('%s','%s');", userID, timestamp));
-        } catch (MySQLIntegrityConstraintViolationException e) {
+        } catch (SQLIntegrityConstraintViolationException e) {
             dbLog.debug("Tried to add a duplicate user");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -989,7 +1106,7 @@ public class DBManager {
     }
 
     public void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate, String inviteCode) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "INSERT INTO raidlobby (lobby_id, gym_id, members, channel_id, role_id, next_timeleft_update,invite_code) VALUES (?,?,?,?,?,?,?)")
         ) {
@@ -1007,7 +1124,7 @@ public class DBManager {
     }
 
     public boolean notContainsUser(final String userID) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeQuery(String.format("SELECT * FROM users WHERE id = %s;", "'" + userID + "'"));
             final ResultSet rs = statement.getResultSet();
@@ -1023,14 +1140,14 @@ public class DBManager {
     }
 
     public void novabotdbConnect() {
-        DBManager.novabotDataSource.setUser(novaBot.config.getNbUser());
-        DBManager.novabotDataSource.setPassword(novaBot.config.getNbPass());
-        DBManager.novabotDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", novaBot.config.getNbIp(), novaBot.config.getNbPort(), novaBot.config.getNbDbName()));
-        DBManager.novabotDataSource.setDatabaseName(novaBot.config.getNbDbName());
+//        novabotDataSource.setUser(novaBot.config.getNbUser());
+//        novabotDataSource.setPassword(novaBot.config.getNbPass());
+        nbUrl = String.format("jdbc:%s://%s:%s/%s", novaBot.config.getNbProtocol(),novaBot.config.getNbIp(), novaBot.config.getNbPort(), novaBot.config.getNbDbName());
+//        novabotDataSource.setDatabaseName(novaBot.config.getNbDbName());
     }
 
     public void pauseUser(String id) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "UPDATE users SET paused = TRUE WHERE id = ?")
         ) {
@@ -1042,7 +1159,7 @@ public class DBManager {
     }
 
     public void resetPokemon(String id) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM pokemon WHERE user_id = %s;", id));
         } catch (SQLException e) {
@@ -1051,7 +1168,7 @@ public class DBManager {
     }
 
     public void resetPresets(String id) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM preset WHERE user_id = %s;", id));
         } catch (SQLException e) {
@@ -1060,7 +1177,7 @@ public class DBManager {
     }
 
     public void resetRaids(String id) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format("DELETE FROM raid WHERE user_id = %s;", id));
         } catch (SQLException e) {
@@ -1074,11 +1191,11 @@ public class DBManager {
         resetPresets(id);
     }
 
-    public void rocketmapdbConnect() {
-        DBManager.rocketmapDataSource.setUser(novaBot.config.getRmUser());
-        DBManager.rocketmapDataSource.setPassword(novaBot.config.getRmPass());
-        DBManager.rocketmapDataSource.setUrl(String.format("jdbc:mysql://%s:%s/%s", novaBot.config.getRmIp(), novaBot.config.getRmPort(), novaBot.config.getRmDbName()));
-        DBManager.rocketmapDataSource.setDatabaseName(novaBot.config.getRmDbName());
+    public void scanDbConnect() {
+//        scanDataSource.setUser(novaBot.config.getScanUser());
+//        scanDataSource.setPassword(novaBot.config.getScanPass());
+        scanUrl = String.format("jdbc:%s://%s:%s/%s", novaBot.config.getScanProtocol(),novaBot.config.getScanIp(), novaBot.config.getScanPort(), novaBot.config.getScanDbName());
+//        scanDataSource.setDatabaseName(novaBot.config.getScanDbName());
     }
 
     public void setGeocodedLocation(final double lat, final double lon, GeocodedLocation location) {
@@ -1086,7 +1203,7 @@ public class DBManager {
         dbLog.info("inserting location");
         dbLog.info(location.getProperties().toString());
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("" +
                                                                        "INSERT INTO geocoding " +
                                                                        "VALUES (?,?,?,?,?,?,?,?,?,?)")) {
@@ -1109,7 +1226,7 @@ public class DBManager {
     }
 
     public void setSuburb(final double lat, final double lon, final String suburb) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement("INSERT INTO geocoding VALUES (?,?,?)")) {
             statement.setDouble(1, lat);
             statement.setDouble(2, lon);
@@ -1121,7 +1238,7 @@ public class DBManager {
     }
 
     public void unPauseUser(String id) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "UPDATE users SET paused = FALSE WHERE id = ?")
         ) {
@@ -1133,7 +1250,7 @@ public class DBManager {
     }
 
     public void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate, String inviteCode) {
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "UPDATE raidlobby SET members = ?, next_timeleft_update = ?, invite_code = ? WHERE lobby_id = ?")
         ) {
@@ -1180,7 +1297,7 @@ public class DBManager {
             }
         }
 
-        try (Connection connection = getConnection(DBManager.novabotDataSource);
+        try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(
                      "DELETE FROM raidlobby WHERE lobby_id IN (" + qMarks + ") ")
         ) {
@@ -1197,14 +1314,22 @@ public class DBManager {
         }
     }
 
-    private static Connection getConnection(final MysqlDataSource dataSource) {
+    private Connection getScanConnection() {
         try {
-            return dataSource.getConnection();
+            return DriverManager.getConnection(scanUrl,novaBot.config.getScanUser(),novaBot.config.getScanPass());
         } catch (SQLException e) {
-            dbLog.warn("Conn is null, something fukedup");
             e.printStackTrace();
-            return null;
         }
+        return null;
+    }
+
+    private Connection getNbConnection() {
+        try {
+            return DriverManager.getConnection(nbUrl,novaBot.config.getNbUser(),novaBot.config.getNbPass());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

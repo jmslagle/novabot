@@ -234,7 +234,7 @@ public class RaidSpawn extends Spawn {
                                 );
         }
 
-        if (diff > 0) {
+        if (diff < 0) {
             time = "-" + time;
         }
 

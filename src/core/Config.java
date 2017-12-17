@@ -47,7 +47,7 @@ public class Config {
     private boolean stats = true;
     private boolean startupMessage = false;
     private boolean countLocationsInLimits = true;
-    private boolean standardRaidTable = true;
+    private ScannerType scannerType = ScannerType.RocketMap;
     private boolean useRmDb = true;
     private boolean raidsEnabled = true;
     private boolean pokemonEnabled = true;
@@ -61,16 +61,18 @@ public class Config {
     private String novabotRoleId = null;
     private String roleLogId = null;
     private String userUpdatesId = null;
-    private String rmUser;
-    private String rmPass;
-    private String rmIp;
-    private String rmPort;
-    private String rmDbName;
+    private String scanUser;
+    private String scanPass;
+    private String scanIp;
+    private String scanPort = "3306";
+    private String scanDbName;
+    private String scanProtocol = "mysql";
     private String nbUser;
     private String nbPass;
     private String nbIp;
-    private String nbPort;
+    private String nbPort = "3306";
     private String nbDbName;
+    private String nbProtocol = "mysql";
     private long pokePollingDelay = 2;
     private long raidPollingDelay = 15;
     private int pokemonThreads = 2;
@@ -109,7 +111,7 @@ public class Config {
 
         useRmDb = config.get("useRmDb", Boolean.class, useRmDb);
 
-        standardRaidTable = config.get("standardRaidTable", Boolean.class, standardRaidTable);
+        scannerType = ScannerType.fromString(config.get("scannerType",scannerType.toString()));
 
         googleSuburbField = config.get("googleSuburbField", googleSuburbField);
 
@@ -171,12 +173,13 @@ public class Config {
             novaBot.novabotLog.warn("Couldn't find commandChannel in config.ini. novabot will only be able to accept commands in DM.");
         }
 
-        Ini.Section rocketmapDb = configIni.get("rocketmap db");
-        rmUser = rocketmapDb.get("user", rmUser);
-        rmPass = rocketmapDb.get("password", rmPass);
-        rmIp = rocketmapDb.get("ip", rmIp);
-        rmPort = rocketmapDb.get("port", rmPort);
-        rmDbName = rocketmapDb.get("dbName", rmDbName);
+        Ini.Section scannerDb = configIni.get("scanner db");
+        scanUser = scannerDb.get("user", scanUser);
+        scanPass = scannerDb.get("password", scanPass);
+        scanIp = scannerDb.get("ip", scanIp);
+        scanPort = scannerDb.get("port", scanPort);
+        scanDbName = scannerDb.get("dbName", scanDbName);
+        scanProtocol = scannerDb.get("protocol", scanProtocol);
 
         Ini.Section novabotDb = configIni.get("novabot db");
         nbUser = novabotDb.get("user", nbUser);
@@ -184,6 +187,7 @@ public class Config {
         nbIp = novabotDb.get("ip", nbIp);
         nbPort = novabotDb.get("port", nbPort);
         nbDbName = novabotDb.get("dbName", nbDbName);
+        nbProtocol = novabotDb.get("protocol", nbProtocol);
 
         novaBot.novabotLog.info("Finished loading config.ini");
 
@@ -413,24 +417,24 @@ public class Config {
         return raidThreads;
     }
 
-    public String getRmDbName() {
-        return rmDbName;
+    public String getScanDbName() {
+        return scanDbName;
     }
 
-    public String getRmIp() {
-        return rmIp;
+    public String getScanIp() {
+        return scanIp;
     }
 
-    public String getRmPass() {
-        return rmPass;
+    public String getScanPass() {
+        return scanPass;
     }
 
-    public String getRmPort() {
-        return rmPort;
+    public String getScanPort() {
+        return scanPort;
     }
 
-    public String getRmUser() {
-        return rmUser;
+    public String getScanUser() {
+        return scanUser;
     }
 
     public String getRoleLogId() {
@@ -635,10 +639,6 @@ public class Config {
 
     public boolean showStartupMessage() {
         return startupMessage;
-    }
-
-    public boolean standardRaidTable() {
-        return standardRaidTable;
     }
 
     public boolean statsEnabled() {
@@ -1114,5 +1114,17 @@ public class Config {
     private JsonElement searchFilter(JsonObject filter, String search) {
         if (filter == null || search == null) return null;
         return filter.get(Util.capitaliseFirst(search));
+    }
+
+    public ScannerType getScannerType() {
+        return scannerType;
+    }
+
+    public String getNbProtocol() {
+        return nbProtocol;
+    }
+
+    public String getScanProtocol() {
+        return scanProtocol;
     }
 }

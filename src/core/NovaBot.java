@@ -50,7 +50,7 @@ public class NovaBot {
     public ReverseGeocoder reverseGeocoder;
     public Commands commands;
     private NotificationsManager notificationsManager;
-    private Parser parser;
+    public Parser parser;
 
     public void alertRaidChats(String[] raidChatIds, String message) {
         for (String raidChatId : raidChatIds) {
@@ -796,7 +796,7 @@ public class NovaBot {
 
     private void start() {
         novabotLog.info("Connecting to db");
-        dbManager.rocketmapdbConnect();
+        dbManager.scanDbConnect();
         dbManager.novabotdbConnect();
         novabotLog.info("Connected");
         try {

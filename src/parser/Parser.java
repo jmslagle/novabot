@@ -115,15 +115,16 @@ public class Parser {
             } else if (TimeUnit.fromString(s.trim()) != null) {
                 argument.setType(ArgType.TimeUnit);
                 argument.setParams(new Object[]{TimeUnit.fromString(s.trim())});
-            } else if (getInt(s.trim()) != null) {
+            }else if (novaBot.config.presets.get(s.trim()) != null) {
+                    argument.setType(ArgType.Preset);
+                    argument.setParams(new Object[]{s.trim()});
+            } else if (getInt(s.trim().replace("iv","")) != null) {
+
                 argument.setType(ArgType.Int);
-                argument.setParams(new Object[]{getInt(s.trim())});
-            } else if (getFloat(s.trim()) != null) {
+                argument.setParams(new Object[]{getInt(s.trim().replace("iv",""))});
+            } else if (getFloat(s.trim().replace("iv","")) != null) {
                 argument.setType(ArgType.Float);
-                argument.setParams(new Object[]{getFloat(s.trim())});
-            } else if (novaBot.config.presets.get(s.trim()) != null) {
-                argument.setType(ArgType.Preset);
-                argument.setParams(new Object[]{s.trim()});
+                argument.setParams(new Object[]{getFloat(s.trim().replace("iv",""))});
             } else {
                 argument.setType(ArgType.Unknown);
                 argument.setParams(new Object[]{null});
@@ -258,21 +259,14 @@ public class Parser {
         return true;
     }
 
-//    public static void main(String[] args) {
-//        MessageListener.loadConfig();
-//
-//        if (config.useGeofences()) {
-//            Geofencing.loadGeofences();
-//        }
-//
-//        MessageListener.loadSuburbs();
-//            UserCommand command = parseInput("!addpokemon larvitar <Salisbury North, Salisbury, Paralowie, Burton>", true);
-//        System.out.println(command.getExceptions());
-//
-//        for (InputError inputError : command.getExceptions()) {
-//            System.out.println(inputError.getErrorMessage(command));
-//        }
-//    }
+    public static void main(String[] args) {
+        NovaBot novaBot = new NovaBot();
+        novaBot.setup();
+
+        for (InputError inputError : novaBot.parser.parseInput("!addpokemon < torchic,treecko,mudkip > 90iv", true).getExceptions()) {
+            System.out.println(inputError);
+        }
+    }
 
     static {
         PATTERN = Pattern.compile("(?=\\S*[.'-])([a-zA-Z0-9.'-]+)|!?\\w+|<(.*?)>");
