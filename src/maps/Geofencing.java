@@ -42,22 +42,12 @@ public class Geofencing
         for (GeofenceIdentifier identifier : geofencesMap.keySet()) {
             String str = String.format("  %s", identifier.name);
 
-            if (identifier.hasAliases()) str += String.format("aliases: %s", identifier.getAliasList());
+            if (identifier.hasAliases()) str += String.format("     aliases: %s", identifier.getAliasList());
             stringBuilder.append(String.format("%s%n", str));
         }
 
         return stringBuilder.toString();
     }
-
-//    public static Region getRegion(final double lat, final double lon) {
-//        final GeoPoint point = new GeoPoint(lat, lon);
-//        for (final GeoPolygon geoPolygon : Geofencing.geofences.keySet()) {
-//            if (geoPolygon.containsPoint(point)) {
-//                return Geofencing.geofences.get(geoPolygon);
-//            }
-//        }
-//        return null;
-//    }
 
     public static ArrayList<GeofenceIdentifier> getGeofence(double lat, double lon) {
         GeoPoint point = new GeoPoint(lat, lon);

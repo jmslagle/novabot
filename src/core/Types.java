@@ -1,9 +1,43 @@
 package core;
 
+import net.dv8tion.jda.core.entities.Emote;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class Types {
+
+    public static final HashMap<String,String> SPECIAL_NAMES = new HashMap<>();
+    public static final String[] TYPES = new String[] {
+            "bugtype",
+            "dark",
+            "dragontype",
+            "electric",
+            "fairy",
+            "fighting",
+            "firetype",
+            "flying",
+            "ghosttype",
+            "grass",
+            "ground",
+            "ice",
+            "normal",
+            "poison",
+            "psychic",
+            "rock",
+            "steel",
+            "water"
+    };
+    public static final HashMap<String, Emote> emotes = new HashMap<>();
+
+    static {
+        Types.SPECIAL_NAMES.put("bug","bugtype");
+        Types.SPECIAL_NAMES.put("dragon","dragontype");
+        Types.SPECIAL_NAMES.put("fire","firetype");
+        Types.SPECIAL_NAMES.put("ghost","ghosttype");
+    }
 
     public static ArrayList<String> getStrengths(String type) {
         String types[] = new String[0];
@@ -124,6 +158,41 @@ public class Types {
                 break;
         }
         return new ArrayList<>(Arrays.asList(types));
+    }
+
+    public static ArrayList<String> getEmoteNames(ArrayList<String> types){
+        for (String toReplace : Types.SPECIAL_NAMES.keySet()) {
+            int oldSize = types.size();
+            types.remove(toReplace);
+            if (types.size() < oldSize) {
+                types.add(Types.SPECIAL_NAMES.get(toReplace));
+            }
+        }
+
+        return types;
+    }
+
+    public static HashSet<String> getEmoteNames(HashSet<String> types) {
+        for (String toReplace : Types.SPECIAL_NAMES.keySet()) {
+            int oldSize = types.size();
+            types.remove(toReplace);
+            if (types.size() < oldSize) {
+                types.add(Types.SPECIAL_NAMES.get(toReplace));
+            }
+        }
+
+        return types;
+    }
+
+    public static String getEmote(String type) {
+        type = type.toLowerCase();
+
+        if (SPECIAL_NAMES.keySet().contains(type)) {
+            type = SPECIAL_NAMES.get(type);
+        }
+
+        if(type.equals(""))return "unkn";
+        return Types.emotes.get(type).getAsMention();
     }
 
 }

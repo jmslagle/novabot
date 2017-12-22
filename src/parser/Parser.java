@@ -262,10 +262,12 @@ public class Parser {
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
+        novaBot.dbManager.novabotdbConnect();
 
-        for (InputError inputError : novaBot.parser.parseInput("!addpokemon < torchic,treecko,mudkip > 90iv", true).getExceptions()) {
-            System.out.println(inputError);
-        }
+        UserCommand command = novaBot.parser.parseInput("!clearpreset 100iv",true);
+        Object[] presets = command.getArg(ArgType.Preset).getParams();
+        novaBot.dbManager.clearPreset("paris", Arrays.copyOf(presets,presets.length,String[].class));
+        System.out.println(command);
     }
 
     static {

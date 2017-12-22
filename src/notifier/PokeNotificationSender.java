@@ -2,6 +2,7 @@ package notifier;
 
 import core.AlertChannel;
 import core.NovaBot;
+import core.Util;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -31,7 +32,7 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
             for (final PokeSpawn pokeSpawn : this.newPokemon) {
                 notificationLog.info("Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
 
-                if (pokeSpawn.disappearTime.isBefore(Instant.now())) {
+                if (pokeSpawn.disappearTime.isBefore(ZonedDateTime.now(Util.UTC))) {
                     notificationLog.info("Already despawned, skipping");
                     continue;
                 }
@@ -92,9 +93,9 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
         if (user == null) return;
 
 
-        Instant lastChecked = novaBot.lastUserRoleChecks.get(userID);
-        Instant currentTime = Instant.now();
-        if (lastChecked == null || lastChecked.isBefore(currentTime.minusMillis(10 * 60 * 1000))) {
+        ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
+        ZonedDateTime currentTime = ZonedDateTime.now(Util.UTC);
+        if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
             notificationLog.info(String.format("Checking supporter status of %s", user.getName()));
             novaBot.lastUserRoleChecks.put(userID, currentTime);
             if (checkSupporterStatus(user)) {

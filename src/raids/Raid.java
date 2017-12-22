@@ -2,7 +2,6 @@ package raids;
 
 import core.Location;
 import core.Types;
-import net.dv8tion.jda.core.entities.Emote;
 import pokemon.Pokemon;
 
 import java.util.*;
@@ -11,40 +10,10 @@ import java.util.*;
  * Created by Owner on 27/06/2017.
  */
 public class Raid {
-    private static final HashMap<String,String> SPECIAL_NAMES = new HashMap<>();
-
-    public static final String[] TYPES = new String[] {
-            "bugtype",
-            "dark",
-            "dragontype",
-            "electric",
-            "fairy",
-            "fighting",
-            "firetype",
-            "flying",
-            "ghosttype",
-            "grass",
-            "ground",
-            "ice",
-            "normal",
-            "poison",
-            "psychic",
-            "rock",
-            "steel",
-            "water"
-    };
-
-    public static final HashMap<String, Emote> emotes = new HashMap<>();
 
     public int bossId;
     public Location location;
 
-    static {
-        SPECIAL_NAMES.put("bug","bugtype");
-        SPECIAL_NAMES.put("dragon","dragontype");
-        SPECIAL_NAMES.put("fire","firetype");
-        SPECIAL_NAMES.put("ghost","ghosttype");
-    }
 
     public Raid(){
 
@@ -66,13 +35,7 @@ public class Raid {
             weaknesses.addAll(Types.getWeaknesses(type));
         }
 
-        for (String toReplace : SPECIAL_NAMES.keySet()) {
-            int oldSize = weaknesses.size();
-            weaknesses.remove(toReplace);
-            if (weaknesses.size() < oldSize) {
-                weaknesses.add(SPECIAL_NAMES.get(toReplace));
-            }
-        }
+        weaknesses = Types.getEmoteNames(weaknesses);
 
         String weaknessArray[] = new String[weaknesses.size()];
         return weaknesses.toArray(weaknessArray);
@@ -84,13 +47,7 @@ public class Raid {
         strengths.addAll(Types.getStrengths(Pokemon.getMoveType(move1)));
         strengths.addAll(Types.getStrengths(Pokemon.getMoveType(move2)));
 
-        for (String toReplace : SPECIAL_NAMES.keySet()) {
-            int oldSize = strengths.size();
-            strengths.remove(toReplace);
-            if (strengths.size() < oldSize) {
-                strengths.add(SPECIAL_NAMES.get(toReplace));
-            }
-        }
+        strengths = Types.getEmoteNames(strengths);
 
         String strengthsArray[] = new String[strengths.size()];
         return strengths.toArray(strengthsArray);

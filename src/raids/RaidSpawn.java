@@ -2,12 +2,12 @@ package raids;
 
 import core.Spawn;
 import core.Team;
+import core.Types;
 import core.Util;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
-import pokemon.PokeMove;
 import pokemon.Pokemon;
 
 import java.awt.*;
@@ -29,13 +29,11 @@ public class RaidSpawn extends Spawn {
     private static final String RARE_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_rare.png";
     private static final String LEGENDARY_EGG = "https://raw.githubusercontent.com/ZeChrales/PogoAssets/master/static_assets/png/ic_raid_egg_legendary.png";
     private final HashMap<String, Message> builtMessages = new HashMap<>();
-    public Instant raidEnd;
-    public Instant battleStart;
+    public ZonedDateTime raidEnd;
+    public ZonedDateTime battleStart;
     public int bossId;
     public int raidLevel;
     public String gymId;
-    public int move1Id;
-    public int move2Id;
     private String name;
     private int bossCp;
     private String imageUrl;
@@ -50,7 +48,7 @@ public class RaidSpawn extends Spawn {
         }
     }
 
-    public RaidSpawn(String name, String gymId, double lat, double lon, Team team, Instant raidEnd, Instant battleStart, int bossId, int bossCp, int move_1, int move_2, int raidLevel) {
+    public RaidSpawn(String name, String gymId, double lat, double lon, Team team, ZonedDateTime raidEnd, ZonedDateTime battleStart, int bossId, int bossCp, int move_1, int move_2, int raidLevel) {
         this.name = name;
         properties.put("gym_name", name);
 
@@ -63,6 +61,8 @@ public class RaidSpawn extends Spawn {
         properties.put("lng", String.valueOf(lon));
 
         properties.put("team_name", team.toString());
+
+        properties.put("team_icon", team.getEmote());
 
         this.geofenceIdentifiers = getGeofence(lat, lon);
 
@@ -88,24 +88,55 @@ public class RaidSpawn extends Spawn {
 
         this.bossId = bossId;
         this.bossCp = bossCp;
-        this.move1Id = move_1;
-        this.move2Id = move_2;
-        this.move_1 = PokeMove.idToName(move1Id);
-        this.move_2 = PokeMove.idToName(move2Id);
+        this.move_1 = move_1;
+        this.move_2 = move_2;
 
         if (bossId != 0) {
             properties.put("pkmn", Util.capitaliseFirst(Pokemon.idToName(bossId)));
             properties.put("cp", String.valueOf(bossCp));
             properties.put("lvl20cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 20)));
             properties.put("lvl25cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 25)));
-            properties.put("quick_move", this.move_1);
-            properties.put("charge_move", this.move_2);
+            properties.put("quick_move",(move_1 == 0) ? "unkn" : Pokemon.moveName(move_1));
+            properties.put("quick_move_type_icon",(move_1 == 0) ? "unkn" : Types.getEmote(Pokemon.getMoveType(move_1)));
+            properties.put("charge_move", (move_2 == 0) ? "unkn" : Pokemon.moveName(move_2));
+            properties.put("charge_move_type_icon",(move_2 == 0) ? "unkn" : Types.getEmote(Pokemon.getMoveType(move_2)));
         }
 
         this.raidLevel = raidLevel;
         properties.put("level", String.valueOf(raidLevel));
 
         properties.put("lobbycode", "unkn");
+    }
+
+    public String timeLeft(ZonedDateTime until) {
+        long diff = Duration.between(Util.getCurrentTime(Util.UTC),until).toMillis();
+
+        String time;
+        if (MILLISECONDS.toHours(diff) > 0) {
+            time = String.format("%02dh %02dm %02ds", MILLISECONDS.toHours(Math.abs(diff)),
+                    MILLISECONDS.toMinutes(Math.abs(diff)) -
+                            (MILLISECONDS.toHours(Math.abs(diff)) * 60),
+                    MILLISECONDS.toSeconds(Math.abs(diff)) -
+                            MILLISECONDS.toMinutes(Math.abs(diff) * 60)
+            );
+        } else {
+            time = String.format("%02dm %02ds",
+                    MILLISECONDS.toMinutes(Math.abs(diff)),
+                    MILLISECONDS.toSeconds(Math.abs(diff)) -
+                            (MILLISECONDS.toMinutes(Math.abs(diff)) * 60)
+            );
+        }
+
+        if (diff < 0) {
+            time = "-" + time;
+        }
+
+        return time;
+    }
+
+    public RaidSpawn(int i, int level, boolean b) {
+        this(i,b);
+        this.raidLevel = level;
     }
 
     public Message buildMessage(String formatFile) {
@@ -154,7 +185,7 @@ public class RaidSpawn extends Spawn {
     }
 
     public String getDisappearTime(DateTimeFormatter printFormat) {
-        return printFormat.format(ZonedDateTime.ofInstant(raidEnd, novaBot.config.getTimeZone()));
+        return printFormat.format(raidEnd.withZoneSameInstant(novaBot.config.getTimeZone()));
     }
 
     public String getIcon() {
@@ -184,7 +215,7 @@ public class RaidSpawn extends Spawn {
     }
 
     public String getStartTime(DateTimeFormatter printFormat) {
-        return printFormat.format(ZonedDateTime.ofInstant(battleStart, novaBot.config.getTimeZone()));
+        return printFormat.format(battleStart.withZoneSameInstant(novaBot.config.getTimeZone()));
     }
 
 //    public static void main(String[] args) {

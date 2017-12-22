@@ -21,9 +21,13 @@ class PokeNotifier implements Runnable
 
     @Override
     public void run() {
-        notifierLog.debug("Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
-        notifierLog.info("checking for pokemon to notify");
-        manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(novaBot, novaBot.dbManager.getNewPokemon()));
-        notifierLog.debug("Done checking and adding to queue for processing");
+        try {
+            notifierLog.debug("Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
+            notifierLog.info("checking for pokemon to notify");
+            manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(novaBot, novaBot.dbManager.getNewPokemon()));
+            notifierLog.debug("Done checking and adding to queue for processing");
+        } catch(Exception e){
+                notifierLog.error("An error ocurred in RaidNotifier", e);
+        }
     }
 }

@@ -4,13 +4,18 @@ package core;
  * Created by Owner on 14/05/2017.
  */
 public enum TimeUnit {
+    Seconds,
     Minutes,
     Hours,
     Days,
     Weeks,
-    Months;
+    Months,
+    Years;
 
     public static TimeUnit fromString(String str) {
+        if (str.equals("second") || str.equals("seconds"))
+            return Seconds;
+
         if (str.equals("minute") || str.equals("minutes"))
             return Minutes;
 
@@ -26,11 +31,16 @@ public enum TimeUnit {
         if (str.equals("month") || str.equals("months"))
             return Months;
 
+        if (str.equals("year") || str.equals("years"))
+            return Years;
+
         return null;
     }
 
     public String toDbString() {
         switch (this) {
+            case Seconds:
+                return "SECOND";
             case Minutes:
                 return "MINUTE";
             case Hours:
@@ -41,6 +51,8 @@ public enum TimeUnit {
                 return "WEEK";
             case Months:
                 return "MONTH";
+            case Years:
+                return "YEAR";
         }
         return null;
     }

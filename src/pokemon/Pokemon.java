@@ -112,7 +112,7 @@ public class Pokemon {
     }
 
     public static String getIcon(final int id) {
-        String url = "https://bytebucket.org/anzmap/sprites/raw/388a1e0ef08b98eaa0412c8a5f67ffb14d6a707d/";
+        String url = "https://bitbucket.org/anzmap/sprites/raw/HEAD/";
         if (id >= 2011) {
             final int form = id % 201;
             url = url + "201-" + form;
@@ -411,6 +411,11 @@ public class Pokemon {
         return baseStats.getAsJsonObject(Integer.toString(id)).get("stamina").getAsDouble();
     }
 
+    public static String moveName(int id) {
+        JsonObject moveObj = movesInfo.getAsJsonObject(Integer.toString(id));
+        return moveObj.get("name").getAsString();
+    }
+
     private static float[] getBaseStats(int id) {
         JsonObject statsObj = baseStats.getAsJsonObject(Integer.toString(id));
 
@@ -466,4 +471,5 @@ public class Pokemon {
         }
         return (int) Math.floor(((baseAtk(bossId) + 15) * Math.sqrt(baseDef(bossId) + 15) * Math.sqrt(stamina)) / 10);
     }
+
 }

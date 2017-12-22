@@ -6,7 +6,7 @@ package core;
 public enum ScannerType {
     RocketMap,
     Monocle,
-    Hydro7000Monocle,
+    Hydro74000Monocle,
     PhilMap;
 
     public static ScannerType fromString(String str){
@@ -15,8 +15,8 @@ public enum ScannerType {
                 return RocketMap;
             case "monocle":
                 return Monocle;
-            case "hydro7000monocle":
-                return Hydro7000Monocle;
+            case "hydro74000monocle":
+                return Hydro74000Monocle;
             case "philmap":
                 return PhilMap;
         }

@@ -98,7 +98,7 @@ public class Location {
             case Geofence:
                 return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
             case All:
-                return "All";
+                return "all";
         }
 
         return null;

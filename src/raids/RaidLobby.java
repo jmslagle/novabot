@@ -1,6 +1,9 @@
 package raids;
 
-import core.*;
+import core.NovaBot;
+import core.ScheduledExecutor;
+import core.Types;
+import core.Util;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -9,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +44,7 @@ public class RaidLobby {
         this.lobbyCode = lobbyCode;
         this.novaBot = novaBot;
 
-        long timeLeft = Duration.between(Instant.now(), spawn.raidEnd).toMillis();
+        long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC), spawn.raidEnd).toMillis();
 
         double minutes = timeLeft / 1000 / 60;
 
@@ -64,7 +67,7 @@ public class RaidLobby {
         this.roleId = roleId;
         this.inviteCode = inviteCode;
 
-        long timeLeft = Duration.between(Instant.now(), spawn.raidEnd).toMillis();
+        long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC), spawn.raidEnd).toMillis();
 
         if(channelId != null && roleId != null){
             created = true;
@@ -129,14 +132,15 @@ public class RaidLobby {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
         embedBuilder.setTitle(String.format("%s - Level %s raid", spawn.properties.get("pkmn"), spawn.properties.get("level")));
+        embedBuilder.addField("Gym Owners", String.format("%s %s",spawn.properties.get("team_name"), spawn.properties.get("team_icon")), false);
         embedBuilder.addField("CP", spawn.properties.get("cp"), false);
-        embedBuilder.addField("Moveset", String.format("%s - %s", spawn.move_1, spawn.move_2), false);
+        embedBuilder.addField("Moveset", String.format("%s%s - %s%s", spawn.properties.get("quick_move"),spawn.properties.get("quick_move_type_icon"), spawn.properties.get("charge_move"),spawn.properties.get("charge_move_type_icon")), false);
         embedBuilder.addField("Max catchable CP", spawn.properties.get("lvl20cp"), false);
         embedBuilder.addField("Max catchable CP (with weather bonus)", spawn.properties.get("lvl25cp"), false);
         StringBuilder weaknessEmoteStr = new StringBuilder();
 
         for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
-            Emote emote = Raid.emotes.get(s);
+            Emote emote = Types.emotes.get(s);
             weaknessEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
@@ -144,8 +148,8 @@ public class RaidLobby {
 
         StringBuilder strengthEmoteStr = new StringBuilder();
 
-        for (String s : Raid.getBossStrengthsEmote(spawn.move1Id, spawn.move2Id)) {
-            Emote emote = Raid.emotes.get(s);
+        for (String s : Raid.getBossStrengthsEmote(spawn.move_1, spawn.move_2)) {
+            Emote emote = Types.emotes.get(s);
             strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
@@ -186,18 +190,22 @@ public class RaidLobby {
                     spawn.properties.get("city")
             ), false);
             embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Gym Owners", String.format("%s %s",
+                    spawn.properties.get("team_name"),
+                    spawn.properties.get("team_icon")
+            ), false);
             embedBuilder.addField("Raid End Time", String.format("%s (%s)",
                     spawn.properties.get("24h_end"),
                     spawn.timeLeft(spawn.raidEnd)),
                     false);
-            embedBuilder.addField("Boss Moveset", String.format("%s - %s", spawn.move_1, spawn.move_2), false);
+            embedBuilder.addField("Boss Moveset", String.format("%s%s - %s%s", spawn.properties.get("quick_move"),spawn.properties.get("quick_move_type_icon"), spawn.properties.get("charge_move"),spawn.properties.get("charge_move_type_icon")), false);
             embedBuilder.addField("Max catchable CP", spawn.properties.get("lvl20cp"), false);
             embedBuilder.addField("Max catchable CP (with weather bonus)", spawn.properties.get("lvl25cp"), false);
 
             StringBuilder weaknessEmoteStr = new StringBuilder();
 
             for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
-                Emote emote = Raid.emotes.get(s);
+                Emote emote = Types.emotes.get(s);
                 if(emote != null) {
                     weaknessEmoteStr.append(emote.getAsMention());
                 }
@@ -207,8 +215,8 @@ public class RaidLobby {
 
             StringBuilder strengthEmoteStr = new StringBuilder();
 
-            for (String s : Raid.getBossStrengthsEmote(spawn.move1Id,spawn.move2Id)) {
-                Emote emote = Raid.emotes.get(s);
+            for (String s : Raid.getBossStrengthsEmote(spawn.move_1,spawn.move_2)) {
+                Emote emote = Types.emotes.get(s);
                 strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
             }
 
@@ -231,6 +239,7 @@ public class RaidLobby {
                     spawn.properties.get("city")
             ), false);
             embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Gym Owners", String.format("%s %s",spawn.properties.get("team_name"), spawn.properties.get("team_icon")), false);
             embedBuilder.addField("Raid Start Time", String.format("%s (%s)",
                     spawn.properties.get("24h_start"),
                     spawn.timeLeft(spawn.battleStart)),
@@ -256,7 +265,7 @@ public class RaidLobby {
     }
 
     public void joinLobby(String userId) {
-        if (spawn.raidEnd.isBefore(Util.getCurrentTime(novaBot.config.getTimeZone()).toInstant())) return;
+        if (spawn.raidEnd.isBefore(ZonedDateTime.now(Util.UTC))) return;
 
         memberIds.add(userId);
 
@@ -296,7 +305,7 @@ public class RaidLobby {
                 novaBot.dbManager.newLobby(lobbyCode, spawn.gymId, memberCount(), channelId, roleId, nextTimeLeftUpdate, inviteCode);
             });
 
-            long timeLeft = Duration.between(Instant.now(),spawn.raidEnd).toMillis();
+            long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC),spawn.raidEnd).toMillis();
 
             raidLobbyLog.info(String.format("First join for lobbyCode %s, created channel.", lobbyCode));
 
@@ -370,6 +379,7 @@ public class RaidLobby {
             embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
             embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
             embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Gym Owners", String.format("%s %s",spawn.properties.get("team_name"), spawn.properties.get("team_icon")), false);
             embedBuilder.addField("Raid End",String.format("%s (%s remaining)"
                     ,spawn.properties.get("24h_end")
                     ,timeLeft
@@ -387,6 +397,7 @@ public class RaidLobby {
             embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
             embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
             embedBuilder.addField("Gym Name", spawn.properties.get("gym_name"), false);
+            embedBuilder.addField("Gym Owners", String.format("%s %s",spawn.properties.get("team_name"), spawn.properties.get("team_icon")), false);
             embedBuilder.addField("Raid Start",String.format("%s (%s remaining)"
                     ,spawn.properties.get("24h_start")
                     ,timeLeft
