@@ -413,7 +413,12 @@ public class Pokemon {
 
     public static String moveName(int id) {
         JsonObject moveObj = movesInfo.getAsJsonObject(Integer.toString(id));
-        return moveObj.get("name").getAsString();
+        if(moveObj == null){
+            System.out.println(String.format("move not found in json for id %s", id));
+            return "unkn";
+        }else {
+            return moveObj.get("name").getAsString();
+        }
     }
 
     private static float[] getBaseStats(int id) {

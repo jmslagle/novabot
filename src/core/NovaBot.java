@@ -792,6 +792,15 @@ public class NovaBot {
         reverseGeocoder = new ReverseGeocoder(this);
 
         dbManager = new DBManager(this);
+
+        if (config.useScanDb()) {
+            notificationsManager = new NotificationsManager(this, testing);
+        }
+
+        if (config.isRaidOrganisationEnabled()) {
+            lobbyManager = new LobbyManager(this);
+            RaidNotificationSender.nextId = dbManager.highestRaidLobbyId() + 1;
+        }
     }
 
     public void shutDown() {
@@ -860,14 +869,6 @@ public class NovaBot {
                 userUpdatesLog = guild.getTextChannelById(config.getUserUpdatesId());
             }
 
-            if (config.useScanDb()) {
-                notificationsManager = new NotificationsManager(this, testing);
-            }
-
-            if (config.isRaidOrganisationEnabled()) {
-                lobbyManager = new LobbyManager(this);
-                RaidNotificationSender.nextId = dbManager.highestRaidLobbyId() + 1;
-            }
         } catch (LoginException | InterruptedException | RateLimitedException ex2) {
             ex2.printStackTrace();
         }
