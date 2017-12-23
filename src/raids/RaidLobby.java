@@ -1,9 +1,9 @@
 package raids;
 
+import Util.UtilityFunctions;
 import core.NovaBot;
 import core.ScheduledExecutor;
 import core.Types;
-import core.Util;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -44,7 +44,7 @@ public class RaidLobby {
         this.lobbyCode = lobbyCode;
         this.novaBot = novaBot;
 
-        long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC), spawn.raidEnd).toMillis();
+        long timeLeft = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC), spawn.raidEnd).toMillis();
 
         double minutes = timeLeft / 1000 / 60;
 
@@ -67,7 +67,7 @@ public class RaidLobby {
         this.roleId = roleId;
         this.inviteCode = inviteCode;
 
-        long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC), spawn.raidEnd).toMillis();
+        long timeLeft = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC), spawn.raidEnd).toMillis();
 
         if(channelId != null && roleId != null){
             created = true;
@@ -265,7 +265,7 @@ public class RaidLobby {
     }
 
     public void joinLobby(String userId) {
-        if (spawn.raidEnd.isBefore(ZonedDateTime.now(Util.UTC))) return;
+        if (spawn.raidEnd.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) return;
 
         memberIds.add(userId);
 
@@ -305,7 +305,7 @@ public class RaidLobby {
                 novaBot.dbManager.newLobby(lobbyCode, spawn.gymId, memberCount(), channelId, roleId, nextTimeLeftUpdate, inviteCode);
             });
 
-            long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC),spawn.raidEnd).toMillis();
+            long timeLeft = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC),spawn.raidEnd).toMillis();
 
             raidLobbyLog.info(String.format("First join for lobbyCode %s, created channel.", lobbyCode));
 

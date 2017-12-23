@@ -178,7 +178,7 @@ public class Pokemon {
 
     @Override
     public String toString() {
-        return this.name;
+        return String.format("%s (%s,%s)",name,miniv,maxiv);
     }
 
     public static String idToName(final int id) {

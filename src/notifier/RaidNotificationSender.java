@@ -2,7 +2,7 @@ package notifier;
 
 import core.AlertChannel;
 import core.NovaBot;
-import core.Util;
+import Util.UtilityFunctions;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
@@ -53,7 +53,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                     continue;
                 }
 
-                if (raidSpawn.raidEnd.isBefore(ZonedDateTime.now(Util.UTC))) {
+                if (raidSpawn.raidEnd.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) {
                     notificationLog.info("Raid already ended, not posting");
                     continue;
                 }
@@ -140,7 +140,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
         if (user == null) return;
 
         ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
-        ZonedDateTime currentTime = ZonedDateTime.now(Util.UTC);
+        ZonedDateTime currentTime = ZonedDateTime.now(UtilityFunctions.UTC);
         if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
             notificationLog.info(String.format("Checking supporter status of %s", user.getName()));
             novaBot.lastUserRoleChecks.put(userID, currentTime);

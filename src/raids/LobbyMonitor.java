@@ -1,6 +1,6 @@
 package raids;
 
-import core.Util;
+import Util.UtilityFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +33,13 @@ public class LobbyMonitor implements Runnable {
             for (RaidLobby lobby : lobbyManager.activeLobbies.values()) {
                 lobbyMonitorLog.info(String.format("Commencing check for lobby %s", lobby.lobbyCode));
 
-                if (lobby.shutDownService == null && lobby.spawn.raidEnd.isBefore(ZonedDateTime.now(Util.UTC))) {
+                if (lobby.shutDownService == null && lobby.spawn.raidEnd.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) {
                     lobbyMonitorLog.info(String.format("Lobby %s's raid has ended and is not already shutting down, ending raid.", lobby.lobbyCode));
                     lobby.end(15);
                     continue;
                 }
 
-                long timeLeft = Duration.between(ZonedDateTime.now(Util.UTC), lobby.spawn.raidEnd).toMillis();
+                long timeLeft = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC), lobby.spawn.raidEnd).toMillis();
 
                 if (timeLeft < 0 && lobby.nextTimeLeftUpdate <= 0) {
                     continue;

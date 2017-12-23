@@ -1,9 +1,9 @@
 package raids;
 
+import Util.UtilityFunctions;
 import core.Spawn;
 import core.Team;
 import core.Types;
-import core.Util;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -92,7 +92,7 @@ public class RaidSpawn extends Spawn {
         this.move_2 = move_2;
 
         if (bossId != 0) {
-            properties.put("pkmn", Util.capitaliseFirst(Pokemon.idToName(bossId)));
+            properties.put("pkmn", UtilityFunctions.capitaliseFirst(Pokemon.idToName(bossId)));
             properties.put("cp", String.valueOf(bossCp));
             properties.put("lvl20cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 20)));
             properties.put("lvl25cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 25)));
@@ -109,7 +109,7 @@ public class RaidSpawn extends Spawn {
     }
 
     public String timeLeft(ZonedDateTime until) {
-        long diff = Duration.between(Util.getCurrentTime(Util.UTC),until).toMillis();
+        long diff = Duration.between(UtilityFunctions.getCurrentTime(UtilityFunctions.UTC),until).toMillis();
 
         String time;
         if (MILLISECONDS.toHours(diff) > 0) {
@@ -225,8 +225,8 @@ public class RaidSpawn extends Spawn {
 //        DBManager.novabotdbConnect();
 //        RaidSpawn spawn = new RaidSpawn("gym",
 //                "123", -35.34200996278955, 149.05508042811897,
-//                Team.Valor, Util.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(504000),
-//                Util.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(6000000),
+//                Team.Valor, UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(504000),
+//                UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(6000000),
 //                6,
 //                11003,
 //                2,

@@ -1,5 +1,6 @@
 package core;
 
+import Util.UtilityFunctions;
 import maps.GeocodedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class DBManager {
 
     private final RotatingSet<Integer> hashCodes = new RotatingSet<>(2000);
 
-    Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone(Util.UTC));
+    Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone(UtilityFunctions.UTC));
 
     public final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
     private ZonedDateTime lastCheckedRaids;
@@ -33,8 +34,8 @@ public class DBManager {
 
     public DBManager(NovaBot novaBot) {
         this.novaBot = novaBot;
-        lastChecked = ZonedDateTime.now(Util.UTC);
-        lastCheckedRaids = ZonedDateTime.now(Util.UTC);
+        lastChecked = ZonedDateTime.now(UtilityFunctions.UTC);
+        lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
     }
 
     public void addPokemon(final String userID, final Pokemon pokemon) {
@@ -612,7 +613,7 @@ public class DBManager {
 
 
             dbLog.info("Executing query: " + statement);
-            lastCheckedRaids = ZonedDateTime.now(Util.UTC);
+            lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
 //            dbLog.log(DEBUG,statement);
             final ResultSet rs = statement.executeQuery();
             dbLog.info("Query complete");
@@ -621,8 +622,8 @@ public class DBManager {
                 RaidSpawn raidSpawn = null;
                 String gymId = null;
 
-//                System.out.println("Current UTC time: " + ZonedDateTime.now(Util.UTC));
-//                System.out.println("Current time based on config timezone : " + Util.getCurrentTime(novaBot.config.getTimeZone()));
+//                System.out.println("Current UTC time: " + ZonedDateTime.now(UtilityFunctions.UTC));
+//                System.out.println("Current time based on config timezone : " + UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()));
                 switch (novaBot.config.getScannerType()) {
                     case RocketMap:
                     case PhilMap:
@@ -631,8 +632,8 @@ public class DBManager {
                         double lat = rs.getDouble(3);
                         double lon = rs.getDouble(4);
                         Team team = Team.fromId(rs.getInt(5));
-                        ZonedDateTime raidEnd = ZonedDateTime.ofLocal(rs.getTimestamp(6).toLocalDateTime(),Util.UTC, null);
-                        ZonedDateTime battleStart = ZonedDateTime.ofLocal(rs.getTimestamp(7).toLocalDateTime(),Util.UTC, null);
+                        ZonedDateTime raidEnd = ZonedDateTime.ofLocal(rs.getTimestamp(6).toLocalDateTime(), UtilityFunctions.UTC, null);
+                        ZonedDateTime battleStart = ZonedDateTime.ofLocal(rs.getTimestamp(7).toLocalDateTime(), UtilityFunctions.UTC, null);
                         int bossId = rs.getInt(8);
                         int bossCp = rs.getInt(9);
                         int raidLevel = rs.getInt(10);
@@ -647,8 +648,8 @@ public class DBManager {
                         lat = rs.getDouble(3);
                         lon = rs.getDouble(4);
                         team = Team.fromId(rs.getInt(5));
-                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)),Util.UTC);
-                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(7)),Util.UTC);
+                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)), UtilityFunctions.UTC);
+                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(7)), UtilityFunctions.UTC);
                         bossId = rs.getInt(8);
                         bossCp = rs.getInt(9);
                         raidLevel = rs.getInt(10);
@@ -662,8 +663,8 @@ public class DBManager {
                         lat = rs.getDouble(2);
                         lon = rs.getDouble(3);
                         team = Team.fromId(rs.getInt(4));
-                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(5)),Util.UTC);
-                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)),Util.UTC);
+                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(5)), UtilityFunctions.UTC);
+                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)), UtilityFunctions.UTC);
                         bossId = rs.getInt(7);
                         raidLevel = rs.getInt(8);
                         move_1 = rs.getInt(9);
@@ -679,7 +680,7 @@ public class DBManager {
                 raidEggs.add(raidSpawn);
             }
         } catch (SQLException e) {
-            lastCheckedRaids = ZonedDateTime.now(Util.UTC);
+            lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
             e.printStackTrace();
         }
         dbLog.info("Found: " + raidEggs.size());
@@ -811,13 +812,13 @@ public class DBManager {
                     break;
             }
             dbLog.info("Executing query:" + statement);
-            lastChecked = ZonedDateTime.now(Util.UTC);
+            lastChecked = ZonedDateTime.now(UtilityFunctions.UTC);
             final ResultSet rs = statement.executeQuery();
             dbLog.info("Query complete");
 
             while (rs.next()) {
-//                System.out.println("Current UTC time: " + ZonedDateTime.now(Util.UTC));
-//                System.out.println("Current time based on config timezone : " + Util.getCurrentTime(novaBot.config.getTimeZone()));
+//                System.out.println("Current UTC time: " + ZonedDateTime.now(UtilityFunctions.UTC));
+//                System.out.println("Current time based on config timezone : " + UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()));
 
                 PokeSpawn pokeSpawn = null;
 
@@ -827,7 +828,7 @@ public class DBManager {
                         int    id  = rs.getInt(1);
                         double lat = rs.getDouble(2);
                         double lon = rs.getDouble(3);
-                        ZonedDateTime disappearTime = ZonedDateTime.ofLocal(rs.getTimestamp(4).toLocalDateTime(),Util.UTC, null);
+                        ZonedDateTime disappearTime = ZonedDateTime.ofLocal(rs.getTimestamp(4).toLocalDateTime(), UtilityFunctions.UTC, null);
                         int attack = rs.getInt(5);
                         int defense = rs.getInt(6);
                         int stamina = rs.getInt(7);
@@ -846,7 +847,7 @@ public class DBManager {
                         id = rs.getInt(1);
                         lat = rs.getDouble(2);
                         lon = rs.getDouble(3);
-                        disappearTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getLong(4)), Util.UTC);
+                        disappearTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getLong(4)), UtilityFunctions.UTC);
                         attack = rs.getInt(5);
                         defense = rs.getInt(6);
                         stamina = rs.getInt(7);
@@ -876,7 +877,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            lastChecked = ZonedDateTime.now(Util.UTC);
+            lastChecked = ZonedDateTime.now(UtilityFunctions.UTC);
             e.printStackTrace();
         }
         dbLog.info("Found: " + pokeSpawns.size());
@@ -1142,7 +1143,7 @@ public class DBManager {
         System.out.println(new PokeSpawn(
                 143,
                 -35.265134, 149.122796,
-                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60),Util.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
                 15,
                 15,
                 15,
@@ -1160,8 +1161,8 @@ public class DBManager {
                 "id",
                 -35.265134, 149.122796,
                 Team.Valor,
-                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120),Util.UTC),
-                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60),Util.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
                 383,
                 155555,
                 18,
@@ -1179,7 +1180,7 @@ public class DBManager {
 //                143,
 //                35,
 //                149,
-//                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60),Util.UTC),
+//                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60),UtilityFunctions.UTC),
 //                15,
 //                15,
 //                15,

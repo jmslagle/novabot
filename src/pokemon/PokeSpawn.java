@@ -2,7 +2,7 @@ package pokemon;
 
 import core.Spawn;
 import core.Types;
-import core.Util;
+import Util.UtilityFunctions;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -60,7 +60,7 @@ public class PokeSpawn extends Spawn
         this.id = id;
         properties.put("pkmn_id", String.valueOf(id));
 
-        String name = Util.capitaliseFirst(Pokemon.idToName(this.id));
+        String name = UtilityFunctions.capitaliseFirst(Pokemon.idToName(this.id));
         if (name.startsWith("Unown")) {
             name = "Unown";
         }
@@ -160,7 +160,7 @@ public class PokeSpawn extends Spawn
                 embedBuilder.setImage(this.getImage(formatFile));
             }
             embedBuilder.setFooter(novaBot.config.getFooterText(), null);
-            embedBuilder.setTimestamp(ZonedDateTime.now(Util.UTC));
+            embedBuilder.setTimestamp(ZonedDateTime.now(UtilityFunctions.UTC));
             messageBuilder.setEmbed(embedBuilder.build());
 
             String contentFormatting = novaBot.config.getContentFormatting(formatFile, formatKey);
@@ -227,7 +227,7 @@ public class PokeSpawn extends Spawn
 //        PokeSpawn spawn = new PokeSpawn(149,
 //                -35.214385,
 //                149.0405493,
-//                Util.getCurrentTime(ZoneId.of("UTC")).toInstant().plusSeconds(300),
+//                UtilityFunctions.getCurrentTime(ZoneId.of("UTC")).toInstant().plusSeconds(300),
 //                0,
 //                0,
 //                0,
@@ -255,7 +255,7 @@ public class PokeSpawn extends Spawn
 //        System.out.println("Timestamp to instant: " +instant.toString());
 //        System.out.println("ZonedDateTime: " +zdt);
 //
-//        System.out.println("Current adelaide time: " + printFormat24hr.format(Util.getCurrentTime(config.getTimeZone())));
+//        System.out.println("Current adelaide time: " + printFormat24hr.format(UtilityFunctions.getCurrentTime(config.getTimeZone())));
 //        System.out.println("UTC disappear time " + spawn.disappearTime);
 //        System.out.println("24h_time in " + config.getTimeZone() + " " + spawn.properties.get("24h_time"));
 //        System.out.println("12h_time in " + config.getTimeZone() + " " + spawn.properties.get("12h_time"));
@@ -329,7 +329,7 @@ public class PokeSpawn extends Spawn
     }
 
     private String timeLeft() {
-        long diff = Duration.between(ZonedDateTime.now(Util.UTC), disappearTime).toMillis();
+        long diff = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC), disappearTime).toMillis();
 
         String time = String.format("%02dm %02ds",
                                     MILLISECONDS.toMinutes(Math.abs(diff)),

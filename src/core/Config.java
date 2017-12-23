@@ -1,5 +1,6 @@
 package core;
 
+import Util.UtilityFunctions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -99,13 +100,13 @@ public class Config {
 
         String blacklistStr = config.get("blacklist", "[]");
 
-        for (String s : Util.parseList(blacklistStr)) {
+        for (String s : UtilityFunctions.parseList(blacklistStr)) {
             blacklist.add(Integer.valueOf(s));
         }
 
         String raidBossStr = config.get("raidBosses", "[2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359]");
 
-        for (String s : Util.parseList(raidBossStr)) {
+        for (String s : UtilityFunctions.parseList(raidBossStr)) {
             raidBosses.add(Integer.valueOf(s));
         }
 
@@ -527,7 +528,7 @@ public class Config {
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
-        System.out.println(Util.getCurrentTime(ZoneId.of("+02:00")));
+        System.out.println(UtilityFunctions.getCurrentTime(ZoneId.of("+02:00")));
         novaBot.config.matchesFilter(novaBot.config.raidFilters.get("raidfilter.json"),new RaidSpawn(383,5,false));
     }
 
@@ -843,7 +844,7 @@ public class Config {
                                 ArrayList<String> geofences;
 
                                 if (value.charAt(0) == '[') {
-                                    geofences = Util.parseList(value);
+                                    geofences = UtilityFunctions.parseList(value);
                                 } else {
                                     geofences = new ArrayList<>();
                                     geofences.add(value);
@@ -1032,7 +1033,7 @@ public class Config {
                                 ArrayList<String> geofences;
 
                                 if (value.charAt(0) == '[') {
-                                    geofences = Util.parseList(value);
+                                    geofences = UtilityFunctions.parseList(value);
                                 } else {
                                     geofences = new ArrayList<>();
                                     geofences.add(value);
@@ -1141,7 +1142,7 @@ public class Config {
 
     private JsonElement searchFilter(JsonObject filter, String search) {
         if (filter == null || search == null) return null;
-        return filter.get(Util.capitaliseFirst(search));
+        return filter.get(UtilityFunctions.capitaliseFirst(search));
     }
 
     public ScannerType getScannerType() {

@@ -1,7 +1,7 @@
 package maps;
 
 import core.NovaBot;
-import core.Util;
+import Util.UtilityFunctions;
 import org.opengts.util.GeoPoint;
 import org.opengts.util.GeoPolygon;
 import org.slf4j.Logger;
@@ -85,7 +85,7 @@ public class Geofencing
                         geofencesMap.put(new GeofenceIdentifier(name,aliases),new GeoPolygon(points));
                     }
 
-                    ArrayList<String> names = Util.parseList(line);
+                    ArrayList<String> names = UtilityFunctions.parseList(line);
                     name = names.get(0);
                     names.remove(0);
 

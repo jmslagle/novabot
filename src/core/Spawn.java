@@ -1,5 +1,6 @@
 package core;
 
+import Util.UtilityFunctions;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.entities.Message;
 
@@ -43,7 +44,7 @@ public class Spawn {
     }
 
     public static void main(String[] args) {
-        System.out.println(printFormat24hr.format(Util.getCurrentTime(Util.UTC)));
+        System.out.println(printFormat24hr.format(UtilityFunctions.getCurrentTime(UtilityFunctions.UTC)));
     }
 
     protected String getAppleMapsLink() {

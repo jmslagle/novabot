@@ -793,6 +793,9 @@ public class NovaBot {
 
         dbManager = new DBManager(this);
 
+        dbManager.scanDbConnect();
+        dbManager.novabotdbConnect();
+
         if (config.useScanDb()) {
             notificationsManager = new NotificationsManager(this, testing);
         }
@@ -832,8 +835,6 @@ public class NovaBot {
 
     public void start() {
         novabotLog.info("Connecting to db");
-        dbManager.scanDbConnect();
-        dbManager.novabotdbConnect();
         novabotLog.info("Connected");
         try {
             jda = new JDABuilder(AccountType.BOT)
@@ -865,8 +866,8 @@ public class NovaBot {
             guild.getInvites().queue(success -> invites.addAll(success));
 
             if (config.loggingEnabled()) {
-                roleLog = guild.getTextChannelById(config.getRoleLogId());
-                userUpdatesLog = guild.getTextChannelById(config.getUserUpdatesId());
+                roleLog = jda.getTextChannelById(config.getRoleLogId());
+                userUpdatesLog = jda.getTextChannelById(config.getUserUpdatesId());
             }
 
         } catch (LoginException | InterruptedException | RateLimitedException ex2) {
