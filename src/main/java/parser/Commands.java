@@ -30,8 +30,20 @@ public class Commands {
                     .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
                     .setArgRange(1,3);
 
+            Command clearPreset = new Command()
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
+                    .setArgRange(1,2);
+
+            Command clearPresetLocation = new Command()
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Locations)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Locations)))
+                    .setArgRange(1,2);
+
             commands.put("!loadpreset", loadPreset);
             commands.put("!delpreset", delPreset);
+            commands.put("!clearpreset", clearPreset);
+            commands.put("!clearpresetlocation", clearPresetLocation);
         }
 
         if(config.pokemonEnabled()) {

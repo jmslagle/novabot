@@ -1,10 +1,12 @@
-package core;
+package Util;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
-public class Util {
+public class UtilityFunctions {
+
+    public static final ZoneId UTC = ZoneId.of("UTC");
 
     public static String capitaliseFirst(final String string) {
         final char[] chars = string.toCharArray();

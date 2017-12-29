@@ -23,10 +23,13 @@ import raids.RaidLobby;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static core.Spawn.printFormat24hr;
@@ -35,7 +38,7 @@ public class NovaBot {
 
     public final String WHITE_GREEN_CHECK = "\u2705";
     public final Logger novabotLog = LoggerFactory.getLogger("novabot");
-    public final ConcurrentHashMap<String, Instant> lastUserRoleChecks = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<String, ZonedDateTime> lastUserRoleChecks = new ConcurrentHashMap<>();
     public final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     public TextChannel roleLog;
     public Guild guild;
@@ -51,7 +54,7 @@ public class NovaBot {
     public ReverseGeocoder reverseGeocoder;
     public Commands commands;
     private NotificationsManager notificationsManager;
-    private Parser parser;
+    public Parser parser;
 
     public void alertRaidChats(String[] raidChatIds, String message) {
         for (String raidChatId : raidChatIds) {
@@ -82,7 +85,7 @@ public class NovaBot {
     }
 
     public static void main(String[] args) {
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+//        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
@@ -321,6 +324,8 @@ public class NovaBot {
                                  "**Preset Commands:**" +
                                  "```!loadpreset <preset name> <location list>\n" +
                                  "!delpreset <preset name> <location list>\n" +
+                                 "!clearpreset <preset name>\n" +
+                                 "!clearpresetlocation <location list>\n" +
                                  "!presetsettings\n" +
                                  "!presetlist or !presets\n" +
                                  "!resetpresets```" : "") +
@@ -494,7 +499,7 @@ public class NovaBot {
                 }
             }
 
-            if (cmdStr.contains("pokemon")) {
+            if (cmdStr.contains("poke")) {
                 final Pokemon[] pokemons = userCommand.buildPokemon();
 
                 switch (cmdStr) {
@@ -581,27 +586,49 @@ public class NovaBot {
                             novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
                         }
 
-                        String presetName = (String) userCommand.getArg(ArgType.Preset).getParams()[0];
-                        String message    = String.format("%s you will now be notified of anything in the %s preset", author.getAsMention(), presetName);
+                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
+                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
 
-                        for (Location location : locations) {
-                            dbManager.addPreset(author.getId(), presetName, location);
+                        for (String preset : presets) {
+                            for (Location location : locations) {
+                                dbManager.addPreset(author.getId(),preset,location);
+                            }
                         }
+
+                        String message    = String.format("%s you will now be notified of anything in the %s preset%s", author.getAsMention(), Arrays.toString(presets),presets.length > 1 ? "s" : "");
 
                         message += " in " + Location.listToString(locations);
                         channel.sendMessage(message).queue();
                         return;
                     }
                     case "!delpreset": {
-                        String presetName = (String) userCommand.getArg(ArgType.Preset).getParams()[0];
-                        String message    = String.format("%s you will no longer be notified of anything in the %s preset", author.getAsMention(), presetName);
+                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
+                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
 
-                        for (Location location : locations) {
-                            dbManager.deletePreset(author.getId(), presetName, location);
+                        for (String preset : presets) {
+                            for (Location location : locations) {
+                                dbManager.addPreset(author.getId(), preset, location);
+                            }
                         }
+
+                        String message = String.format("%s you will no longer be notified of anything in the %s preset%s", author.getAsMention(), Arrays.toString(presets), presets.length > 1 ? "s" : "");
 
                         message += " in " + Location.listToString(locations);
                         channel.sendMessage(message).queue();
+                        return;
+                    }
+                    case "!clearpreset": {
+                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
+                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
+                        dbManager.clearPreset(author.getId(), presets);
+                        channel.sendMessageFormat("%s you will no longer be notified of %s preset%s in any locations",author,Arrays.toString(presets),presets.length > 1 ? "s" : "").queue();
+                        return;
+                    }
+                    case "!clearpresetlocation": {
+                        locations = userCommand.getLocations();
+                        dbManager.clearLocationsPresets(author.getId(),locations);
+                        channel.sendMessageFormat("%s you will no longer be notified of any presets in %s",author,Location.listToString(locations)).queue();
+                        return;
                     }
                 }
             } else if (cmdStr.equals("!clearlocation")) {
@@ -766,6 +793,18 @@ public class NovaBot {
         reverseGeocoder = new ReverseGeocoder(this);
 
         dbManager = new DBManager(this);
+
+        dbManager.scanDbConnect();
+        dbManager.novabotdbConnect();
+
+        if (config.useScanDb()) {
+            notificationsManager = new NotificationsManager(this, testing);
+        }
+
+        if (config.isRaidOrganisationEnabled()) {
+            lobbyManager = new LobbyManager(this);
+            RaidNotificationSender.nextId = dbManager.highestRaidLobbyId() + 1;
+        }
     }
 
     public void shutDown() {
@@ -795,10 +834,8 @@ public class NovaBot {
         return false;
     }
 
-    private void start() {
+    public void start() {
         novabotLog.info("Connecting to db");
-        dbManager.rocketmapdbConnect();
-        dbManager.novabotdbConnect();
         novabotLog.info("Connected");
         try {
             jda = new JDABuilder(AccountType.BOT)
@@ -823,28 +860,21 @@ public class NovaBot {
                 }
             }
 
+            config.loadEmotes();
+
             guild.getMember(jda.getSelfUser()).getRoles().forEach(System.out::println);
 
             guild.getInvites().queue(success -> invites.addAll(success));
 
             if (config.loggingEnabled()) {
-                roleLog = guild.getTextChannelById(config.getRoleLogId());
-                userUpdatesLog = guild.getTextChannelById(config.getUserUpdatesId());
+                roleLog = jda.getTextChannelById(config.getRoleLogId());
+                userUpdatesLog = jda.getTextChannelById(config.getUserUpdatesId());
             }
 
-            if (config.useRmDb()) {
-                notificationsManager = new NotificationsManager(this, testing);
-            }
-
-            if (config.isRaidOrganisationEnabled()) {
-                lobbyManager = new LobbyManager(this);
-                RaidNotificationSender.nextId = dbManager.highestRaidLobbyId() + 1;
-            }
         } catch (LoginException | InterruptedException | RateLimitedException ex2) {
             ex2.printStackTrace();
         }
 
-        config.loadEmotes();
 
         novabotLog.info("connected");
     }

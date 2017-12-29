@@ -1,10 +1,16 @@
 package core;
 
+import net.dv8tion.jda.core.entities.Emote;
+
+import java.util.HashMap;
+
 public enum Team {
     Uncontested,
     Valor,
     Instinct,
     Mystic;
+
+    public static final HashMap<Team, Emote> emotes = new HashMap<>();
 
     public static Team fromId(int i) {
         switch (i) {
@@ -44,6 +50,10 @@ public enum Team {
             case Instinct:
                 return "Instinct";
         }
-        return null;
+        return "";
+    }
+
+    public String getEmote() {
+        return emotes.get(this).getAsMention();
     }
 }

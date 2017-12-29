@@ -1,7 +1,8 @@
 package pokemon;
 
 import core.Spawn;
-import core.Util;
+import core.Types;
+import Util.UtilityFunctions;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -10,7 +11,8 @@ import net.dv8tion.jda.core.entities.Message;
 import java.awt.*;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.time.*;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -25,7 +27,7 @@ public class PokeSpawn extends Spawn
 
     }
 
-    public Instant disappearTime;
+    public ZonedDateTime disappearTime;
     public String form;
     public int id;
     public float iv;
@@ -45,8 +47,7 @@ public class PokeSpawn extends Spawn
         this.id = i;
     }
 
-
-    public PokeSpawn(final int id, final double lat, final double lon, final Instant disappearTime, final int attack, final int defense, final int stamina, final String move1, final String move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
+    public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final int attack, final int defense, final int stamina, final int move1, final int move2, final float weight, final float height, final int gender, final int form, int cp) {
         super();
         this.disappearTime = null;
         this.form = null;
@@ -59,7 +60,7 @@ public class PokeSpawn extends Spawn
         this.id = id;
         properties.put("pkmn_id", String.valueOf(id));
 
-        String name = Util.capitaliseFirst(Pokemon.idToName(this.id));
+        String name = UtilityFunctions.capitaliseFirst(Pokemon.idToName(this.id));
         if (name.startsWith("Unown")) {
             name = "Unown";
         }
@@ -96,11 +97,15 @@ public class PokeSpawn extends Spawn
         this.iv = (attack + defense + stamina) / 45.0f * 100.0f;
         properties.put("iv", getIv());
 
-        this.move_1 = ((move1 == null) ? "unkn" : move1);
-        properties.put("quick_move", move_1);
+        this.move_1 = move1;
+        properties.put("quick_move", (move1 == 0) ? "unkn" : Pokemon.moveName(move1));
+        properties.put("quick_move_type",(move1 == 0) ? "unkn" : Pokemon.getMoveType(move1));
+        properties.put("quick_move_type_icon",(move1 == 0) ? "unkn" : Types.getEmote(Pokemon.getMoveType(move1)));
 
-        this.move_2 = ((move2 == null) ? "unkn" : move2);
-        properties.put("charge_move", move_2);
+        this.move_2 = move2;
+        properties.put("charge_move", (move2 == 0) ? "unkn" : Pokemon.moveName(move2));
+        properties.put("charge_move_type", (move2 == 0) ? "unkn" : Pokemon.getMoveType(move2));
+        properties.put("charge_move_type_icon",(move1 == 0) ? "unkn" : Types.getEmote(Pokemon.getMoveType(move2)));
 
         this.weight = weight;
         properties.put("weight", getWeight());
@@ -124,8 +129,17 @@ public class PokeSpawn extends Spawn
 
         properties.put("lvl30cp", cp == 0 ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 30)));
         properties.put("lvl35cp", cp == 0 ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 35)));
+    }
 
+    public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final int attack, final int defense, final int stamina, final int move1, final int move2, final float weight, final float height, final int gender, final int form, int cp, double cpModifier) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp);
         level = Pokemon.getLevel(cpModifier);
+        properties.put("level", String.valueOf(level));
+    }
+
+    public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final int attack, final int defense, final int stamina, final int move1, final int move2, final float weight, final float height, final int gender, final int form, int cp, Integer level) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp);
+        this.level = level;
         properties.put("level", String.valueOf(level));
     }
 
@@ -146,7 +160,7 @@ public class PokeSpawn extends Spawn
                 embedBuilder.setImage(this.getImage(formatFile));
             }
             embedBuilder.setFooter(novaBot.config.getFooterText(), null);
-            embedBuilder.setTimestamp(Instant.now());
+            embedBuilder.setTimestamp(ZonedDateTime.now(UtilityFunctions.UTC));
             messageBuilder.setEmbed(embedBuilder.build());
 
             String contentFormatting = novaBot.config.getContentFormatting(formatFile, formatKey);
@@ -182,7 +196,7 @@ public class PokeSpawn extends Spawn
 
         hash += (weight * height);
 
-        hash += PokeMove.indexOf(move_1) * PokeMove.indexOf(move_2);
+        hash += move_1 * move_2;
 
         hash += (iv_attack + iv_defense + iv_stamina);
 
@@ -213,7 +227,7 @@ public class PokeSpawn extends Spawn
 //        PokeSpawn spawn = new PokeSpawn(149,
 //                -35.214385,
 //                149.0405493,
-//                Util.getCurrentTime(ZoneId.of("UTC")).toInstant().plusSeconds(300),
+//                UtilityFunctions.getCurrentTime(ZoneId.of("UTC")).toInstant().plusSeconds(300),
 //                0,
 //                0,
 //                0,
@@ -241,7 +255,7 @@ public class PokeSpawn extends Spawn
 //        System.out.println("Timestamp to instant: " +instant.toString());
 //        System.out.println("ZonedDateTime: " +zdt);
 //
-//        System.out.println("Current adelaide time: " + printFormat24hr.format(Util.getCurrentTime(config.getTimeZone())));
+//        System.out.println("Current adelaide time: " + printFormat24hr.format(UtilityFunctions.getCurrentTime(config.getTimeZone())));
 //        System.out.println("UTC disappear time " + spawn.disappearTime);
 //        System.out.println("24h_time in " + config.getTimeZone() + " " + spawn.properties.get("24h_time"));
 //        System.out.println("12h_time in " + config.getTimeZone() + " " + spawn.properties.get("12h_time"));
@@ -257,7 +271,7 @@ public class PokeSpawn extends Spawn
 //    }
 
     private boolean encountered() {
-        return iv != 0 || !move_1.equals("unkn") || !move_2.equals("unkn") || cp > 0;
+        return iv != 0 || !(move_1 == 0) || !(move_2 == 0) || cp > 0;
     }
 
     private Color getColor() {
@@ -278,7 +292,7 @@ public class PokeSpawn extends Spawn
     }
 
     private String getDespawnTime(DateTimeFormatter printFormat) {
-        return printFormat.format(ZonedDateTime.ofInstant(disappearTime, novaBot.config.getTimeZone()));
+        return printFormat.format(disappearTime.withZoneSameInstant(novaBot.config.getTimeZone()));
     }
 
     private String getGender() {
@@ -315,7 +329,7 @@ public class PokeSpawn extends Spawn
     }
 
     private String timeLeft() {
-        long diff = Duration.between(Instant.now(), disappearTime).toMillis();
+        long diff = Duration.between(ZonedDateTime.now(UtilityFunctions.UTC), disappearTime).toMillis();
 
         String time = String.format("%02dm %02ds",
                                     MILLISECONDS.toMinutes(Math.abs(diff)),

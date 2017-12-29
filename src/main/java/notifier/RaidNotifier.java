@@ -20,8 +20,12 @@ class RaidNotifier implements Runnable
 
     @Override
     public void run() {
-        notifierLog.info("checking for raids to notify");
-        manager.raidNotifSenderExecutor.submit(new RaidNotificationSender(novaBot, novaBot.dbManager.getCurrentRaids()));
-        notifierLog.debug("Done checking and adding to queue for processing");
+        try {
+            notifierLog.info("checking for raids to notify");
+            manager.raidNotifSenderExecutor.submit(new RaidNotificationSender(novaBot, novaBot.dbManager.getCurrentRaids()));
+            notifierLog.debug("Done checking and adding to queue for processing");
+        } catch (Exception e){
+            notifierLog.error("An error ocurred in RaidNotifier",e);
+        }
     }
 }

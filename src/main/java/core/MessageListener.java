@@ -16,16 +16,26 @@ import raids.RaidLobby;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class MessageListener extends ListenerAdapter {
     public final String WHITE_GREEN_CHECK = "\u2705";
 
 
-    private final HashMap<Long, Message> messageMap = new HashMap<>();
+    private Map<Long, Message> messageMap;
     private NovaBot novaBot;
 
     public MessageListener(NovaBot novaBot) {
         this.novaBot = novaBot;
+        if (novaBot.config.loggingEnabled()){
+            int maxSize = novaBot.config.getMaxStoredMessages();
+
+            if(maxSize > 0){
+                messageMap = new MaxSizeHashMap<>(maxSize);
+            }else{
+                messageMap = new HashMap<>();
+            }
+        }
     }
 
     @Override
@@ -51,7 +61,9 @@ public class MessageListener extends ListenerAdapter {
         final MessageChannel channel = event.getChannel();
         final String         msg     = message.getContentDisplay();
 
-        messageMap.put(message.getIdLong(), message);
+        if(novaBot.config.loggingEnabled() && !author.isBot() && !message.isWebhookMessage()) {
+            messageMap.put(message.getIdLong(), message);
+        }
 
         if (event.isFromType(ChannelType.TEXT)) {
             final TextChannel textChannel = event.getTextChannel();
@@ -63,6 +75,7 @@ public class MessageListener extends ListenerAdapter {
             } else if (channel.getId().equals(novaBot.config.getUserUpdatesId())) {
                 novaBot.parseModMsg(message, textChannel);
             } else if (channel.getId().equals(novaBot.config.getCommandChannelId())) {
+                novaBot.novabotLog.info(String.format("[COMMAND CHANNEL]<%s>: %s\n", author.getName(), msg));
                 novaBot.parseMsg(msg.toLowerCase().trim(), author, textChannel);
             }
         } else if (event.isFromType(ChannelType.PRIVATE)) {

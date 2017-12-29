@@ -1,5 +1,6 @@
 package core;
 
+import Util.UtilityFunctions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -15,7 +16,6 @@ import notifier.RaidNotificationSender;
 import org.ini4j.Ini;
 import pokemon.PokeSpawn;
 import pokemon.Pokemon;
-import raids.Raid;
 import raids.RaidSpawn;
 
 import java.io.File;
@@ -24,8 +24,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.util.*;
-
-import static raids.Raid.emotes;
 
 /**
  * Created by Owner on 13/05/2017.
@@ -47,8 +45,8 @@ public class Config {
     private boolean stats = true;
     private boolean startupMessage = false;
     private boolean countLocationsInLimits = true;
-    private boolean standardRaidTable = true;
-    private boolean useRmDb = true;
+    private ScannerType scannerType = ScannerType.RocketMap;
+    private boolean useScanDb = true;
     private boolean raidsEnabled = true;
     private boolean pokemonEnabled = true;
     private boolean raidOrganisationEnabled = true;
@@ -61,20 +59,25 @@ public class Config {
     private String novabotRoleId = null;
     private String roleLogId = null;
     private String userUpdatesId = null;
-    private String rmUser;
-    private String rmPass;
-    private String rmIp;
-    private String rmPort;
-    private String rmDbName;
+    private String scanUser;
+    private String scanPass;
+    private String scanIp;
+    private String scanPort = "3306";
+    private String scanDbName;
+    private String scanProtocol = "mysql";
+    private String scanUseSSL = "true";
     private String nbUser;
     private String nbPass;
     private String nbIp;
-    private String nbPort;
+    private String nbPort = "3306";
     private String nbDbName;
+    private String nbProtocol = "mysql";
+    private String nbUseSSL = "true";
     private long pokePollingDelay = 2;
     private long raidPollingDelay = 15;
     private int pokemonThreads = 2;
     private int raidThreads = 2;
+    private int maxStoredMessages = 1000000;
     private NotificationLimit nonSupporterLimit = new NotificationLimit(null, null, null);
     private ArrayList<String> GMAPS_KEYS = new ArrayList<>();
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
@@ -97,19 +100,19 @@ public class Config {
 
         String blacklistStr = config.get("blacklist", "[]");
 
-        for (String s : Util.parseList(blacklistStr)) {
+        for (String s : UtilityFunctions.parseList(blacklistStr)) {
             blacklist.add(Integer.valueOf(s));
         }
 
         String raidBossStr = config.get("raidBosses", "[2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359]");
 
-        for (String s : Util.parseList(raidBossStr)) {
+        for (String s : UtilityFunctions.parseList(raidBossStr)) {
             raidBosses.add(Integer.valueOf(s));
         }
 
-        useRmDb = config.get("useRmDb", Boolean.class, useRmDb);
+        useScanDb = config.get("useScanDb", Boolean.class, useScanDb);
 
-        standardRaidTable = config.get("standardRaidTable", Boolean.class, standardRaidTable);
+        scannerType = ScannerType.fromString(config.get("scannerType",scannerType.toString()));
 
         googleSuburbField = config.get("googleSuburbField", googleSuburbField);
 
@@ -131,10 +134,12 @@ public class Config {
 
         countLocationsInLimits = config.get("countLocationsInLimits", Boolean.class, countLocationsInLimits);
 
-
         logging = config.get("logging", Boolean.class, logging);
 
+
         if (logging) {
+            maxStoredMessages = config.get("maxStoredMessages",Integer.class, maxStoredMessages);
+
             roleLogId = config.get("roleLogChannel", roleLogId);
 
             userUpdatesId = config.get("userUpdatesChannel", userUpdatesId);
@@ -171,12 +176,14 @@ public class Config {
             novaBot.novabotLog.warn("Couldn't find commandChannel in config.ini. novabot will only be able to accept commands in DM.");
         }
 
-        Ini.Section rocketmapDb = configIni.get("rocketmap db");
-        rmUser = rocketmapDb.get("user", rmUser);
-        rmPass = rocketmapDb.get("password", rmPass);
-        rmIp = rocketmapDb.get("ip", rmIp);
-        rmPort = rocketmapDb.get("port", rmPort);
-        rmDbName = rocketmapDb.get("dbName", rmDbName);
+        Ini.Section scannerDb = configIni.get("scanner db");
+        scanUser = scannerDb.get("user", scanUser);
+        scanPass = scannerDb.get("password", scanPass);
+        scanIp = scannerDb.get("ip", scanIp);
+        scanPort = scannerDb.get("port", scanPort);
+        scanDbName = scannerDb.get("dbName", scanDbName);
+        scanProtocol = scannerDb.get("protocol", scanProtocol);
+        scanUseSSL = scannerDb.get("useSSL",scanUseSSL);
 
         Ini.Section novabotDb = configIni.get("novabot db");
         nbUser = novabotDb.get("user", nbUser);
@@ -184,6 +191,8 @@ public class Config {
         nbIp = novabotDb.get("ip", nbIp);
         nbPort = novabotDb.get("port", nbPort);
         nbDbName = novabotDb.get("dbName", nbDbName);
+        nbProtocol = novabotDb.get("protocol", nbProtocol);
+        nbUseSSL = novabotDb.get("useSSL",nbUseSSL);
 
         novaBot.novabotLog.info("Finished loading config.ini");
 
@@ -249,7 +258,11 @@ public class Config {
     public String formatStr(HashMap<String, String> properties, String toFormat) {
         final String[] str = {toFormat};
 
-        properties.forEach((key, value) -> str[0] = str[0].replace(String.format("<%s>", key), value));
+        for (Map.Entry<String, String> stringStringEntry : properties.entrySet()) {
+            str[0] = str[0].replace(String.format("<%s>", stringStringEntry.getKey()), stringStringEntry.getValue());
+        }
+
+//        properties.forEach((key, value) -> str[0] = str[0].replace(String.format("<%s>", key), value));
 
         return str[0];
     }
@@ -413,24 +426,24 @@ public class Config {
         return raidThreads;
     }
 
-    public String getRmDbName() {
-        return rmDbName;
+    public String getScanDbName() {
+        return scanDbName;
     }
 
-    public String getRmIp() {
-        return rmIp;
+    public String getScanIp() {
+        return scanIp;
     }
 
-    public String getRmPass() {
-        return rmPass;
+    public String getScanPass() {
+        return scanPass;
     }
 
-    public String getRmPort() {
-        return rmPort;
+    public String getScanPort() {
+        return scanPort;
     }
 
-    public String getRmUser() {
-        return rmUser;
+    public String getScanUser() {
+        return scanUser;
     }
 
     public String getRoleLogId() {
@@ -479,18 +492,33 @@ public class Config {
     }
 
     public void loadEmotes() {
-        for (String type : Raid.TYPES) {
+        for (String type : Types.TYPES) {
             List<Emote> found = novaBot.jda.getEmotesByName(type, true);
             if (found.size() == 0) try {
                 novaBot.guild.getController().createEmote(type, Icon.from(new File("static/icons/" + type + ".png"))).queue(emote ->
-                                                                                                                                    emotes.put(type, emote));
+                                                                                                                                    Types.emotes.put(type, emote));
             } catch (IOException e) {
                 e.printStackTrace();
             }
             else {
-                emotes.put(type, found.get(0));
+                Types.emotes.put(type, found.get(0));
             }
         }
+        novaBot.novabotLog.info(String.format("Finished loading type emojis: %s", Types.emotes.toString()));
+
+        for (Team team : Team.values()) {
+            List<Emote> found = novaBot.jda.getEmotesByName(team.toString().toLowerCase(), true);
+            if (found.size() == 0) try {
+                novaBot.guild.getController().createEmote(team.toString().toLowerCase(), Icon.from(new File("static/icons/" + team.toString().toLowerCase() + ".png"))).queue(emote ->
+                        Team.emotes.put(team, emote));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            else {
+                Team.emotes.put(team, found.get(0));
+            }
+        }
+        novaBot.novabotLog.info(String.format("Finished loading team emojis: %s", Team.emotes.toString()));
     }
 
     public boolean loggingEnabled() {
@@ -500,7 +528,8 @@ public class Config {
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
-        System.out.println(novaBot.config.token);
+        System.out.println(UtilityFunctions.getCurrentTime(ZoneId.of("+02:00")));
+        novaBot.config.matchesFilter(novaBot.config.raidFilters.get("raidfilter.json"),new RaidSpawn(383,5,false));
     }
 
     public boolean matchesFilter(JsonObject filter, RaidSpawn raidSpawn) {
@@ -508,10 +537,14 @@ public class Config {
 
         JsonElement raidFilter = searchFilter(filter, searchStr);
         if (raidFilter == null) {
+            RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'",searchStr));
 //            System.out.println(String.format("raidFilter %s is null for %s for channel with id %s", channel.filterName, searchStr,channel.channelId));
             raidFilter = searchFilter(filter, "Level" + raidSpawn.raidLevel);
 
-            if (raidFilter == null) return false;
+            if (raidFilter == null) {
+                RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'","Level" + raidSpawn.raidLevel));
+                return false;
+            }
         }
 
         if (raidFilter.isJsonObject()) {
@@ -637,10 +670,6 @@ public class Config {
         return startupMessage;
     }
 
-    public boolean standardRaidTable() {
-        return standardRaidTable;
-    }
-
     public boolean statsEnabled() {
         return stats;
     }
@@ -653,8 +682,8 @@ public class Config {
         return Geofencing.notEmpty();
     }
 
-    public boolean useRmDb() {
-        return useRmDb;
+    public boolean useScanDb() {
+        return useScanDb;
     }
 
     private void loadFilter(String filterName, HashMap<String, JsonObject> filterMap) {
@@ -815,7 +844,7 @@ public class Config {
                                 ArrayList<String> geofences;
 
                                 if (value.charAt(0) == '[') {
-                                    geofences = Util.parseList(value);
+                                    geofences = UtilityFunctions.parseList(value);
                                 } else {
                                     geofences = new ArrayList<>();
                                     geofences.add(value);
@@ -1004,7 +1033,7 @@ public class Config {
                                 ArrayList<String> geofences;
 
                                 if (value.charAt(0) == '[') {
-                                    geofences = Util.parseList(value);
+                                    geofences = UtilityFunctions.parseList(value);
                                 } else {
                                     geofences = new ArrayList<>();
                                     geofences.add(value);
@@ -1113,6 +1142,30 @@ public class Config {
 
     private JsonElement searchFilter(JsonObject filter, String search) {
         if (filter == null || search == null) return null;
-        return filter.get(Util.capitaliseFirst(search));
+        return filter.get(UtilityFunctions.capitaliseFirst(search));
+    }
+
+    public ScannerType getScannerType() {
+        return scannerType;
+    }
+
+    public String getNbProtocol() {
+        return nbProtocol;
+    }
+
+    public String getScanProtocol() {
+        return scanProtocol;
+    }
+
+    public String getScanUseSSL() {
+        return scanUseSSL;
+    }
+
+    public String getNbUseSSL() {
+        return nbUseSSL;
+    }
+
+    public int getMaxStoredMessages() {
+        return maxStoredMessages;
     }
 }

@@ -71,7 +71,7 @@ public class ReverseGeocoder {
                             location.set("postal",addressComponent.longName);
                             break;
                         case NEIGHBORHOOD:
-                            location.set("neighbourhood",addressComponent.longName);
+                            location.set("neighborhood",addressComponent.longName);
                             break;
                         case SUBLOCALITY:
                             location.set("sublocality",addressComponent.longName);
@@ -83,6 +83,7 @@ public class ReverseGeocoder {
                 }
             }
 
+            location.set("address",String.format("%s %s", location.getProperties().get("number"), location.getProperties().get("street")));
             novaBot.dbManager.setGeocodedLocation(lat, lon, location);
         }
         catch (com.google.maps.errors.OverDailyLimitException e){

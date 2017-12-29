@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import core.Location;
-import core.Types;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -113,7 +112,7 @@ public class Pokemon {
     }
 
     public static String getIcon(final int id) {
-        String url = "https://bytebucket.org/anzmap/sprites/raw/7f31b4ddb8a3ca6c942c7a1f39e3143de0f1a8d8/";
+        String url = "https://bitbucket.org/anzmap/sprites/raw/HEAD/";
         if (id >= 2011) {
             final int form = id % 201;
             url = url + "201-" + form;
@@ -179,7 +178,7 @@ public class Pokemon {
 
     @Override
     public String toString() {
-        return this.name;
+        return String.format("%s (%s,%s)",name,miniv,maxiv);
     }
 
     public static String idToName(final int id) {
@@ -300,9 +299,10 @@ public class Pokemon {
     }
 
     public static void main(final String[] args) {
-        System.out.println(Types.getStrengths(getMoveType(279)));
-        System.out.println(idToName(5));
-        System.out.println("Max cp for " + idToName(250) + " at level " + 25 + " is " + maxCpAtLevel(250, 25));
+        System.out.println(getRaidBossCp(129,1));
+//        System.out.println(Types.getStrengths(getMoveType(279)));
+//        System.out.println(idToName(5));
+//        System.out.println("Max cp for " + idToName(250) + " at level " + 25 + " is " + maxCpAtLevel(250, 25));
     }
 
     public static int maxCpAtLevel(int id, int level) {
@@ -411,6 +411,16 @@ public class Pokemon {
         return baseStats.getAsJsonObject(Integer.toString(id)).get("stamina").getAsDouble();
     }
 
+    public static String moveName(int id) {
+        JsonObject moveObj = movesInfo.getAsJsonObject(Integer.toString(id));
+        if(moveObj == null){
+            System.out.println(String.format("move not found in json for id %s", id));
+            return "unkn";
+        }else {
+            return moveObj.get("name").getAsString();
+        }
+    }
+
     private static float[] getBaseStats(int id) {
         JsonObject statsObj = baseStats.getAsJsonObject(Integer.toString(id));
 
@@ -443,4 +453,28 @@ public class Pokemon {
         }
         return names;
     }
+
+    public static int getRaidBossCp(int bossId, int raidLevel) {
+        int stamina = 600;
+
+        switch (raidLevel){
+            case 1:
+                stamina = 600;
+                break;
+            case 2:
+                stamina = 1800;
+                break;
+            case 3:
+                stamina = 3000;
+                break;
+            case 4:
+                stamina = 7500;
+                break;
+            case 5:
+                stamina = 12500;
+                break;
+        }
+        return (int) Math.floor(((baseAtk(bossId) + 15) * Math.sqrt(baseDef(bossId) + 15) * Math.sqrt(stamina)) / 10);
+    }
+
 }

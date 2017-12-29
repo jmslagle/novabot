@@ -1,6 +1,5 @@
 package raids;
 
-import data.DBManager;
 import core.NovaBot;
 import core.RotatingSet;
 import maps.GeofenceIdentifier;
@@ -38,14 +37,13 @@ public class LobbyManager {
             String lobbyCode = entry.getKey();
             String gymId     = entry.getValue();
 
-            RaidSpawn raidSpawn = DBManager.knownRaids.get(gymId);
+            RaidSpawn raidSpawn = novaBot.dbManager.knownRaids.get(gymId);
 
             if (raidSpawn != null) {
                 lobbyManagerLog.info("Found an active raid/egg for gymId: %s, previous lobby code %s. Restoring the lobby");
                 raidSpawn.setLobbyCode(lobbyCode);
             }
         }
-
     }
 
     public boolean isLobbyChannel(String id) {

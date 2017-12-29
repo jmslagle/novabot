@@ -1,9 +1,9 @@
 package core;
 
+import Util.UtilityFunctions;
 import maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.entities.Message;
 
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +20,8 @@ public class Spawn {
 
     public final HashMap<String, String> properties = new HashMap<>();
     protected final HashMap<String, Message> builtMessages = new HashMap<>();
-    public String move_1;
-    public String move_2;
+    public int move_1;
+    public int move_2;
     protected double lat;
     protected double lon;
     protected String formatKey = "pokemon";
@@ -44,7 +44,7 @@ public class Spawn {
     }
 
     public static void main(String[] args) {
-        System.out.println(printFormat24hr.format(Util.getCurrentTime(ZoneId.of("UTC"))));
+        System.out.println(printFormat24hr.format(UtilityFunctions.getCurrentTime(UtilityFunctions.UTC)));
     }
 
     protected String getAppleMapsLink() {
@@ -67,4 +67,5 @@ public class Spawn {
         ++lastKey;
         return novaBot.config.getKeys().get(lastKey);
     }
+
 }
