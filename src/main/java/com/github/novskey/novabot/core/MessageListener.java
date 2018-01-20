@@ -1,5 +1,6 @@
 package com.github.novskey.novabot.core;
 
+import com.github.novskey.novabot.raids.RaidLobby;
 import net.dv8tion.jda.client.entities.Group;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
@@ -12,9 +13,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
-import com.github.novskey.novabot.raids.RaidLobby;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,9 +23,11 @@ public class MessageListener extends ListenerAdapter {
 
     private Map<Long, Message> messageMap;
     private NovaBot novaBot;
+    private boolean mainBot;
 
-    public MessageListener(NovaBot novaBot) {
+    public MessageListener(NovaBot novaBot, boolean mainBot) {
         this.novaBot = novaBot;
+        this.mainBot = mainBot;
         if (novaBot.config.loggingEnabled()){
             int maxSize = novaBot.config.getMaxStoredMessages();
 
@@ -40,7 +41,7 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onUserNameUpdate(UserNameUpdateEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final User user = event.getUser();
         novaBot.userUpdatesLog.sendMessage(user.getAsMention() + " has changed their username from " + event.getOldName() + " to " + event.getUser().getName()).queue();
@@ -60,6 +61,10 @@ public class MessageListener extends ListenerAdapter {
         final Message        message = event.getMessage();
         final MessageChannel channel = event.getChannel();
         final String         msg     = message.getContentDisplay();
+
+        if(!mainBot && channel.getType() != ChannelType.PRIVATE){
+            return;
+        }
 
         if(novaBot.config.loggingEnabled() && !author.isBot() && !message.isWebhookMessage()) {
             messageMap.put(message.getIdLong(), message);
@@ -94,10 +99,10 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onMessageDelete(MessageDeleteEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final long  id      = event.getMessageIdLong();
-        TextChannel channel = novaBot.guild.getTextChannelById(event.getChannel().getId());
+        TextChannel channel = novaBot.jda.getTextChannelById(event.getChannel().getId());
 
 
         Message foundMessage = messageMap.get(id);
@@ -121,7 +126,7 @@ public class MessageListener extends ListenerAdapter {
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
 
-        if (!novaBot.config.isRaidOrganisationEnabled()) return;
+        if (!mainBot || !novaBot.config.isRaidOrganisationEnabled()) return;
 
         if (event.getUser().isBot()) return;
 
@@ -173,7 +178,7 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberJoin(final GuildMemberJoinEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final Member member = event.getMember();
 
@@ -206,13 +211,13 @@ public class MessageListener extends ListenerAdapter {
                     break;
                 }
             }
-            novaBot.invites = (ArrayList<Invite>) success;
+            novaBot.invites.addAll(success);
 
             novaBot.userUpdatesLog.sendMessage(
                     member.getAsMention() +
                     " joined with code " + theCode + ". The account was created " +
                     member.getUser().getCreationTime().atZoneSameInstant(novaBot.config.getTimeZone()).format(novaBot.formatter)).queue();
-            novaBot.dbManager.logNewUser(member.getUser().getId());
+            novaBot.dataManager.logNewUser(member.getUser().getId());
 
             if (member.getEffectiveName().equalsIgnoreCase("novaBot") && !member.getUser().isBot()) {
                 novaBot.guild.getController().kick(member).queue(
@@ -224,7 +229,7 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRoleAdd(final GuildMemberRoleAddEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final User    user    = event.getMember().getUser();
         StringBuilder roleStr = new StringBuilder();
@@ -241,7 +246,7 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRoleRemove(final GuildMemberRoleRemoveEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final User    user    = event.getMember().getUser();
         StringBuilder roleStr = new StringBuilder();
@@ -257,7 +262,7 @@ public class MessageListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberNickChange(final GuildMemberNickChangeEvent event) {
-        if (!novaBot.config.loggingEnabled()) return;
+        if (!mainBot || !novaBot.config.loggingEnabled()) return;
 
         final User user = event.getMember().getUser();
         novaBot.userUpdatesLog.sendMessage(user.getAsMention() + " has changed their nickname from " + event.getPrevNick() + " to " + event.getNewNick()).queue();

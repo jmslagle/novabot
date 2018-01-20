@@ -1,5 +1,6 @@
 package com.github.novskey.novabot.core;
 
+import com.github.novskey.novabot.data.Preset;
 import com.github.novskey.novabot.pokemon.Pokemon;
 import com.github.novskey.novabot.raids.Raid;
 
@@ -20,6 +21,9 @@ public class UserPref {
     public void addPokemon(final Pokemon pokemon) {
         Location location = pokemon.getLocation();
 
+        if (location == null) return;
+
+
         if (!this.pokemonPrefs.containsKey(location.toWords())) {
             final Set<Pokemon> set = new HashSet<>();
             set.add(pokemon);
@@ -30,6 +34,9 @@ public class UserPref {
     }
 
     public void addPreset(String presetName, Location location) {
+
+        if (location == null) return;
+
         if (!this.presetPrefs.containsKey(location.toWords())) {
             Set<String> set = new HashSet<>();
             set.add(presetName);
@@ -41,6 +48,8 @@ public class UserPref {
 
     public void addRaid(final Raid raid) {
         Location location = raid.location;
+
+        if (location == null) return;
 
         if (!this.raidPrefs.containsKey(location.toWords())) {
             final Set<Raid> set = new HashSet<>();
@@ -202,16 +211,46 @@ public class UserPref {
 
     private String pokePrefString(Pokemon pokemon) {
         String str = pokemon.name;
+        boolean iv = false, lvl = false;
         if (pokemon.miniv > 0.0f || pokemon.maxiv < 100.0f) {
+            iv = true;
             if (pokemon.maxiv < 100.0f) {
                 if (pokemon.miniv == pokemon.maxiv) {
-                    str = str + " " + pokemon.miniv;
+                    str = str + " " + pokemon.miniv + "%";
                 } else {
-                    str = str + " " + pokemon.miniv + "-" + pokemon.maxiv;
+                    str = str + " " + pokemon.miniv + "-" + pokemon.maxiv + "%";
                 }
-                str += "%";
             } else {
-                str = str + " " + pokemon.miniv + ((pokemon.miniv == 100.0f) ? "%" : "%+");
+                str = str + " " + pokemon.miniv + ((pokemon.miniv == pokemon.maxiv) ? "%" : "%+");
+            }
+        }
+        if (pokemon.minlvl > 0 || pokemon.maxlvl < 40) {
+            lvl = true;
+            if (iv){
+                str += ",";
+            }
+            if (pokemon.maxlvl < 40) {
+                if (pokemon.minlvl == pokemon.maxlvl) {
+                    str = str + " level " + pokemon.minlvl + "";
+                } else {
+                    str = str + " level " + pokemon.minlvl + "-" + pokemon.maxlvl;
+                }
+            } else {
+                str = str + " level " + pokemon.minlvl + ((pokemon.minlvl == pokemon.maxlvl) ? "" : "+");
+            }
+        }
+        if (pokemon.mincp > 0 || pokemon.maxcp < Integer.MAX_VALUE) {
+            if (iv || lvl){
+                str += ",";
+            }
+            if (pokemon.maxcp < Integer.MAX_VALUE) {
+                if (pokemon.mincp == pokemon.maxcp) {
+                    str = str + " " + pokemon.mincp + "CP" + "";
+                } else {
+                    str = str + " " + pokemon.mincp + "-" + pokemon.maxcp + "CP";
+                }
+            } else {
+                str = str + " " + pokemon.mincp + ((pokemon.mincp == pokemon.maxcp) ? "CP" : "CP+");
             }
         }
         return str;
@@ -221,4 +260,7 @@ public class UserPref {
         return preset + " preset";
     }
 
+    public void addPreset(Preset preset) {
+        addPreset(preset.presetName, preset.location);
+    }
 }

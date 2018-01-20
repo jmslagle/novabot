@@ -1,10 +1,12 @@
 package com.github.novskey.novabot.pokemon;
 
+import com.github.novskey.novabot.core.Location;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.github.novskey.novabot.core.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -24,37 +26,60 @@ public class Pokemon {
     private static JsonObject pokemonInfo;
     private static JsonObject movesInfo;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("Pokemon");
+
     static {
-        JsonParser parser = new JsonParser();
-
         try {
-            JsonElement element = parser.parse(new FileReader("static/data/base_stats.json"));
+            JsonParser parser = new JsonParser();
 
-            if (element.isJsonObject()) {
-                baseStats = element.getAsJsonObject();
+            JsonElement element;
+            try {
+                element = parser.parse(new FileReader("static/data/base_stats.json"));
+
+                if (element.isJsonObject()) {
+                    baseStats = element.getAsJsonObject();
+                }
+            } catch (FileNotFoundException e) {
+                LOGGER.error("Couldn't find file static/data/base_stats.json, aborting");
+                System.exit(0);
             }
 
-            element = parser.parse(new FileReader("static/data/pokemon.json"));
+            try{
+                element = parser.parse(new FileReader("static/data/pokemon.json"));
 
-            if (element.isJsonObject()) {
-                pokemonInfo = element.getAsJsonObject();
+                if (element.isJsonObject()) {
+                    pokemonInfo = element.getAsJsonObject();
+                }
+
+                VALID_NAMES = getPokemonNames(pokemonInfo);
+            } catch (FileNotFoundException e) {
+                LOGGER.error("Couldn't find ile static/data/pokemon.json, aborting");
+                System.exit(0);
             }
 
-            VALID_NAMES = getPokemonNames(pokemonInfo);
+            try{
+                element = parser.parse(new FileReader("static/data/moves.json"));
 
-            element = parser.parse(new FileReader("static/data/moves.json"));
-
-            if (element.isJsonObject()) {
-                movesInfo = element.getAsJsonObject();
+                if (element.isJsonObject()) {
+                    movesInfo = element.getAsJsonObject();
+                }
+            } catch (FileNotFoundException e) {
+                LOGGER.error("Couldn't find static/data/moves.json, aborting");
+                System.exit(0);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+
+        }catch (Exception e){
+            LOGGER.error("Error initialising Pokemon class",e);
         }
     }
 
     public final String name;
     public float miniv;
     public float maxiv;
+    public int minlvl;
+    public int maxlvl;
+    public int maxcp;
+    public int mincp;
     private Location location;
 
     public Pokemon(final String name) {
@@ -79,11 +104,15 @@ public class Pokemon {
         this.maxiv = max_iv;
     }
 
-    public Pokemon(final String pokeName, final Location location, final float miniv, final float maxiv) {
+    public Pokemon(final String pokeName, final Location location, final float miniv, final float maxiv, int minlvl, int maxlvl, int mincp, int maxcp) {
         this(pokeName);
         this.location = location;
         this.miniv = miniv;
         this.maxiv = maxiv;
+        this.minlvl = minlvl;
+        this.maxlvl = maxlvl;
+        this.mincp = mincp;
+        this.maxcp = maxcp;
     }
 
     private Pokemon(final int id) {
@@ -97,6 +126,10 @@ public class Pokemon {
         this.location = location;
         this.miniv = miniv;
         this.maxiv = maxiv;
+    }
+
+    public Pokemon(int pokemonId, Location location, float minIv, float maxIv, int minLvl, int maxLvl, int minCp, int maxCp) {
+        this(Pokemon.idToName(pokemonId),location,minIv,maxIv,minLvl,maxLvl,minCp,maxCp);
     }
 
     public static String getFilterName(int id) {
@@ -166,14 +199,25 @@ public class Pokemon {
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return (int) (name.hashCode() *
+                        ((minlvl+1) * (maxlvl+1)) *
+                        ((mincp + 1) * (maxcp+1)) *
+                        ((miniv + 1) * (maxiv + 1)) *
+                (location == null ? 1 : location.toString().hashCode()));
     }
 
     @Override
     public boolean equals(final Object obj) {
-        assert obj.getClass().getName().equals("pokemon.Pokemon");
+        assert obj.getClass().getName().equals(this.getClass().getName());
         final Pokemon poke = (Pokemon) obj;
-        return poke.name.equals(this.name);
+        return poke.name.equals(this.name) &&
+                poke.minlvl == this.minlvl &&
+                poke.maxlvl == this.maxlvl &&
+                poke.mincp == this.mincp &&
+                poke.maxcp == this.maxcp &&
+                poke.miniv == this.miniv &&
+                poke.maxiv == this.maxiv &&
+                poke.location.equals(this.location);
     }
 
     @Override
@@ -298,13 +342,6 @@ public class Pokemon {
         return str.toString();
     }
 
-    public static void main(final String[] args) {
-        System.out.println(getRaidBossCp(129,1));
-//        System.out.println(Types.getStrengths(getMoveType(279)));
-//        System.out.println(idToName(5));
-//        System.out.println("Max cp for " + idToName(250) + " at level " + 25 + " is " + maxCpAtLevel(250, 25));
-    }
-
     public static int maxCpAtLevel(int id, int level) {
         double multiplier = cpMultipliers[level - 1];
         double attack     = (baseAtk(id) + 15) * multiplier;
@@ -419,6 +456,10 @@ public class Pokemon {
         }else {
             return moveObj.get("name").getAsString();
         }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(maxCpAtLevel(382,20));
     }
 
     private static float[] getBaseStats(int id) {

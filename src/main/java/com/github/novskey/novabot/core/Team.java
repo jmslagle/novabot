@@ -3,12 +3,19 @@ package com.github.novskey.novabot.core;
 import net.dv8tion.jda.core.entities.Emote;
 
 import java.util.HashMap;
+import java.util.ResourceBundle;
 
 public enum Team {
     Uncontested,
     Valor,
     Instinct,
     Mystic;
+
+    private static ResourceBundle bundle;
+
+    public static void setBundle(ResourceBundle bundle){
+        Team.bundle = bundle;
+    }
 
     public static final HashMap<Team, Emote> emotes = new HashMap<>();
 
@@ -42,18 +49,22 @@ public enum Team {
     public String toString() {
         switch (this) {
             case Uncontested:
-                return "Uncontested";
+                return bundle.getString("Uncontested");
             case Valor:
-                return "Valor";
+                return bundle.getString("Valor");
             case Mystic:
-                return "Mystic";
+                return bundle.getString("Mystic");
             case Instinct:
-                return "Instinct";
+                return bundle.getString("Instinct");
         }
         return "";
     }
 
     public String getEmote() {
-        return emotes.get(this).getAsMention();
+        if(emotes.get(this) != null) {
+            return emotes.get(this).getAsMention();
+        }else{
+            return "";
+        }
     }
 }

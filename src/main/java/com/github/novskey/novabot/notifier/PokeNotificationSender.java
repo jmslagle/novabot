@@ -1,15 +1,16 @@
 package com.github.novskey.novabot.notifier;
 
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.Util.UtilityFunctions;
 import com.github.novskey.novabot.core.AlertChannel;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
+import com.github.novskey.novabot.pokemon.PokeSpawn;
+import com.github.novskey.novabot.pokemon.Pokemon;
+import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.github.novskey.novabot.pokemon.PokeSpawn;
-import com.github.novskey.novabot.pokemon.Pokemon;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,39 +18,42 @@ import java.util.HashSet;
 
 
 public class PokeNotificationSender extends NotificationSender implements Runnable {
-    private final ArrayList<PokeSpawn> newPokemon;
 
-    public static final Logger notificationLog = LoggerFactory.getLogger("Poke-Notif-Sender");
+    public static Logger notificationLog = LoggerFactory.getLogger("Poke-Notif-Sender");
+    private JDA jdaInstance;
+    private Logger localLog;
 
-    public PokeNotificationSender(NovaBot novaBot, ArrayList<PokeSpawn> newPokemon) {
-        this.newPokemon = newPokemon;
+    public PokeNotificationSender(NovaBot novaBot, int id) {
         this.novaBot = novaBot;
+        localLog = LoggerFactory.getLogger("Poke-Notif-Sender-" + id);
     }
 
     @Override
     public void run() {
         try {
-            for (final PokeSpawn pokeSpawn : this.newPokemon) {
-                notificationLog.info("Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
+            while (novaBot.config.pokemonEnabled()) {
+                PokeSpawn pokeSpawn = novaBot.notificationsManager.pokeQueue.take();
+                this.jdaInstance = novaBot.getNextNotificationBot();
+                localLog.info("Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
 
                 if (pokeSpawn.disappearTime.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) {
-                    notificationLog.info("Already despawned, skipping");
+                    localLog.info("Already despawned, skipping");
                     continue;
                 }
 
-                HashSet<String> toNotify = new HashSet<>(novaBot.dbManager.getUserIDsToNotify(pokeSpawn));
+                HashSet<String> toNotify = new HashSet<>(novaBot.dataManager.getUserIDsToNotify(pokeSpawn));
 
                 ArrayList<String> matchingPresets = novaBot.config.findMatchingPresets(pokeSpawn);
 
                 for (String preset : matchingPresets) {
-                    toNotify.addAll(novaBot.dbManager.getUserIDsToNotify(preset, pokeSpawn));
+                    toNotify.addAll(novaBot.dataManager.getUserIDsToNotify(preset, pokeSpawn));
                 }
 
                 if (toNotify.size() == 0) {
-                    notificationLog.info("no-one wants this pokemon");
+                    localLog.info("no-one wants this pokemon");
                 } else {
                     final Message message = pokeSpawn.buildMessage("formatting.ini");
-                    notificationLog.info("Built message for pokespawn");
+                    localLog.info("Built message for pokespawn");
 
                     toNotify.forEach(userID -> this.notifyUser(userID, message));
                 }
@@ -74,29 +78,29 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
                 }
             }
         } catch (Exception e) {
-            notificationLog.error("An exception ocurred in poke-notif-sender", e);
+            localLog.error("An exception ocurred in poke-notif-sender", e);
         }
 
     }
 
     private void checkAndPost(AlertChannel channel, PokeSpawn pokeSpawn) {
         if (novaBot.config.matchesFilter(novaBot.config.pokeFilters.get(channel.filterName), pokeSpawn, channel.filterName)) {
-            notificationLog.info("Pokemon passed filter, posting to Discord");
+            localLog.info("Pokemon passed filter, posting to Discord");
             sendChannelAlert(pokeSpawn.buildMessage(channel.formattingName), channel.channelId);
         } else {
-            notificationLog.info(String.format("Pokemon didn't pass %s filter, not posting", channel.filterName));
+            localLog.info(String.format("Pokemon didn't pass %s filter, not posting", channel.filterName));
         }
     }
 
     private void notifyUser(final String userID, final Message message) {
-        final User user = novaBot.jda.getUserById(userID);
+        final User user = jdaInstance.getUserById(userID);
         if (user == null) return;
 
 
         ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
         ZonedDateTime currentTime = ZonedDateTime.now(UtilityFunctions.UTC);
         if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
-            notificationLog.info(String.format("Checking supporter status of %s", user.getName()));
+            localLog.info(String.format("Checking supporter status of %s", user.getName()));
             novaBot.lastUserRoleChecks.put(userID, currentTime);
             if (checkSupporterStatus(user)) {
                 user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue());
@@ -107,7 +111,7 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
     }
 
     private void sendChannelAlert(Message message, String channelId) {
-        notificationLog.info("Sending public alert message to channel " + channelId);
-        novaBot.jda.getTextChannelById(channelId).sendMessage(message).queue(m -> notificationLog.info("Successfully sent message."));
+        localLog.info("Sending public alert message to channel " + channelId);
+        jdaInstance.getTextChannelById(channelId).sendMessage(message).queue(m -> localLog.info("Successfully sent message."));
     }
 }

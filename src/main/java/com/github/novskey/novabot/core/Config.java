@@ -1,22 +1,23 @@
 package com.github.novskey.novabot.core;
 
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.Util.UtilityFunctions;
+import com.github.novskey.novabot.maps.GeofenceIdentifier;
+import com.github.novskey.novabot.maps.Geofencing;
+import com.github.novskey.novabot.notifier.PokeNotificationSender;
+import com.github.novskey.novabot.notifier.RaidNotificationSender;
+import com.github.novskey.novabot.pokemon.PokeSpawn;
+import com.github.novskey.novabot.pokemon.Pokemon;
+import com.github.novskey.novabot.raids.RaidSpawn;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.github.novskey.novabot.maps.GeofenceIdentifier;
-import com.github.novskey.novabot.maps.Geofencing;
+import com.google.maps.GeoApiContext;
 import net.dv8tion.jda.core.entities.Emote;
 import net.dv8tion.jda.core.entities.Icon;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
-import com.github.novskey.novabot.notifier.PokeNotificationSender;
-import com.github.novskey.novabot.notifier.RaidNotificationSender;
 import org.ini4j.Ini;
-import com.github.novskey.novabot.pokemon.PokeSpawn;
-import com.github.novskey.novabot.pokemon.Pokemon;
-import com.github.novskey.novabot.raids.RaidSpawn;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -41,6 +42,7 @@ public class Config {
     public HashMap<String, String> presets = new HashMap<>();
     public ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
     private ArrayList<Integer> blacklist = new ArrayList<>();
+    private ArrayList<String> notificationTokens = new ArrayList<>();
     private boolean logging = false;
     private boolean stats = true;
     private boolean startupMessage = false;
@@ -50,8 +52,11 @@ public class Config {
     private boolean raidsEnabled = true;
     private boolean pokemonEnabled = true;
     private boolean raidOrganisationEnabled = true;
+    private boolean useGoogleTimeZones = false;
+    private boolean allowAllLocation = true;
     private String token = null;
     private ZoneId timeZone = ZoneId.systemDefault();
+    private int minSecondsLeft = 60;
     private String footerText = null;
     private String googleSuburbField = "city";
     private String adminRole = null;
@@ -59,6 +64,7 @@ public class Config {
     private String novabotRoleId = null;
     private String roleLogId = null;
     private String userUpdatesId = null;
+    private String raidLobbyCategory = null;
     private String scanUser;
     private String scanPass;
     private String scanIp;
@@ -77,40 +83,51 @@ public class Config {
     private long raidPollingDelay = 15;
     private int pokemonThreads = 2;
     private int raidThreads = 2;
+    private int dbThreads = 2;
     private int maxStoredMessages = 1000000;
+    private int maxStoredHashes = 500000;
     private NotificationLimit nonSupporterLimit = new NotificationLimit(null, null, null);
-    private ArrayList<String> GMAPS_KEYS = new ArrayList<>();
+    private ArrayList<String> geocodingKeys = new ArrayList<>();
+    private ArrayList<String> timeZoneKeys = new ArrayList<>();
+    private ArrayList<String> staticMapKeys = new ArrayList<>();
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
+    private HashMap<String, GeoApiContext> geoApis = new HashMap<>();
     private NovaBot novaBot;
+    private int nbMaxConnections = 8;
+    private int scanMaxConnections = 8;
 
     public Config(Ini configIni, NovaBot novaBot) {
         novaBot.novabotLog.info("Configuring...");
         this.novaBot = novaBot;
 
-        novaBot.novabotLog.info("Loading config.ini...");
+        novaBot.novabotLog.info(String.format("Loading %s...", novaBot.configName));
         Ini.Section config = configIni.get("config");
 
         token = config.get("token", token);
 
         if (token == null) {
-            novaBot.novabotLog.error("Couldn't find token in config.ini. novabot can't run without a bot token.");
+            novaBot.novabotLog.error(String.format("Couldn't find token in %s. novabot can't run without a bot token.", novaBot.configName));
             novaBot.shutDown();
             return;
         }
 
+        String notificationTokensStr = config.get("notificationTokens","[]");
+
+        notificationTokens =UtilityFunctions.parseList(notificationTokensStr);
+
         String blacklistStr = config.get("blacklist", "[]");
 
-        for (String s : UtilityFunctions.parseList(blacklistStr)) {
-            blacklist.add(Integer.valueOf(s));
-        }
+        blacklist.clear();
+        UtilityFunctions.parseList(blacklistStr).forEach(str -> blacklist.add(Integer.valueOf(str)));
 
         String raidBossStr = config.get("raidBosses", "[2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359]");
 
-        for (String s : UtilityFunctions.parseList(raidBossStr)) {
-            raidBosses.add(Integer.valueOf(s));
-        }
+        raidBosses.clear();
+        UtilityFunctions.parseList(raidBossStr).forEach(str -> raidBosses.add(Integer.valueOf(str)));
 
         useScanDb = config.get("useScanDb", Boolean.class, useScanDb);
+
+        allowAllLocation = config.get("allowAllLocation", Boolean.class, allowAllLocation);
 
         scannerType = ScannerType.fromString(config.get("scannerType",scannerType.toString()));
 
@@ -130,6 +147,8 @@ public class Config {
 
         raidThreads = config.get("raidThreads", Integer.class, raidThreads);
 
+        dbThreads = config.get("dbThreads",Integer.class, dbThreads);
+
         nonSupporterLimit = NotificationLimit.fromString(config.get("nonSupporterLimit", "[n,n,n]"));
 
         countLocationsInLimits = config.get("countLocationsInLimits", Boolean.class, countLocationsInLimits);
@@ -145,6 +164,12 @@ public class Config {
             userUpdatesId = config.get("userUpdatesChannel", userUpdatesId);
         }
 
+        minSecondsLeft = config.get("minSecondsLeft",Integer.class, minSecondsLeft);
+
+        maxStoredHashes = config.get("maxStoredHashes",Integer.class, maxStoredHashes);
+
+        useGoogleTimeZones = config.get("useGoogleTimeZones", Boolean.class, useGoogleTimeZones);
+
         timeZone = ZoneId.of(config.get("timezone", String.valueOf(timeZone)));
 
         footerText = config.get("footerText", footerText);
@@ -156,13 +181,13 @@ public class Config {
         adminRole = config.get("adminRole", adminRole);
 
         if (adminRole == null) {
-            novaBot.novabotLog.warn("Couldn't find adminRole in config.ini. !reload command won't work unless an adminRole is specified.");
+            novaBot.novabotLog.warn(String.format("Couldn't find adminRole in %s. !reload command won't work unless an adminRole is specified.", novaBot.configName));
         }
 
         novabotRoleId = config.get("novabotRole", novabotRoleId);
 
         if (novabotRoleId == null) {
-            novaBot.novabotLog.warn("Couldn't find novabotRoleId in config.ini. A novabotRoleId must be specified in order to use raid organisation.");
+            novaBot.novabotLog.warn(String.format("Couldn't find novabotRoleId in %s. A novabotRoleId must be specified in order to use raid organisation.", novaBot.configName));
             if (!raidOrganisationEnabled) {
                 novaBot.novabotLog.error("Raid organisation enabled with no novabotRoleId");
                 novaBot.shutDown();
@@ -173,8 +198,10 @@ public class Config {
         commandChannelId = config.get("commandChannel", commandChannelId);
 
         if (commandChannelId == null) {
-            novaBot.novabotLog.warn("Couldn't find commandChannel in config.ini. novabot will only be able to accept commands in DM.");
+            novaBot.novabotLog.warn("Couldn't find commandChannel in %s. novabot will only be able to accept commands in DM.", novaBot.configName);
         }
+
+        raidLobbyCategory = config.get("raidLobbyCategory",raidLobbyCategory);
 
         Ini.Section scannerDb = configIni.get("scanner db");
         scanUser = scannerDb.get("user", scanUser);
@@ -184,6 +211,7 @@ public class Config {
         scanDbName = scannerDb.get("dbName", scanDbName);
         scanProtocol = scannerDb.get("protocol", scanProtocol);
         scanUseSSL = scannerDb.get("useSSL",scanUseSSL);
+        scanMaxConnections = scannerDb.get("maxConnections",Integer.class,scanMaxConnections);
 
         Ini.Section novabotDb = configIni.get("novabot db");
         nbUser = novabotDb.get("user", nbUser);
@@ -193,37 +221,51 @@ public class Config {
         nbDbName = novabotDb.get("dbName", nbDbName);
         nbProtocol = novabotDb.get("protocol", nbProtocol);
         nbUseSSL = novabotDb.get("useSSL",nbUseSSL);
+        nbMaxConnections = scannerDb.get("maxConnections",Integer.class,nbMaxConnections);
 
-        novaBot.novabotLog.info("Finished loading config.ini");
 
-        novaBot.novabotLog.info("Loading gkeys.txt...");
-        GMAPS_KEYS = loadKeys(new File("gkeys.txt"));
-        novaBot.novabotLog.info("Finished loading gkeys.txt");
+        novaBot.novabotLog.info("Finished loading " + novaBot.configName);
 
-        novaBot.novabotLog.info("Loading formatting.ini...");
-        loadFormatting("formatting.ini");
-        novaBot.novabotLog.info("Finished loading formatting.ini");
+        novaBot.novabotLog.info(String.format("Loading %s...", novaBot.gkeys));
+        geocodingKeys = loadKeys(new File(novaBot.gkeys));
+
+        geoApis.clear();
+        for (String s : geocodingKeys) {
+            GeoApiContext api = new GeoApiContext();
+            api.setApiKey(s);
+            geoApis.put(s,api);
+        }
+
+        timeZoneKeys.clear();
+        timeZoneKeys.addAll(geocodingKeys);
+        staticMapKeys.clear();
+        staticMapKeys.addAll(geocodingKeys);
+        novaBot.novabotLog.info("Finished loading " + novaBot.gkeys);
+
+        novaBot.novabotLog.info(String.format("Loading %s...", novaBot.formatting));
+        loadFormatting(novaBot.formatting);
+        novaBot.novabotLog.info("Finished loading " + novaBot.formatting);
 
 
         if (raidsEnabled()) {
-            novaBot.novabotLog.info("Loading raidchannels.ini...");
+            novaBot.novabotLog.info(String.format("Loading %s...", novaBot.raidChannels));
             loadRaidChannels();
-            novaBot.novabotLog.info("Finished loading raidchannels.ini");
+            novaBot.novabotLog.info("Finished loading " + novaBot.raidChannels);
         }
 
-        novaBot.novabotLog.info("Loading supporterlevels.txt...");
+        novaBot.novabotLog.info(String.format("Loading %s...", novaBot.supporterLevels));
         loadSupporterRoles();
-        novaBot.novabotLog.info("Finished loading supporterlevels.txt");
+        novaBot.novabotLog.info("Finished loading " + novaBot.supporterLevels);
 
         if (pokemonEnabled()) {
-            novaBot.novabotLog.info("Loading pokechannels.ini...");
+            novaBot.novabotLog.info(String.format("Loading %s...", novaBot.pokeChannels));
             loadPokemonChannels();
-            novaBot.novabotLog.info("Finished loading pokechannels.ini");
+            novaBot.novabotLog.info("Finished loading " + novaBot.pokeChannels);
         }
 
-        novaBot.novabotLog.info("Loading presets.ini...");
+        novaBot.novabotLog.info(String.format("Loading %s...", novaBot.presets));
         loadPresets();
-        novaBot.novabotLog.info("Finished loading presets.ini");
+        novaBot.novabotLog.info("Finished loading " + novaBot.presets);
 
         novaBot.novabotLog.info("Finished configuring");
     }
@@ -304,8 +346,14 @@ public class Config {
         return googleSuburbField;
     }
 
-    public ArrayList<String> getKeys() {
-        return GMAPS_KEYS;
+    public ArrayList<String> getGeocodingKeys() {
+        return geocodingKeys;
+    }
+    public ArrayList<String> getTimeZoneKeys() {
+        return timeZoneKeys;
+    }
+    public ArrayList<String> getStaticMapKeys() {
+        return staticMapKeys;
     }
 
     public String getMapHeight(String fileName, String formatKey) {
@@ -353,13 +401,14 @@ public class Config {
     }
 
     public NotificationLimit getNotificationLimit(Member member) {
+        NotificationLimit largest = nonSupporterLimit;
         for (Role role : member.getRoles()) {
             NotificationLimit notificationLimit = roleLimits.get(role.getId());
-            if (notificationLimit != null) {
-                return notificationLimit;
+            if (notificationLimit != null && notificationLimit.sumSize > largest.sumSize){
+                largest = notificationLimit;
             }
         }
-        return nonSupporterLimit;
+        return largest;
     }
 
     public ArrayList<AlertChannel> getPokeChannels(GeofenceIdentifier identifier) {
@@ -495,11 +544,14 @@ public class Config {
     public void loadEmotes() {
         for (String type : Types.TYPES) {
             List<Emote> found = novaBot.jda.getEmotesByName(type, true);
+            String path = null;
             if (found.size() == 0) try {
-                novaBot.guild.getController().createEmote(type, Icon.from(new File("static/icons/" + type + ".png"))).queue(emote ->
-                                                                                                                                    Types.emotes.put(type, emote));
+                path = "static/icons/" + type + ".png";
+
+                novaBot.guild.getController().createEmote(type, Icon.from(new File(path))).queue(emote ->
+                        Types.emotes.put(type, emote));
             } catch (IOException e) {
-                e.printStackTrace();
+                novaBot.novabotLog.warn(String.format("Couldn't find emote file: %s, ignoring.", path));
             }
             else {
                 Types.emotes.put(type, found.get(0));
@@ -509,11 +561,13 @@ public class Config {
 
         for (Team team : Team.values()) {
             List<Emote> found = novaBot.jda.getEmotesByName(team.toString().toLowerCase(), true);
+            String path = null;
             if (found.size() == 0) try {
-                novaBot.guild.getController().createEmote(team.toString().toLowerCase(), Icon.from(new File("static/icons/" + team.toString().toLowerCase() + ".png"))).queue(emote ->
+                path = "static/icons/" + team.toString().toLowerCase() + ".png";
+                novaBot.guild.getController().createEmote(team.toString().toLowerCase(), Icon.from(new File(path))).queue(emote ->
                         Team.emotes.put(team, emote));
             } catch (IOException e) {
-                e.printStackTrace();
+                novaBot.novabotLog.warn(String.format("Couldn't find emote file: %s, ignoring.", path));
             }
             else {
                 Team.emotes.put(team, found.get(0));
@@ -529,40 +583,82 @@ public class Config {
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
-        System.out.println(UtilityFunctions.getCurrentTime(ZoneId.of("+02:00")));
-        novaBot.config.matchesFilter(novaBot.config.raidFilters.get("raidfilter.json"),new RaidSpawn(383,5,false));
+//        System.out.println(UtilityFunctions.getCurrentTime(ZoneId.of("+02:00")));
+
+        PokeSpawn pokeSpawn = new PokeSpawn(248);
+        System.out.println(novaBot.config.matchesFilter(novaBot.config.pokeFilters.get("ultrarare.json"),pokeSpawn,"ultrarare.json"));
+
+//        RaidSpawn raidSpawn = new RaidSpawn("Peachy Grasshopper Mural","c371c2f0035a4407a9ece049e4cbe71f.16",-34.686409,138.670169, Team.Valor, ZonedDateTime.now(novaBot.config.getTimeZone()),ZonedDateTime.now(novaBot.config.getTimeZone()),302,8266,213,65,2);
+//        RaidSpawn spawn2 = new RaidSpawn("Cooper Reed Bridge","7ac3918301ef497ab54016a56576c48e.11",-34.864262,138.555697, Team.Valor, ZonedDateTime.now(novaBot.config.getTimeZone()),ZonedDateTime.now(novaBot.config.getTimeZone()),129,2331,240,102,1);
+//        System.out.println(novaBot.config.matchesFilter(novaBot.config.raidFilters.get("raidfilter.json"),spawn2));
     }
 
     public boolean matchesFilter(JsonObject filter, RaidSpawn raidSpawn) {
-        String searchStr = (raidSpawn.bossId >= 1) ? Pokemon.getFilterName(raidSpawn.bossId) : "Egg" + raidSpawn.raidLevel;
+        RaidNotificationSender.notificationLog.info("Filter: " + filter);
+        String searchStr = raidSpawn.gymId;
 
-        JsonElement raidFilter = searchFilter(filter, searchStr);
+        JsonElement raidFilter = searchFilter(filter,searchStr);
+        RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
+
         if (raidFilter == null) {
             RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'",searchStr));
-//            System.out.println(String.format("raidFilter %s is null for %s for channel with id %s", channel.filterName, searchStr,channel.channelId));
-            raidFilter = searchFilter(filter, "Level" + raidSpawn.raidLevel);
+            searchStr = raidSpawn.properties.get("gym_name");
+            raidFilter = searchFilter(filter, searchStr);
+            RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
 
             if (raidFilter == null) {
-                RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'","Level" + raidSpawn.raidLevel));
-                return false;
+                RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'", searchStr));
+
+                searchStr = "Default";
+                raidFilter = searchFilter(filter, searchStr);
+                RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
+
+                if (raidFilter == null){
+                    RaidNotificationSender.notificationLog.info("no default block in filter, moving on");
+                    return false;
+                }
             }
         }
 
         if (raidFilter.isJsonObject()) {
-            System.out.println("objects as raid filters not supported yet");
-            return false;
+            searchStr = (raidSpawn.bossId >= 1) ? Pokemon.getFilterName(raidSpawn.bossId) : "Egg" + raidSpawn.raidLevel;
+
+            JsonElement subFilter = searchFilter(raidFilter.getAsJsonObject(),searchStr);
+            RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
+
+            if (subFilter != null){
+                if (subFilter.getAsBoolean()) {
+                    RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", searchStr));
+                    return true;
+                }else {
+                    RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", searchStr));
+                    return false;
+                }
+            } else {
+                subFilter = searchFilter(raidFilter.getAsJsonObject(),"Level"+raidSpawn.raidLevel);
+                RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
+
+                if(subFilter != null && subFilter.getAsBoolean()){
+                    RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", "Level"+ raidSpawn.raidLevel));
+                    return true;
+                }else {
+                    RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", "Level"+ raidSpawn.raidLevel));
+                    return false;
+                }
+            }
         } else {
             if (raidFilter.getAsBoolean()) {
+                RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", searchStr));
                 return true;
-            } else {
-                RaidNotificationSender.notificationLog.info("raid not enabled in filter, not posting");
+            }else{
+                RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", searchStr));
                 return false;
             }
         }
     }
 
     public boolean matchesFilter(JsonObject filter, PokeSpawn pokeSpawn, String filterName) {
-        JsonElement pokeFilter = searchFilter(filter, Pokemon.getFilterName(pokeSpawn.getFilterId()));
+        JsonElement pokeFilter = searchFilter(filter, UtilityFunctions.capitaliseFirst(Pokemon.getFilterName(pokeSpawn.getFilterId())));
         if (pokeFilter == null) {
             PokeNotificationSender.notificationLog.info(String.format("pokeFilter %s is null for %s", filterName, pokeSpawn.properties.get("pkmn")));
 //            System.out.println(String.format("pokeFilter %s is null for %s for channel with id %s", channel.filterName, pokeSpawn.properties.get("pkmn"),channel.channelId));
@@ -573,6 +669,17 @@ public class Config {
                 return false;
             }
         }
+
+        if (pokeFilter.isJsonArray()) {
+            JsonArray array = pokeFilter.getAsJsonArray();
+            for (JsonElement element : array) {
+                if (processElement(element, pokeSpawn,filterName)) return true;
+            }
+        }
+        return processElement(pokeFilter,pokeSpawn,filterName);
+    }
+
+    private boolean processElement(JsonElement pokeFilter, PokeSpawn pokeSpawn, String filterName) {
         if (pokeFilter.isJsonObject()) {
             JsonObject obj = pokeFilter.getAsJsonObject();
 
@@ -712,7 +819,8 @@ public class Config {
                 novaBot.novabotLog.info(String.format("Loaded filter %s", filterName));
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novaBot.novabotLog.warn(String.format("Couldn't find filter file %s, aborting.",filterName));
+            System.exit(0);
         }
     }
 
@@ -741,7 +849,7 @@ public class Config {
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find formatting file %s", fileName));
         } catch (IOException e) {
-            e.printStackTrace();
+            novaBot.novabotLog.error(String.format("Error loading formatting file %s", fileName),e);
         }
     }
 
@@ -784,7 +892,8 @@ public class Config {
             }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novaBot.novabotLog.warn(String.format("Couldn't find gkeys file %s. Aborting", gkeys.getName()));
+            System.exit(0);
         }
 
         return keys;
@@ -793,13 +902,13 @@ public class Config {
     private void loadPokemonChannels() {
         if (novaBot.geofencing == null || !novaBot.geofencing.loaded) novaBot.loadGeofences();
 
-        File file = new File("pokechannels.ini");
+        File file = new File(novaBot.pokeChannels);
 
         try (Scanner in = new Scanner(file)) {
 
             String                      channelId           = null;
             String                      filterName          = null;
-            String                      formattingName      = "formatting.ini";
+            String                      formattingName      = novaBot.formatting;
             HashSet<GeofenceIdentifier> geofenceIdentifiers = null;
 
             boolean first = true;
@@ -905,12 +1014,12 @@ public class Config {
             }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novaBot.novabotLog.warn(String.format("Couldn't find pokechannels file: %s, ignoring.", novaBot.pokeChannels));
         }
     }
 
     private void loadPresets() {
-        File file = new File("presets.ini");
+        File file = new File(novaBot.presets);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -966,20 +1075,20 @@ public class Config {
             }
 
         } catch (FileNotFoundException e) {
-            novaBot.novabotLog.warn("Couldn't find presets.ini, ignoring");
+            novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.presets));
         }
     }
 
     private void loadRaidChannels() {
         if (novaBot.geofencing == null || !novaBot.geofencing.loaded) novaBot.loadGeofences();
 
-        File file = new File("raidchannels.ini");
+        File file = new File(novaBot.raidChannels);
 
         try (Scanner in = new Scanner(file)) {
 
             String                      channelId           = null;
             String                      filterName          = null;
-            String                      formattingName      = "formatting.ini";
+            String                      formattingName      = novaBot.formatting;
             String                      chatId              = null;
             HashSet<GeofenceIdentifier> geofenceIdentifiers = null;
 
@@ -1105,12 +1214,12 @@ public class Config {
             }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            novaBot.novabotLog.warn(String.format("Couldn't find raidchannels file: %s, ignoring.", novaBot.pokeChannels));
         }
     }
 
     private void loadSupporterRoles() {
-        File file = new File("supporterlevels.txt");
+        File file = new File(novaBot.supporterLevels);
 
         try {
             Scanner sc = new Scanner(file);
@@ -1125,7 +1234,7 @@ public class Config {
                 roleLimits.put(roleId, NotificationLimit.fromString(line));
             }
         } catch (FileNotFoundException e) {
-            novaBot.novabotLog.warn("Couldn't find supporterlevels.txt, ignoring");
+            novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.supporterLevels));
         }
     }
 
@@ -1153,7 +1262,7 @@ public class Config {
 
     private JsonElement searchFilter(JsonObject filter, String search) {
         if (filter == null || search == null) return null;
-        return filter.get(UtilityFunctions.capitaliseFirst(search));
+        return filter.get(search);
     }
 
     public ScannerType getScannerType() {
@@ -1178,5 +1287,45 @@ public class Config {
 
     public int getMaxStoredMessages() {
         return maxStoredMessages;
+    }
+
+    public String getRaidLobbyCategory() {
+        return raidLobbyCategory;
+    }
+
+    public String getMinSecondsLeft() {
+        return String.valueOf(minSecondsLeft);
+    }
+
+    public boolean useGoogleTimeZones() {
+        return useGoogleTimeZones;
+    }
+
+    public ArrayList<String> getNotificationTokens() {
+        return notificationTokens;
+    }
+
+    public int getDbThreads() {
+        return dbThreads;
+    }
+
+    public int getNbMaxConnections() {
+        return nbMaxConnections;
+    }
+
+    public int getScanMaxConnections() {
+        return scanMaxConnections;
+    }
+
+    public int getMaxStoredHashes() {
+        return maxStoredHashes;
+    }
+
+    public boolean getAllowAllLocation() {
+        return allowAllLocation;
+    }
+
+    public HashMap<String, GeoApiContext> getGeoApis() {
+        return geoApis;
     }
 }

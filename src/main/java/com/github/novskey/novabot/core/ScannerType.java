@@ -7,7 +7,7 @@ public enum ScannerType {
     RocketMap,
     Monocle,
     Hydro74000Monocle,
-    PhilMap;
+    PhilMap, SloppyRocketMap, SkoodatRocketMap;
 
     public static ScannerType fromString(String str){
         switch (str.toLowerCase().trim()){
@@ -19,6 +19,10 @@ public enum ScannerType {
                 return Hydro74000Monocle;
             case "philmap":
                 return PhilMap;
+            case "sloppyrocketmap":
+                return SloppyRocketMap;
+            case "skoodatrocketmap":
+                return SkoodatRocketMap;
         }
 
         return null;

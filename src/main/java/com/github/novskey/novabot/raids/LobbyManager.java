@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public class LobbyManager {
             String lobbyCode = entry.getKey();
             String gymId     = entry.getValue();
 
-            RaidSpawn raidSpawn = novaBot.dbManager.knownRaids.get(gymId);
+            RaidSpawn raidSpawn = novaBot.dataManager.dbManager.knownRaids.get(gymId);
 
             if (raidSpawn != null) {
                 lobbyManagerLog.info("Found an active raid/egg for gymId: %s, previous lobby code %s. Restoring the lobby");
@@ -47,9 +48,10 @@ public class LobbyManager {
     }
 
     public boolean isLobbyChannel(String id) {
-        for (RaidLobby raidLobby : activeLobbies.values()) {
-            if(raidLobby.channelId == null) continue;
-            if(raidLobby.channelId.equals(id))
+        Collection<RaidLobby> raidLobbies = activeLobbies.values();
+        for (RaidLobby raidLobby : raidLobbies) {
+            if (raidLobby.channelId == null) continue;
+            if (raidLobby.channelId.equals(id))
                 return true;
         }
         return false;

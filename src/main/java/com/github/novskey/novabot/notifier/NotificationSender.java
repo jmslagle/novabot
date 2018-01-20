@@ -15,14 +15,14 @@ class NotificationSender {
 
         boolean passedChecks = true;
 
-        int pokeCount = novaBot.dbManager.countPokemon(user.getId(), novaBot.config.countLocationsInLimits());
+        int pokeCount = novaBot.dataManager.countPokemon(user.getId(), novaBot.config.countLocationsInLimits());
         if (limit.pokemonLimit != null && pokeCount > limit.pokemonLimit) {
             resetUser(user,limit);
             passedChecks = false;
         }
 
         if (passedChecks) {
-            int presetCount = novaBot.dbManager.countPresets(user.getId(), novaBot.config.countLocationsInLimits());
+            int presetCount = novaBot.dataManager.countPresets(user.getId(), novaBot.config.countLocationsInLimits());
             if (limit.presetLimit != null && presetCount > limit.presetLimit) {
                 resetUser(user,limit);
                 passedChecks = false;
@@ -30,7 +30,7 @@ class NotificationSender {
             }
 
             if (passedChecks) {
-                int raidCount = novaBot.dbManager.countRaids(user.getId(), novaBot.config.countLocationsInLimits());
+                int raidCount = novaBot.dataManager.countRaids(user.getId(), novaBot.config.countLocationsInLimits());
                 if (limit.raidLimit != null && raidCount > limit.raidLimit) {
                     resetUser(user,limit);
                     passedChecks = false;
@@ -41,7 +41,7 @@ class NotificationSender {
     }
 
     private void resetUser(User user, NotificationLimit newLimit) {
-        novaBot.dbManager.resetUser(user.getId());
+        novaBot.dataManager.resetUser(user.getId());
 
         user.openPrivateChannel().queue(channel -> channel.sendMessageFormat("Hi %s, I noticed that recently your supporter status has changed." +
                 " As a result I have cleared your settings. At your current level you can add up to %s to your settings.",user,newLimit.toWords()).queue());

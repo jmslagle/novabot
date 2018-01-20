@@ -11,10 +11,12 @@ public class GeofenceIdentifier {
 
     private final ArrayList<String> aliases;
 
+
     public GeofenceIdentifier(String name, ArrayList<String> aliases) {
         this.name = name;
         this.aliases = aliases;
     }
+
 
     public static ArrayList<GeofenceIdentifier> fromString(String str) {
 

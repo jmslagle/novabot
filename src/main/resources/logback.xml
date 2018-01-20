@@ -6,12 +6,13 @@
             <level>INFO</level>
         </filter>
         <file>logs/novabot.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/novabot.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.log</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/novabot.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.%i.log.gz</fileNamePattern>
             <TimeBasedFileNamingAndTriggeringPolicy class="com.github.novskey.novabot.core.StartupTimeBasedTriggeringPolicy"/>
-            <maxFileSize>20MB</maxFileSize>
+            <maxFileSize>50MB</maxFileSize>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
+
         <encoder>
             <pattern>[%date{HH:mm:ss}] [ %-5level] [%logger{0}] %msg%n</pattern>
         </encoder>
@@ -22,12 +23,13 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
         </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/debug.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.log.gz</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/debug.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.%i.log.gz</fileNamePattern>
             <TimeBasedFileNamingAndTriggeringPolicy class="com.github.novskey.novabot.core.StartupTimeBasedTriggeringPolicy"/>
-            <maxFileSize>20MB</maxFileSize>
+            <maxFileSize>50MB</maxFileSize>
             <maxHistory>5</maxHistory>
         </rollingPolicy>
+
         <encoder>
             <pattern>[%d] [ %-5level] [%thread] %logger{35}: %msg%n</pattern>
         </encoder>
@@ -38,12 +40,13 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/error.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.log</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/error.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.%i.log.gz</fileNamePattern>
             <TimeBasedFileNamingAndTriggeringPolicy class="com.github.novskey.novabot.core.StartupTimeBasedTriggeringPolicy"/>
-            <maxFileSize>20MB</maxFileSize>
+            <maxFileSize>50MB</maxFileSize>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
+
         <encoder>
             <pattern>[%date{HH:mm:ss}] [%thread] [%logger{0}] %msg%n</pattern>
         </encoder>
@@ -54,12 +57,13 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
         </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/jda.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.log</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/jda.%d{yyyy-MM-dd}_%d{HH-mm-ss,aux}.%i.log.gz</fileNamePattern>
             <TimeBasedFileNamingAndTriggeringPolicy class="com.github.novskey.novabot.core.StartupTimeBasedTriggeringPolicy"/>
-            <maxFileSize>20MB</maxFileSize>
+            <maxFileSize>50MB</maxFileSize>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
+
         <encoder>
             <pattern>[%d] [ %-5level] [%thread] %logger{35}: %msg%n</pattern>
         </encoder>

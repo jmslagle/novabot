@@ -1,14 +1,15 @@
 package com.github.novskey.novabot.raids;
 
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.Util.UtilityFunctions;
 import com.github.novskey.novabot.core.Spawn;
 import com.github.novskey.novabot.core.Team;
 import com.github.novskey.novabot.core.Types;
+import com.github.novskey.novabot.data.SpawnLocation;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
+import com.github.novskey.novabot.pokemon.Pokemon;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
-import com.github.novskey.novabot.pokemon.Pokemon;
 
 import java.awt.*;
 import java.time.Duration;
@@ -17,8 +18,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static com.github.novskey.novabot.maps.Geofencing.getGeofence;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Created by Owner on 27/06/2017.
@@ -39,6 +40,7 @@ public class RaidSpawn extends Spawn {
     private String imageUrl;
     private int lobbyCode;
 
+
     public RaidSpawn(int id, boolean egg) {
         super();
         if (egg) {
@@ -48,7 +50,7 @@ public class RaidSpawn extends Spawn {
         }
     }
 
-    public RaidSpawn(String name, String gymId, double lat, double lon, Team team, ZonedDateTime raidEnd, ZonedDateTime battleStart, Integer bossId, Integer bossCp, Integer move_1, Integer move_2, Integer raidLevel) {
+    public RaidSpawn(String name, String gymId, double lat, double lon, Team team, ZonedDateTime raidEnd, ZonedDateTime battleStart, int bossId, int bossCp, int move_1, int move_2, int raidLevel) {
         this.name = name;
         properties.put("gym_name", name);
 
@@ -64,25 +66,25 @@ public class RaidSpawn extends Spawn {
 
         properties.put("team_icon", team.getEmote());
 
+        if (novaBot.config.suburbsEnabled()) {
+            this.geocodedLocation = novaBot.reverseGeocoder.geocodedLocation(lat, lon);
+            geocodedLocation.getProperties().forEach(properties::put);
+        }
+
         this.geofenceIdentifiers = getGeofence(lat, lon);
+
+        this.spawnLocation = new SpawnLocation(geocodedLocation, geofenceIdentifiers);
 
         properties.put("geofence", GeofenceIdentifier.listToString(geofenceIdentifiers));
 
         properties.put("gmaps", getGmapsLink());
         properties.put("applemaps", getAppleMapsLink());
 
-        if (novaBot.config.suburbsEnabled()) {
-            novaBot.reverseGeocoder.geocodedLocation(lat, lon).getProperties().forEach(properties::put);
-        }
-
         this.raidEnd = raidEnd;
-        properties.put("24h_end", getDisappearTime(printFormat24hr));
-        properties.put("12h_end", getDisappearTime(printFormat12hr));
+
         properties.put("time_left", timeLeft(raidEnd));
 
         this.battleStart = battleStart;
-        properties.put("24h_start", getStartTime(printFormat24hr));
-        properties.put("12h_start", getStartTime(printFormat12hr));
         properties.put("time_left_start", timeLeft(battleStart));
 
 
@@ -92,7 +94,7 @@ public class RaidSpawn extends Spawn {
         this.move_2 = move_2;
 
         if (bossId != 0) {
-            properties.put("pkmn", UtilityFunctions.capitaliseFirst(Pokemon.idToName(bossId)));
+            properties.put("pkmn", Pokemon.getFilterName(bossId));
             properties.put("cp", String.valueOf(bossCp));
             properties.put("lvl20cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 20)));
             properties.put("lvl25cp", String.valueOf(Pokemon.maxCpAtLevel(bossId, 25)));
@@ -147,6 +149,18 @@ public class RaidSpawn extends Spawn {
                 novaBot.reverseGeocoder.geocodedLocation(lat, lon).getProperties().forEach(properties::put);
             }
 
+            if (!properties.containsKey("24h_start")){
+                this.timeZone = novaBot.config.useGoogleTimeZones() ?  novaBot.timeZones.getTimeZone(lat,lon) : novaBot.config.getTimeZone();
+                if(timeZone == null){
+                    timeZone = novaBot.timeZones.getTimeZone(lat,lon);
+                }
+                properties.put("24h_end", getDisappearTime(printFormat24hr));
+                properties.put("12h_end", getDisappearTime(printFormat12hr));
+
+                properties.put("24h_start", getStartTime(printFormat24hr));
+                properties.put("12h_start", getStartTime(printFormat12hr));
+            }
+
             final MessageBuilder messageBuilder = new MessageBuilder();
             final EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setColor(getColor());
@@ -185,7 +199,7 @@ public class RaidSpawn extends Spawn {
     }
 
     public String getDisappearTime(DateTimeFormatter printFormat) {
-        return printFormat.format(raidEnd.withZoneSameInstant(novaBot.config.getTimeZone()));
+        return printFormat.format(raidEnd.withZoneSameInstant(timeZone));
     }
 
     public String getIcon() {
@@ -215,30 +229,8 @@ public class RaidSpawn extends Spawn {
     }
 
     public String getStartTime(DateTimeFormatter printFormat) {
-        return printFormat.format(battleStart.withZoneSameInstant(novaBot.config.getTimeZone()));
+        return printFormat.format(battleStart.withZoneSameInstant(timeZone));
     }
-
-//    public static void main(String[] args) {
-//
-//        loadConfig();
-//        loadGeofences();
-//        DBManager.novabotdbConnect();
-//        RaidSpawn spawn = new RaidSpawn("gym",
-//                "123", -35.34200996278955, 149.05508042811897,
-//                Team.Valor, UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(504000),
-//                UtilityFunctions.getCurrentTime(novaBot.config.getTimeZone()).toInstant().plusMillis(6000000),
-//                6,
-//                11003,
-//                2,
-//                4,
-//                3);
-//
-//        spawn.setLobbyCode(1);
-//
-//        Message message = spawn.buildMessage("formatting.ini");
-//        System.out.println(message.getEmbeds().get(0).getTitle());
-//        System.out.println(message.getEmbeds().get(0).getDescription());
-//    }
 
     public void setLobbyCode(String lobbyCode) {
         this.lobbyCode = Integer.parseInt(lobbyCode);
@@ -291,5 +283,10 @@ public class RaidSpawn extends Spawn {
                 return new Color(0x00082d);
         }
         return Color.WHITE;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (gymId.hashCode() * raidEnd.toInstant().toEpochMilli());
     }
 }

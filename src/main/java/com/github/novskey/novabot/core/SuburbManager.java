@@ -16,7 +16,7 @@ public class SuburbManager {
             suburbs.clear();
 
             while (in.hasNext()) {
-                suburbs.add(in.nextLine().toLowerCase());
+                suburbs.add(in.nextLine().toLowerCase().trim());
             }
 
         } catch (FileNotFoundException e) {
@@ -34,5 +34,15 @@ public class SuburbManager {
 
     public boolean notEmpty() {
         return suburbs.size() > 0;
+    }
+
+    public String getListMessage() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (String suburb : suburbs) {
+            stringBuilder.append(String.format("`%s`%n",suburb));
+        }
+
+        return stringBuilder.toString();
     }
 }

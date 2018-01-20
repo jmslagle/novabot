@@ -31,6 +31,11 @@ public class UserCommand
         Location[] locations = {Location.ALL};
         float miniv = 0.0f;
         float maxiv = 100.0f;
+        int minlvl= 0;
+        int maxlvl = 40;
+        int mincp = 0;
+        int maxcp = Integer.MAX_VALUE;
+
         String[] pokeNames = new String[0];
         for (final Argument arg : this.args) {
             switch (arg.getType()) {
@@ -40,18 +45,23 @@ public class UserCommand
                 case Pokemon:
                     pokeNames = this.toStrings(arg.getParams());
                     break;
-                case Float:
+                case IV:
                     miniv = (float)arg.getParams()[0];
                     if (arg.getParams().length == 2) {
                         maxiv = (float)arg.getParams()[1];
                         break;
                     }
                     break;
-                case Int:
-                    miniv = ((Integer)arg.getParams()[0]).floatValue();
+                case Level:
+                    minlvl = (int)arg.getParams()[0];
                     if (arg.getParams().length == 2) {
-                        maxiv = ((Integer)arg.getParams()[1]).floatValue();
-                        break;
+                        maxlvl = (int)arg.getParams()[1];
+                    }
+                    break;
+                case CP:
+                    mincp = (int)arg.getParams()[0];
+                    if (arg.getParams().length == 2) {
+                        maxcp = (int)arg.getParams()[1];
                     }
                     break;
             }
@@ -60,7 +70,7 @@ public class UserCommand
         for (final String pokeName : pokeNames) {
             for (final Location location : locations) {
                 System.out.println(pokeName);
-                pokemons.add(new Pokemon(pokeName, location, miniv, maxiv));
+                pokemons.add(new Pokemon(pokeName, location, miniv, maxiv, minlvl, maxlvl, mincp, maxcp));
             }
         }
         final Pokemon[] pokeArray = new Pokemon[pokemons.size()];
@@ -165,21 +175,12 @@ public class UserCommand
 
     public String getIvMessage() {
         String message = "";
-        if (containsArg(ArgType.Float)) {
-            final Argument ivArg = getArg(ArgType.Float);
+        if (containsArg(ArgType.IV)) {
+            final Argument ivArg = getArg(ArgType.IV);
             if (ivArg.getParams().length == 1) {
-                message = message + " " + ivArg.getParams()[0] + "% IV or above";
-            }
-            else {
-                message = message + " between " + ivArg.getParams()[0] + " and " + ivArg.getParams()[1] + "% IV";
-            }
-        }else if(containsArg(ArgType.Int)){
-            final Argument ivArg = getArg(ArgType.Int);
-            if (ivArg.getParams().length == 1) {
-                message = message + " " + ivArg.getParams()[0] + "% IV or above";
-            }
-            else {
-                message = message + " between " + ivArg.getParams()[0] + " and " + ivArg.getParams()[1] + "% IV";
+                message = message + " " + ivArg.getParams()[0] + "% " + novaBot.getLocalString("IvOrAbove");
+            } else {
+                message = message + " " + novaBot.getLocalString("Between") + " " + ivArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + ivArg.getParams()[1] + "% " + novaBot.getLocalString("IV");
             }
         }
         return message;
@@ -211,5 +212,33 @@ public class UserCommand
 
         final Raid[] raidArray = new Raid[raids.size()];
         return raids.toArray(raidArray);
+    }
+
+    public String getCpMessage() {
+        String message = "";
+        if (containsArg(ArgType.CP)) {
+            final Argument cpArg = getArg(ArgType.CP);
+            if (cpArg.getParams().length == 1) {
+                message = message + " " + cpArg.getParams()[0] + " " + novaBot.getLocalString("CpOrAbove");
+            }
+            else {
+                message = message + " " + novaBot.getLocalString("Between") + " " + cpArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + cpArg.getParams()[1] + " " + novaBot.getLocalString("CP");
+            }
+        }
+        return message;
+    }
+
+    public String getLevelMessage() {
+        String message = "";
+        if (containsArg(ArgType.Level)) {
+            final Argument levelArg = getArg(ArgType.Level);
+            if (levelArg.getParams().length == 1) {
+                message = message + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[0] + " " + novaBot.getLocalString("OrAbove");
+            }
+            else {
+                message = message + " " + novaBot.getLocalString("Between") + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[1];
+            }
+        }
+        return message;
     }
 }

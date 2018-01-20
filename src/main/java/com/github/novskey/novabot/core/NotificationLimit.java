@@ -13,11 +13,13 @@ public class NotificationLimit {
     public final Integer pokemonLimit;
     public final Integer raidLimit;
     public final Integer presetLimit;
+    public int sumSize;
 
     public NotificationLimit(Integer pokemonLimit, Integer raidLimit, Integer presetLimit) {
         this.pokemonLimit = pokemonLimit;
         this.raidLimit = raidLimit;
         this.presetLimit = presetLimit;
+        sumSize =  (pokemonLimit == null ? Integer.MAX_VALUE : pokemonLimit) + (raidLimit == null ? Integer.MAX_VALUE : raidLimit) + (presetLimit == null ? Integer.MAX_VALUE : presetLimit);
     }
 
     public static NotificationLimit fromString(String line) {

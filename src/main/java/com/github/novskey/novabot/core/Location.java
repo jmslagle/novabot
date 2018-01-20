@@ -6,9 +6,9 @@ import java.util.ArrayList;
 
 public class Location {
     public static final Location ALL = new Location();
+    public static String all;
     public final LocationType locationType;
-    public final boolean usable = true;
-    public ArrayList<GeofenceIdentifier> geofenceIdentifiers;
+    public ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
     private String suburb;
 
     private Location(final String suburb) {
@@ -32,8 +32,20 @@ public class Location {
         this.locationType = LocationType.All;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        assert obj.getClass().getName().equals(this.getClass().getName());
+        Location loc = (Location) obj;
+        if(loc.geofenceIdentifiers == null || this.geofenceIdentifiers == null){
+            System.out.println("null");
+        }
+        return loc.locationType == this.locationType &&
+                loc.geofenceIdentifiers.equals(this.geofenceIdentifiers) &&
+                (loc.locationType != LocationType.Suburb || loc.suburb.equals(suburb));
+    }
+
     public static Location fromDbString(String str, NovaBot novaBot) {
-        if (str.equals("all")) return Location.ALL;
+        if (novaBot.config.getAllowAllLocation() && str.equals("all")) return Location.ALL;
 
         if (novaBot.config.useGeofences()) {
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
@@ -55,7 +67,7 @@ public class Location {
 
     public static Location fromString(final String str, NovaBot novaBot) {
 
-        if (str.equalsIgnoreCase("all")) return Location.ALL;
+        if (novaBot.config.getAllowAllLocation() && str.equalsIgnoreCase(novaBot.getLocalString("All"))) return Location.ALL;
 
         if (novaBot.config.useGeofences()) {
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
@@ -113,7 +125,7 @@ public class Location {
             case Geofence:
                 return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
             case All:
-                return "all";
+                return all;
         }
 
         return null;

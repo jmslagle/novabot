@@ -1,5 +1,8 @@
 package com.github.novskey.novabot.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -10,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  * @author srasul
  */
 public class ScheduledExecutor extends ScheduledThreadPoolExecutor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("ScheduledExecutor");
 
     public ScheduledExecutor(int corePoolSize) {
         super(corePoolSize);
@@ -43,8 +48,7 @@ public class ScheduledExecutor extends ScheduledThreadPoolExecutor {
                 theRunnable.run();
             } catch (Exception e) {
                 // LOG IT HERE!!!
-                System.err.println("error in executing: " + theRunnable + ". It will no longer be run!");
-                e.printStackTrace();
+                LOGGER.error("error in executing: " + theRunnable + ". It will no longer be run!",e);
 
                 // and re throw it so that the Executor also gets this error so that it can do what it would
                 // usually do

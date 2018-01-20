@@ -9,5 +9,10 @@
   "Ampharos": "True",
   "Unown": "True",
   "Blissey": "True",
-  "Tyranitar": "True"
+  "Tyranitar": [
+    {
+      "min_iv": "90"
+    },
+    "True"
+  ]
 }

@@ -1,0 +1,92 @@
+package com.github.novskey.novabot.data;
+
+import com.github.novskey.novabot.core.Location;
+import com.github.novskey.novabot.core.Spawn;
+import com.github.novskey.novabot.core.UserPref;
+import com.github.novskey.novabot.maps.GeocodedLocation;
+import com.github.novskey.novabot.pokemon.PokeSpawn;
+import com.github.novskey.novabot.pokemon.Pokemon;
+import com.github.novskey.novabot.raids.Raid;
+import com.github.novskey.novabot.raids.RaidSpawn;
+
+import java.time.ZoneId;
+import java.util.ArrayList;
+
+/**
+ * Created by Paris on 17/01/2018.
+ */
+public interface IDataBase {
+    void addPokemon(String userID, Pokemon pokemon);
+
+    void addPreset(String userID, String preset, Location location);
+
+    void addRaid(String userID, Raid raid);
+
+    void addUser(String userID);
+
+    void clearPreset(String id, String[] presets);
+
+    void clearLocationsPresets(String id, Location[] locations);
+
+    void clearLocationsPokemon(String id, Location[] locations);
+
+    void clearLocationsRaids(String id, Location[] locations);
+
+    void clearPokemon(String id, ArrayList<Pokemon> pokemons);
+
+    void clearRaid(String id, ArrayList<Raid> raids);
+
+    int countPokemon(String id, boolean countLocations);
+
+    int countPresets(String userID, boolean countLocations);
+
+    int countRaids(String id, boolean countLocations);
+
+    void deletePokemon(String userID, Pokemon pokemon);
+
+    void deletePreset(String userId, String preset, Location location);
+
+    void deleteRaid(String userID, Raid raid);
+
+    void endLobby(String lobbyCode);
+
+    GeocodedLocation getGeocodedLocation(double lat, double lon);
+
+    ArrayList<String> getUserIDsToNotify(RaidSpawn raidSpawn);
+
+    ArrayList<String> getUserIDsToNotify(String preset, Spawn spawn);
+
+    ArrayList<String> getUserIDsToNotify(PokeSpawn pokeSpawn);
+
+    UserPref getUserPref(String id);
+
+    int highestRaidLobbyId();
+
+    void logNewUser(String userID);
+
+    void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate, String inviteCode);
+
+    boolean notContainsUser(String userID);
+
+    void pauseUser(String id);
+
+    void resetPokemon(String id);
+
+    void resetPresets(String id);
+
+    void resetRaids(String id);
+
+    void resetUser(String id);
+
+    void setGeocodedLocation(double lat, double lon, GeocodedLocation location);
+
+    void unPauseUser(String id);
+
+    void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate, String inviteCode);
+
+    int purgeUnknownSpawnpoints();
+
+    ZoneId getZoneId(double lat, double lon);
+
+    void setZoneId(double lat, double lon, ZoneId zoneId);
+}

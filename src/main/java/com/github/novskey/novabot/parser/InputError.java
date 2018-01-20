@@ -6,7 +6,6 @@ import java.util.HashSet;
 public enum InputError
 {
     InvalidArg,
-    UnusableLocation,
     BlacklistedPokemon,
     TooManyArgs,
     NotEnoughArgs,
@@ -42,7 +41,7 @@ public enum InputError
             case DuplicateArgs: {
                 final ArgType duplicateType = Argument.getDuplicateArg(userCommand.getArgs());
                 String str = "You specified multiple " + duplicateType;
-                if (duplicateType == ArgType.Float || duplicateType == ArgType.Int) {
+                if (duplicateType == ArgType.Float || duplicateType == ArgType.Int || duplicateType == ArgType.IV) {
                     return str;
                 }
                 if (duplicateType == ArgType.CommandStr) {

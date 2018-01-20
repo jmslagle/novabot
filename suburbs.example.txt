@@ -1,0 +1,223 @@
+albany park
+archer heights
+armour square
+ashburn
+austin
+avalon park
+avondale
+belmont central
+belmont cragin
+belmont heights
+beverly
+bridgeport
+chicago lawn
+chicago loop
+chinatown
+clearing
+douglas
+dunning
+east garfield park
+east side
+edgewater
+edison park
+englewood
+forest glen
+gage park
+garfield park
+garfield ridge
+grand boulevard
+hermosa
+humboldt park
+hyde park
+illinois medical district
+irving park
+jefferson park
+kenwood
+lake view
+lincoln park
+lincoln square
+little village
+logan square
+lower west side
+morgan park
+museum campus
+near north side
+near south side
+near west side
+new city
+north center
+north lawndale
+north park
+norwood park
+o’hare
+oakland
+portage park
+pullman
+ravenswood
+riverdale
+rogers park
+roseland
+south chicago
+south deering
+south lawndale
+south side
+streeterville
+unknown
+uptown
+washington heights
+washington park
+west garfield park
+west lawn
+west ridge
+west town
+woodlawn
+skokie
+lincolnwood
+evanston
+morton grove
+des plaines
+park ridge
+glenview niles
+winnetka
+wilmette
+glencoe
+northbrook
+northfield
+elk groove
+mt prospect
+heart of chicago
+sauganash
+river north
+deerfield
+rosemont
+o'hare
+montclare
+goose island
+rush lawndale
+arlington
+pulaski
+fulton
+highland
+old
+schorsch
+buena
+acton
+ainslie
+braddon
+campbell
+city
+dickson
+downer
+hackett
+lyneham
+o'connor
+reid
+turner
+watson
+barton
+deakin
+forrest
+griffith
+kingston
+narrabundah
+red hill
+yarralumla
+chifley
+curtin
+farrer
+garran
+hughes
+isaacs
+lyons
+mawson
+o'malley
+pearce
+phillip
+torrens
+aranda
+belconnen
+bruce
+charnwood
+cook
+dunlop
+evatt
+florey
+flynn
+fraser
+giralang
+hawker
+higgins
+holt
+kaleen
+latham
+lawson
+macgregor
+macquarie
+mckellar
+melba
+page
+scullin
+spence
+weetangera
+chapman
+duffy
+fisher
+holder
+rivett
+stirling
+waramanga
+weston
+banks
+bonython
+calwell
+chisholm
+conder
+fadden
+gilmore
+gordon
+gowrie
+greenway
+isabella plains
+kambah
+macarthur
+monash
+oxley
+richardson
+theodore
+tuggeranong
+wanniassa
+amaroo
+bonner
+casey
+crace
+forde
+franklin
+gungahlin
+hall
+harrison
+jacka
+mitchell
+moncrieff
+ngunnawal
+nicholls
+palmerston
+wright
+molonglo valley
+stromlo
+parkes
+googong
+jerrabomberra
+queanbeyan east
+queanbeyan west
+queanbeyan
+karabar
+hume
+crestwood
+stromlo
+coombs
+canberra
+fyshwick
+salisbury north
+salisbury
+paralowie
+burton

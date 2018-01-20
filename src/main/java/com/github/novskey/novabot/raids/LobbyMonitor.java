@@ -1,6 +1,6 @@
 package com.github.novskey.novabot.raids;
 
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.Util.UtilityFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ public class LobbyMonitor implements Runnable {
 
             lobbyMonitorLog.info("Done checking");
         }catch (Exception e){
-            lobbyMonitorLog.error("An error ocurred in lobby monitor",e);
+            lobbyMonitorLog.error("An error occurred in lobby monitor",e);
         }
     }
 }

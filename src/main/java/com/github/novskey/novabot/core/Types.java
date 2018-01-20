@@ -192,7 +192,11 @@ public class Types {
         }
 
         if(type.equals(""))return "unkn";
-        return Types.emotes.get(type).getAsMention();
+        if(Types.emotes.get(type) != null) {
+            return Types.emotes.get(type).getAsMention();
+        }else{
+            return "";
+        }
     }
 
 }

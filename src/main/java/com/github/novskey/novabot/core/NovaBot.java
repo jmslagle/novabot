@@ -1,8 +1,11 @@
 package com.github.novskey.novabot.core;
 
-import com.github.novskey.novabot.data.DBManager;
+import com.github.novskey.novabot.Util.UtilityFunctions;
+import com.github.novskey.novabot.data.DataManager;
+import com.github.novskey.novabot.data.SpawnLocation;
 import com.github.novskey.novabot.maps.Geofencing;
 import com.github.novskey.novabot.maps.ReverseGeocoder;
+import com.github.novskey.novabot.maps.TimeZones;
 import com.github.novskey.novabot.notifier.NotificationsManager;
 import com.github.novskey.novabot.notifier.RaidNotificationSender;
 import com.github.novskey.novabot.parser.*;
@@ -10,10 +13,7 @@ import com.github.novskey.novabot.pokemon.Pokemon;
 import com.github.novskey.novabot.raids.LobbyManager;
 import com.github.novskey.novabot.raids.Raid;
 import com.github.novskey.novabot.raids.RaidLobby;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import org.ini4j.Ini;
@@ -37,8 +37,17 @@ public class NovaBot {
     public final Logger novabotLog = LoggerFactory.getLogger("novabot");
     public final ConcurrentHashMap<String, ZonedDateTime> lastUserRoleChecks = new ConcurrentHashMap<>();
     public final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    public final String configName;
+    private final String geofences;
+    public final String supporterLevels;
+    private final String suburbsName;
+    public final String gkeys;
+    public final String formatting;
+    public final String raidChannels;
+    public final String pokeChannels;
+    public final String presets;
     public TextChannel roleLog;
-    public Guild guild;
+    public Guild guild = null;
     public boolean testing = false;
     public Config config;
     public SuburbManager suburbs;
@@ -47,47 +56,127 @@ public class NovaBot {
     public LobbyManager lobbyManager;
     public MessageChannel userUpdatesLog;
     public Geofencing geofencing;
-    public DBManager dbManager;
     public ReverseGeocoder reverseGeocoder;
     public Commands commands;
-    private NotificationsManager notificationsManager;
+    public NotificationsManager notificationsManager;
     public Parser parser;
     private ResourceBundle messagesBundle;
     private ResourceBundle timeUnitsBundle;
+    private HashMap<String, String> localStringCache = new HashMap<>(100);
+    private String locale = "en";
+    public TimeZones timeZones;
+    private ArrayList<JDA> notificationBots = new ArrayList<>();
+    private int lastNotificationBot = 0;
+    public DataManager dataManager;
+
+    public NovaBot(String config, String geofences, String supporterLevels, String suburbs, String gkeys, String formatting, String raidChannels, String pokeChannels, String presets) {
+        this.configName = config;
+        this.geofences = geofences;
+        this.supporterLevels = supporterLevels;
+        this.suburbsName = suburbs;
+        this.gkeys = gkeys;
+        this.formatting = formatting;
+        this.raidChannels = raidChannels;
+        this.pokeChannels = pokeChannels;
+        this.presets = presets;
+    }
+
+    public NovaBot() {
+        this.configName = "config.ini";
+        this.geofences = "geofences.txt";
+        this.supporterLevels = "supporterlevels.txt";
+        this.suburbsName = "suburbs.txt";
+        this.gkeys = "gkeys.txt";
+        this.formatting = "formatting.ini";
+        this.raidChannels = "raidchannels.ini";
+        this.pokeChannels = "pokechannels.ini";
+        this.presets = "presets.ini";
+    }
 
 
     public void alertRaidChats(String[] raidChatIds, String message) {
         for (String raidChatId : raidChatIds) {
             guild.getTextChannelById(raidChatId).sendMessageFormat(message).queue(
                     m -> m.addReaction(WHITE_GREEN_CHECK).queue()
-                                                                                 );
+            );
         }
     }
 
     public void loadConfig() {
         try {
             config = new Config(
-                    new Ini(new File(testing ? "config.example.ini" : "config.ini")),
+                    new Ini(new File(testing ? "config.example.ini" : configName)),
                     this
             );
         } catch (IOException e) {
-            e.printStackTrace();
+            novabotLog.error(String.format("Couldn't find config file %s, aborting", configName));
+            System.exit(0);
         }
     }
 
     public void loadGeofences() {
         geofencing = new Geofencing(this);
-        geofencing.loadGeofences();
+        geofencing.loadGeofences(geofences);
     }
 
     public void loadSuburbs() {
-        suburbs = new SuburbManager(new File("suburbs.txt"), this);
+        suburbs = new SuburbManager(new File(suburbsName), this);
     }
 
     public static void main(String[] args) {
-//        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        System.out.println(Arrays.toString(args));
+        if (args.length % 2 != 0) {
+            System.out.println("Uneven number of command line arguments. Make sure each argument has a matching value.");
+            return;
+        }
 
-        NovaBot novaBot = new NovaBot();
+        String config = "config.ini";
+        String geofences = "geofences.txt";
+        String supporterLevels = "supporterlevels.txt";
+        String suburbs = "suburbs.txt";
+        String gkeys = "gkeys.txt";
+        String formatting = "formatting.ini";
+        String raidChannels = "raidchannels.ini";
+        String pokeChannels = "pokechannels.ini";
+        String presets = "presets.ini";
+        String locale = "en";
+
+        for (int i = 0; i < args.length; i += 2) {
+            switch (args[i]) {
+                case "-cf":
+                    config = args[i + 1];
+                    break;
+                case "-gf":
+                    geofences = args[i + 1];
+                    break;
+                case "-sl":
+                    supporterLevels = args[i + 1];
+                    break;
+                case "-s":
+                    suburbs = args[i + 1];
+                    break;
+                case "-gk":
+                    gkeys = args[i + 1];
+                    break;
+                case "-f":
+                    formatting = args[i + 1];
+                    break;
+                case "-rc":
+                    raidChannels = args[i + 1];
+                    break;
+                case "-pc":
+                    pokeChannels = args[i + 1];
+                    break;
+                case "-p":
+                    presets = args[i + 1];
+                    break;
+                case "-l":
+                    locale = args[i + 1];
+            }
+        }
+
+        NovaBot novaBot = new NovaBot(config, geofences, supporterLevels, suburbs, gkeys, formatting, raidChannels, pokeChannels, presets);
+        novaBot.setLocale(locale);
         novaBot.setup();
         novaBot.start();
     }
@@ -100,8 +189,8 @@ public class NovaBot {
             List<User> mentionedUsers = msg.getMentionedUsers();
 
             for (User mentionedUser : mentionedUsers) {
-                OffsetDateTime joinDate      = guild.getMember(mentionedUser).getJoinDate();
-                String         formattedDate = joinDate.toInstant().atZone(config.getTimeZone()).format(formatter);
+                OffsetDateTime joinDate = guild.getMember(mentionedUser).getJoinDate();
+                String formattedDate = joinDate.toInstant().atZone(config.getTimeZone()).format(formatter);
 
                 response.append(String.format("  %s joined at %s", mentionedUser.getAsMention(), formattedDate));
             }
@@ -116,25 +205,34 @@ public class NovaBot {
             return;
         }
 
+        if (msg.equals(getLocalString("ApiQuotasCommand"))){
+            if (isAdmin(author)){
+                channel.sendMessage(getApiQuotasMessage()).queue();
+            }else {
+                novabotLog.info(String.format("%s doesn't have the admin role required for !apiquotas",author.getName()));
+            }
+            return;
+        }
+
         if (msg.equals(getLocalString("ReloadCommand"))) {
             if (isAdmin(author)) {
                 loadConfig();
                 loadSuburbs();
                 loadGeofences();
             }
-            channel.sendMessageFormat("%s, %s", author,getLocalString("ReloadMessage")).queue();
+            channel.sendMessageFormat("%s, %s", author, getLocalString("ReloadMessage")).queue();
             return;
         }
 
         if (msg.equals(getLocalString("PauseCommand"))) {
-            dbManager.pauseUser(author.getId());
-            channel.sendMessageFormat("%s, %s", author,getLocalString("PauseMessage")).queue();
+            dataManager.pauseUser(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("PauseMessage")).queue();
             return;
         }
 
         if (msg.equals(getLocalString("UnPauseCommand"))) {
-            dbManager.unPauseUser(author.getId());
-            channel.sendMessageFormat("%s, %s", author,getLocalString("UnPauseMessage")).queue();
+            dataManager.unPauseUser(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("UnPauseMessage")).queue();
             return;
         }
 
@@ -144,27 +242,27 @@ public class NovaBot {
             RaidLobby lobby = lobbyManager.getLobby(groupCode);
 
             if (lobby == null) {
-                channel.sendMessageFormat("%s %s", author, getLocalString("NoRaidLobbyMessage").replace("<lobbycode>",groupCode)).queue();
+                channel.sendMessageFormat("%s %s", author, getLocalString("NoRaidLobbyMessage").replace("<lobbycode>", groupCode)).queue();
                 return;
             } else {
                 if (lobby.containsUser(author.getId())) {
-                    channel.sendMessageFormat("%s %s", author,getLocalString("AlreadyInLobbyMessage")).queue();
+                    channel.sendMessageFormat("%s %s", author, getLocalString("AlreadyInLobbyMessage")).queue();
                     return;
                 }
 
                 lobby.joinLobby(author.getId());
 
                 String alertMsg = getLocalString("AlertRaidChatsMessage");
-                alertMsg = alertMsg.replaceAll("<user>",author.getAsMention());
-                alertMsg = alertMsg.replaceAll("<boss-or-egg>", (lobby.spawn.bossId == 0 ? String.format("lvl %s egg", lobby.spawn.raidLevel) : lobby.spawn.properties.get("pkmn")));
-                alertMsg = alertMsg.replaceAll("<channel>",lobby.getChannel().getAsMention());
+                alertMsg = alertMsg.replaceAll("<user>", author.getAsMention());
+                alertMsg = alertMsg.replaceAll("<boss-or-egg>", (lobby.spawn.bossId == 0 ? String.format("%s %s %s", getLocalString("Level"), lobby.spawn.raidLevel, getLocalString("Egg")) : lobby.spawn.properties.get("pkmn")));
+                alertMsg = alertMsg.replaceAll("<channel>", lobby.getChannel().getAsMention());
                 alertMsg = alertMsg.replaceAll("<membercount>", String.valueOf(lobby.memberCount()));
                 alertMsg = alertMsg.replaceAll("<lobbycode>", groupCode);
 
-                alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()),alertMsg);
+                alertRaidChats(config.getRaidChats(lobby.spawn.getGeofences()), alertMsg);
 
                 String joinMsg = getLocalString("JoinRaidLobbyMessage");
-                joinMsg = joinMsg.replaceAll("<channel>",lobby.getChannel().getAsMention());
+                joinMsg = joinMsg.replaceAll("<channel>", lobby.getChannel().getAsMention());
                 joinMsg = joinMsg.replaceAll("<lobbysize>", String.valueOf(lobby.memberCount()));
                 channel.sendMessageFormat("%s %s", joinMsg).queue();
             }
@@ -173,7 +271,7 @@ public class NovaBot {
         }
 
         if (msg.equals(getLocalString("SettingsCommand"))) {
-            final UserPref userPref = dbManager.getUserPref(author.getId());
+            final UserPref userPref = dataManager.getUserPref(author.getId());
             novabotLog.debug("!settings");
             if (userPref == null || (userPref.isRaidEmpty() && userPref.isPokeEmpty() && userPref.isPresetEmpty())) {
                 channel.sendMessage(author.getAsMention() + ", " + getLocalString("NoSettingsMessage")).queue();
@@ -189,7 +287,7 @@ public class NovaBot {
             }
             return;
         } else if (msg.equals(getLocalString("PokemonSettingsCommand")) && config.pokemonEnabled()) {
-            final UserPref userPref = dbManager.getUserPref(author.getId());
+            final UserPref userPref = dataManager.getUserPref(author.getId());
             novabotLog.debug("!pokemonsettings");
             if (userPref == null || userPref.isPokeEmpty()) {
                 channel.sendMessage(author.getAsMention() + ", " + getLocalString("NoPokemonSettingsMessage")).queue();
@@ -205,7 +303,7 @@ public class NovaBot {
             }
             return;
         } else if (msg.equals(getLocalString("RaidSettingsCommand")) && config.raidsEnabled()) {
-            final UserPref userPref = dbManager.getUserPref(author.getId());
+            final UserPref userPref = dataManager.getUserPref(author.getId());
             novabotLog.debug("!raidsettings");
             if (userPref == null || userPref.isRaidEmpty()) {
                 channel.sendMessage(author.getAsMention() + ", " + getLocalString("NoRaidSettingsMessage")).queue();
@@ -221,12 +319,12 @@ public class NovaBot {
             }
             return;
         } else if (config.presets.size() > 0 && (msg.equals(getLocalString("PresetSettingsCommand")))) {
-            UserPref userPref = dbManager.getUserPref(author.getId());
+            UserPref userPref = dataManager.getUserPref(author.getId());
             novabotLog.debug("!presetsettings");
             if (userPref == null || userPref.isPresetEmpty()) {
                 channel.sendMessageFormat("%s, " + getLocalString("NoPresetSettingsMessage"), author).queue();
             } else {
-                String         toSend  = String.format("%s, %s%s", author.getAsMention(), getLocalString("PresetSettingsMessage"), userPref.allPresetsToString());
+                String toSend = String.format("%s, %s%s", author.getAsMention(), getLocalString("PresetSettingsMessage"), userPref.allPresetsToString());
                 MessageBuilder builder = new MessageBuilder();
                 builder.append(toSend);
                 Queue<Message> messages = builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE);
@@ -237,7 +335,7 @@ public class NovaBot {
             return;
         } else if (config.presets.size() > 0 && (msg.equals(getLocalString("PresetsCommand")) || msg.equals(getLocalString("PresetListCommand")))) {
             MessageBuilder builder = new MessageBuilder();
-            builder.appendFormat("%s, %s%s", author, getLocalString("PresetListMessageStart"),config.getPresetsList());
+            builder.appendFormat("%s, %s%s", author, getLocalString("PresetListMessageStart"), config.getPresetsList());
 
             Queue<Message> messages = builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE);
             for (final Message message : messages) {
@@ -245,20 +343,20 @@ public class NovaBot {
             }
             return;
         } else if (msg.equals(getLocalString("ResetCommand"))) {
-            dbManager.resetUser(author.getId());
-            channel.sendMessageFormat("%s, %s",author,getLocalString("ResetMessage")).queue();
+            dataManager.resetUser(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("ResetMessage")).queue();
             return;
         } else if (msg.equals(getLocalString("ResetPokemonCommand")) && config.pokemonEnabled()) {
-            dbManager.resetPokemon(author.getId());
-            channel.sendMessageFormat("%s, %s",author,getLocalString("ResetPokemonMessage")).queue();
+            dataManager.resetPokemon(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("ResetPokemonMessage")).queue();
             return;
         } else if (msg.equals(getLocalString("ResetRaidsCommand")) && config.raidsEnabled()) {
-            dbManager.resetRaids(author.getId());
-            channel.sendMessageFormat("%s, %s", author,getLocalString("ResetRaidsMessage")).queue();
+            dataManager.resetRaids(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("ResetRaidsMessage")).queue();
             return;
         } else if (msg.equals(getLocalString("ResetPresetsCommand")) && config.presetsEnabled()) {
-            dbManager.resetPresets(author.getId());
-            channel.sendMessageFormat("%s, %s", author,getLocalString("ResetPresetsMessage")).queue();
+            dataManager.resetPresets(author.getId());
+            channel.sendMessageFormat("%s, %s", author, getLocalString("ResetPresetsMessage")).queue();
             return;
 //        }
 //        }else if(msg.equals("!activeraids")){
@@ -301,343 +399,447 @@ public class NovaBot {
 //            }
         } else if (msg.equals(getLocalString("HelpCommand"))) {
             channel.sendMessageFormat(getLocalString("HelpMessageStart") +
-                                (config.pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
-                                (config.raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
-                                (config.presets.size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
-                                getLocalString("HelpMessageOtherCommandsStart") +
-                                (config.statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
-                                (config.isRaidOrganisationEnabled()
-                                 && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
-                                 || channel.getType() == ChannelType.PRIVATE
-                                 ? getLocalString("HelpMessageJoinLobbyCommand")
-                                 : "") +
+                    (config.pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
+                    (config.raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
+                    (config.presets.size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
+                    getLocalString("HelpMessageOtherCommandsStart") +
+                    (config.statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
+                    (config.isRaidOrganisationEnabled()
+                            && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
+                            || channel.getType() == ChannelType.PRIVATE
+                            ? getLocalString("HelpMessageJoinLobbyCommand")
+                            : "") +
 //                    (config.isRaidOrganisationEnabled()
 //                            && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
 //                            || channel.getType() == ChannelType.PRIVATE
 //                            ? "!!activeraids\n"
 //                            : "") +
-                                (config.useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
-                                 getLocalString("HelpMessageOtherCommands")).queue();
+                    (config.useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
+                    (config.suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
+                    getLocalString("HelpMessageOtherCommands")).queue();
             return;
         } else if (config.useGeofences() && (msg.equals(getLocalString("RegionListCommand")) || msg.equals(getLocalString("RegionsCommand")))) {
-            channel.sendMessageFormat("%s, %s```%s```", author, getLocalString("RegionListMessageStart"),Geofencing.getListMessage()).queue();
+            MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("RegionListMessageStart"), Geofencing.getListMessage());
+            builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
+            return;
+        } else if (config.suburbsEnabled() && (msg.equals(getLocalString("SuburbListCommand")) || msg.equals(getLocalString("SuburbsCommand")))) {
+            MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("SuburbListMessageStart"), suburbs.getListMessage());
+            builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
             return;
         }
 
         UserCommand userCommand;
+        userCommand = parser.parseInput(msg);
 
-        if (msg.startsWith(getLocalString("AddRaidCommand")) || msg.startsWith(getLocalString("DelRaidCommand")) || msg.startsWith(getLocalString("ClearRaidLocationCommand"))) {
-            userCommand = parser.parseInput(msg);
-        } else {
-            userCommand = parser.parseInput(msg);
-        }
         final ArrayList<InputError> exceptions = userCommand.getExceptions();
 
+        final String cmdStr = (String) userCommand.getArg(0).getParams()[0];
+        String matchingCommand = findMatch(cmdStr);
+
+        if (matchingCommand != null && matchingCommand.equals("statscommand")){
+            exceptions.remove(InputError.BlacklistedPokemon);
+        }
+
         if (exceptions.size() > 0) {
-            String           errorMessage = author.getAsMention() + ", I had " + ((exceptions.size() == 1) ? "a problem" : "problems") + " reading your input.\n\n";
-            final InputError error        = InputError.mostSevere(exceptions);
+            String errorMessage = author.getAsMention() + ", " + ((exceptions.size() > 1) ? getLocalString("ProblemsReadingInput") : getLocalString("ProblemReadingInput"));
+            final InputError error = InputError.mostSevere(exceptions);
             errorMessage += error.getErrorMessage(userCommand);
             channel.sendMessage(errorMessage).queue();
-        } else {
-            final String cmdStr = (String) userCommand.getArg(0).getParams()[0];
+            return;
+        }
 
-            if (cmdStr.equals(getLocalString("StatsCommand"))) {
-                Pokemon[] pokemons = userCommand.buildPokemon();
 
-                StringBuilder str = new StringBuilder(author.getAsMention() + ", " + getLocalString("StatsMessageStart"));
 
-                for (Pokemon pokemon : pokemons) {
+        if(matchingCommand == null){
+            return;
+        }
 
-                    com.github.novskey.novabot.core.TimeUnit timeUnit = (com.github.novskey.novabot.core.TimeUnit) userCommand.getArg(ArgType.TimeUnit).getParams()[0];
+        if (matchingCommand.equals("statscommand")) {
+            Pokemon[] pokemons = userCommand.buildPokemon();
 
-                    int intervalLength = (int) userCommand.getArg(ArgType.Int).getParams()[0];
+            StringBuilder str = new StringBuilder(author.getAsMention() + ", " + getLocalString("StatsMessageStart"));
 
-                    int count = dbManager.countSpawns(pokemon.getID(), timeUnit, intervalLength);
+            for (Pokemon pokemon : pokemons) {
 
-                    str.append(String.format("  %s %s%s %s %s %s%n%n",
-                                             count,
-                                             pokemon.name,
-                                             count == 1 ? "" : "s",
-                                             getLocalString("StatsMessageResult"),
-                                             intervalLength,
-                                             getLocalString(String.valueOf(timeUnit).toLowerCase())));
+                com.github.novskey.novabot.core.TimeUnit timeUnit = (com.github.novskey.novabot.core.TimeUnit) userCommand.getArg(ArgType.TimeUnit).getParams()[0];
 
+                int intervalLength = (int) userCommand.getArg(ArgType.Int).getParams()[0];
+
+                int count = dataManager.countSpawns(pokemon.getID(), timeUnit, intervalLength);
+
+                str.append(String.format("  %s %s%s %s %s %s%n%n",
+                        count,
+                        pokemon.name,
+                        count == 1 ? "" : "s",
+                        getLocalString("StatsMessageResult"),
+                        intervalLength,
+                        getLocalString(String.valueOf(timeUnit).toLowerCase())));
+
+            }
+            channel.sendMessage(str.toString()).queue();
+            return;
+        }
+
+        if (matchingCommand.contains("raid")) {
+            Raid[] raids = userCommand.buildRaids();
+
+            ArrayList<String> nonRaidBosses = new ArrayList<>();
+
+            for (Pokemon pokemon : userCommand.getUniquePokemon()) {
+                if (!config.raidBosses.contains(pokemon.getID())) {
+                    nonRaidBosses.add(Pokemon.idToName(pokemon.getID()));
+                }
+            }
+
+            if (nonRaidBosses.size() != 0) {
+                StringBuilder message = new StringBuilder(author.getAsMention() + getLocalString("ProblemReadingInput") +
+                        getLocalString("NotPossibleRaidBossesError"));
+
+                for (String nonRaidBoss : nonRaidBosses) {
+                    message.append(String.format("  %s%n", nonRaidBoss));
                 }
 
-                channel.sendMessage(str.toString()).queue();
-
+                channel.sendMessage(message.toString()).queue();
                 return;
             }
 
-            if (cmdStr.contains("raid")) {
-                Raid[] raids = userCommand.buildRaids();
+            switch (matchingCommand) {
+                case "addraidcommand": {
+                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
 
-                ArrayList<String> nonRaidBosses = new ArrayList<>();
+                    boolean isSupporter = isSupporter(author.getId());
 
-                for (Pokemon pokemon : userCommand.getUniquePokemon()) {
-                    if (!config.raidBosses.contains(pokemon.getID())) {
-                        nonRaidBosses.add(Pokemon.idToName(pokemon.getID()));
+                    if (limit != null && limit.raidLimit != null && dataManager.countRaids(author.getId(), config.countLocationsInLimits()) + raids.length > limit.raidLimit) {
+                        channel.sendMessageFormat("%s %s %s %s. " +
+                                (limit.raidLimit > 0 ? getLocalString("ExceededNonZeroRaidLimitMessage") : ""),
+                                author,
+                                getLocalString("ExceedLimitMessageStart"),
+                                limit.raidLimit,
+                                getLocalString("ExceedRaidLimitMessageEnd")).queue();
+                        return;
+                    } else if (limit == null && isSupporter) {
+                        novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), true));
                     }
-                }
 
-                if (nonRaidBosses.size() != 0) {
-                    StringBuilder message = new StringBuilder(author.getAsMention() + getLocalString("ProblemReadingInput") +
-                                                              getLocalString("NotPossibleRaidBossesError"));
-
-                    for (String nonRaidBoss : nonRaidBosses) {
-                        message.append(String.format("  %s%n", nonRaidBoss));
+                    if (dataManager.notContainsUser(author.getId())) {
+                        dataManager.addUser(author.getId());
                     }
 
-                    channel.sendMessage(message.toString()).queue();
+                    for (Raid raid : raids) {
+                        novabotLog.debug("adding raid " + raid);
+                        dataManager.addRaid(author.getId(), raid);
+                    }
+
+                    String message2 = String.format("%s, %s %s",author.getAsMention(),getLocalString("YouWillNowBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {Location.ALL};
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 += String.format(" %s %s", getLocalString("RaidsIn"),Location.listToString(locations));
+                    channel.sendMessage(message2).queue();
+
                     return;
                 }
-
-                switch (cmdStr) {
-                    case "!addraid": {
-                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
-
-                        boolean isSupporter = isSupporter(author.getId());
-
-                        if (limit != null && limit.raidLimit != null && dbManager.countRaids(author.getId(), config.countLocationsInLimits()) + raids.length > limit.raidLimit) {
-                            channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s raid notifications set up. " +
-                                                      (limit.raidLimit > 0 ? "What you tried to add would take you over this limit, please remove some raids with the !delraid command or try adding fewer raids." : ""), author, limit.raidLimit).queue();
-                            return;
-                        } else if (limit == null && isSupporter) {
-                            novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), true));
-                        }
-
-                        if (dbManager.notContainsUser(author.getId())) {
-                            dbManager.addUser(author.getId());
-                        }
-
-                        for (Raid raid : raids) {
-                            novabotLog.debug("adding raid " + raid);
-                            dbManager.addRaid(author.getId(), raid);
-                        }
-
-                        String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[]     locations    = {Location.ALL};
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " raids in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
-
-                        return;
+                case "delraidcommand": {
+                    if (dataManager.notContainsUser(author.getId())) {
+                        dataManager.addUser(author.getId());
                     }
-                    case "!delraid": {
-                        if (dbManager.notContainsUser(author.getId())) {
-                            dbManager.addUser(author.getId());
-                        }
 
-                        for (Raid raid : raids) {
-                            novabotLog.debug("deleting raid " + raid);
-                            dbManager.deleteRaid(author.getId(), raid);
-                        }
-
-                        String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[]     locations    = {Location.ALL};
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " raids in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
-
-                        return;
+                    for (Raid raid : raids) {
+                        novabotLog.debug("deleting raid " + raid);
+                        dataManager.deleteRaid(author.getId(), raid);
                     }
-                    case "!clearraid": {
-                        if (dbManager.notContainsUser(author.getId())) {
-                            dbManager.addUser(author.getId());
-                        }
-                        novabotLog.debug("clearing raids " + Arrays.toString(raids));
-                        dbManager.clearRaid(author.getId(), new ArrayList<>(Arrays.asList(raids)));
 
-                        String message2 = String.format("%s you will no longer be notified of %s in any location", author.getAsMention(), Pokemon.listToString(userCommand.getUniquePokemon()));
-                        channel.sendMessage(message2).queue();
-                        return;
-                    }
-                    case "!clearraidlocation": {
-                        final Location[] locations2 = userCommand.getLocations();
-                        dbManager.clearLocationsRaids(author.getId(), locations2);
-                        final String message2 = author.getAsMention() + " you will no longer be notified of any raids in " + Location.listToString(locations2);
-                        channel.sendMessage(message2).queue();
-                        break;
-                    }
-                }
-            }
+                    String message2 = String.format("%s, %s %s",author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
 
-            if (cmdStr.contains("poke")) {
-                final Pokemon[] pokemons = userCommand.buildPokemon();
-
-                switch (cmdStr) {
-                    case "!addpokemon": {
-                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
-
-                        boolean isSupporter = isSupporter(author.getId());
-
-                        if (limit != null && limit.pokemonLimit != null && dbManager.countPokemon(author.getId(), config.countLocationsInLimits()) + pokemons.length > limit.pokemonLimit) {
-                            channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s pokemon notifications set up. " +
-                                                      (limit.pokemonLimit > 0 ? "What you tried to add would take you over this limit, please remove some pokemon with the !delpokemon command or try adding fewer pokemon." : ""), author, limit.pokemonLimit).queue();
-                            return;
-                        } else if (limit == null && isSupporter) {
-                            novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
-                        }
-
-                        if (dbManager.notContainsUser(author.getId())) {
-                            dbManager.addUser(author.getId());
-                        }
-                        for (final Pokemon pokemon : pokemons) {
-                            novabotLog.debug("adding pokemon " + pokemon);
-                            dbManager.addPokemon(author.getId(), pokemon);
-                        }
-                        String message2 = author.getAsMention() + " you will now be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-                        message2 += userCommand.getIvMessage();
-
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[]     locations    = {Location.ALL};
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
-                        return;
-                    }
-                    case "!delpokemon": {
-                        for (final Pokemon pokemon : pokemons) {
-                            dbManager.deletePokemon(author.getId(), pokemon);
-                        }
-                        String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(userCommand.getUniquePokemon());
-                        message2 += userCommand.getIvMessage();
-
-                        final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                        Location[]     locations    = {Location.ALL};
-                        if (locationsArg != null) {
-                            locations = userCommand.getLocations();
-                        }
-                        message2 = message2 + " in " + Location.listToString(locations);
-                        channel.sendMessage(message2).queue();
-                        return;
-                    }
-                    case "!clearpokemon": {
-                        dbManager.clearPokemon(author.getId(), new ArrayList<>(Arrays.asList(pokemons)));
-                        final String message2 = author.getAsMention() + " you will no longer be notified of " + Pokemon.listToString(pokemons) + " in any locations";
-                        channel.sendMessage(message2).queue();
-                        return;
-                    }
-                    case "!clearpokelocation": {
-                        final Location[] locations2 = userCommand.getLocations();
-                        dbManager.clearLocationsPokemon(author.getId(), locations2);
-                        final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon in " + Location.listToString(locations2);
-                        channel.sendMessage(message2).queue();
-                    }
-                }
-            } else if (cmdStr.contains("preset")) {
-
-                final Argument locationsArg = userCommand.getArg(ArgType.Locations);
-                Location[]     locations    = {Location.ALL};
-                if (locationsArg != null) {
-                    locations = userCommand.getLocations();
-                }
-
-                switch (cmdStr) {
-                    case "!loadpreset": {
-                        NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
-
-                        boolean isSupporter = isSupporter(author.getId());
-
-                        if (limit != null && limit.presetLimit != null && dbManager.countPresets(author.getId(), config.countLocationsInLimits()) + locations.length > limit.presetLimit) {
-                            channel.sendMessageFormat("%s at your supporter level you may have a maximum of %s preset notifications set up. " +
-                                                      (limit.presetLimit > 0 ? "What you tried to add would take you over this limit, please remove some presets with the !delpreset command or try adding fewer presets." : ""), author, limit.presetLimit).queue();
-                            return;
-                        } else if (limit == null && isSupporter) {
-                            novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
-                        }
-
-                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
-                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
-
-                        for (String preset : presets) {
-                            for (Location location : locations) {
-                                dbManager.addPreset(author.getId(),preset,location);
-                            }
-                        }
-
-                        String message    = String.format("%s you will now be notified of anything in the %s preset%s", author.getAsMention(), Arrays.toString(presets),presets.length > 1 ? "s" : "");
-
-                        message += " in " + Location.listToString(locations);
-                        channel.sendMessage(message).queue();
-                        return;
-                    }
-                    case "!delpreset": {
-                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
-                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
-
-                        for (String preset : presets) {
-                            for (Location location : locations) {
-                                dbManager.addPreset(author.getId(), preset, location);
-                            }
-                        }
-
-                        String message = String.format("%s you will no longer be notified of anything in the %s preset%s", author.getAsMention(), Arrays.toString(presets), presets.length > 1 ? "s" : "");
-
-                        message += " in " + Location.listToString(locations);
-                        channel.sendMessage(message).queue();
-                        return;
-                    }
-                    case "!clearpreset": {
-                        Object[] presetsObj =  userCommand.getArg(ArgType.Preset).getParams();
-                        String[] presets = Arrays.copyOf(presetsObj,presetsObj.length,String[].class);
-                        dbManager.clearPreset(author.getId(), presets);
-                        channel.sendMessageFormat("%s you will no longer be notified of %s preset%s in any locations",author,Arrays.toString(presets),presets.length > 1 ? "s" : "").queue();
-                        return;
-                    }
-                    case "!clearpresetlocation": {
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {Location.ALL};
+                    if (locationsArg != null) {
                         locations = userCommand.getLocations();
-                        dbManager.clearLocationsPresets(author.getId(),locations);
-                        channel.sendMessageFormat("%s you will no longer be notified of any presets in %s",author,Location.listToString(locations)).queue();
-                        return;
                     }
+                    message2 += String.format(" %s %s",getLocalString("RaidsIn"),Location.listToString(locations));
+                    channel.sendMessage(message2).queue();
+
+                    return;
                 }
-            } else if (cmdStr.equals("!clearlocation")) {
-                final Location[] locations2 = userCommand.getLocations();
-                dbManager.clearLocationsPokemon(author.getId(), locations2);
-                dbManager.clearLocationsRaids(author.getId(), locations2);
-                final String message2 = author.getAsMention() + " you will no longer be notified of any pokemon or raids in " + Location.listToString(locations2);
-                channel.sendMessage(message2).queue();
+                case "clearraidcommand": {
+                    if (dataManager.notContainsUser(author.getId())) {
+                        dataManager.addUser(author.getId());
+                    }
+                    novabotLog.debug("clearing raids " + UtilityFunctions.arrayToString(raids));
+                    dataManager.clearRaid(author.getId(), new ArrayList<>(Arrays.asList(raids)));
+
+                    String message2 = String.format("%s %s %s %s %s", author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()), getLocalString("Raids"), getLocalString("InAnyLocations"));
+                    channel.sendMessage(message2).queue();
+                    return;
+                }
+                case "clearraidlocationcommand": {
+                    final Location[] locations2 = userCommand.getLocations();
+                    dataManager.clearLocationsRaids(author.getId(), locations2);
+                    final String message2 = String.format("%s %s %s", author.getAsMention(), getLocalString("ClearRaidLocationMessage"),Location.listToString(locations2));
+                    channel.sendMessage(message2).queue();
+                    break;
+                }
             }
+        }
+
+        if (matchingCommand.contains("poke")) {
+            final Pokemon[] pokemons = userCommand.buildPokemon();
+
+            switch (matchingCommand) {
+                case "addpokemoncommand": {
+                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+
+                    boolean isSupporter = isSupporter(author.getId());
+
+                    if (limit != null && limit.pokemonLimit != null && dataManager.countPokemon(author.getId(), config.countLocationsInLimits()) + pokemons.length > limit.pokemonLimit) {
+                        channel.sendMessageFormat("%s %s %s %s",
+                                author,
+                                getLocalString("ExceedLimitMessageStart"),
+                                limit.pokemonLimit,
+                                getLocalString("ExceedPokeLimitMessageEnd"),
+                                (limit.pokemonLimit > 0 ? getLocalString("ExceededNonZeroPokeLimitMessage") : "")).queue();
+                        return;
+                    } else if (limit == null && isSupporter) {
+                        novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
+                    }
+
+                    if (dataManager.notContainsUser(author.getId())) {
+                        dataManager.addUser(author.getId());
+                    }
+                    for (final Pokemon pokemon : pokemons) {
+                        novabotLog.debug("adding pokemon " + pokemon);
+                        dataManager.addPokemon(author.getId(), pokemon);
+                    }
+                    String message2 = String.format("%s, %s %s",author.getAsMention(),getLocalString("YouWillNowBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+                    String ivMessage = userCommand.getIvMessage();
+                    message2 += ivMessage;
+
+                    String levelMessage = userCommand.getLevelMessage();
+                    message2 += (!ivMessage.isEmpty() && !levelMessage.isEmpty() ? " and" : "") + levelMessage;
+
+                    String cpMessage = userCommand.getCpMessage();
+                    message2 += ((!ivMessage.isEmpty() || !levelMessage.isEmpty()) && !cpMessage.isEmpty() ? " and" : "") + cpMessage;
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {Location.ALL};
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    message2 += String.format(" %s %s", getLocalString("In"),Location.listToString(locations));
+                    channel.sendMessage(message2).queue();
+                    return;
+                }
+                case "delpokemoncommand": {
+                    for (final Pokemon pokemon : pokemons) {
+                        dataManager.deletePokemon(author.getId(), pokemon);
+                    }
+                    String message2 = String.format("%s %s %s",author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+                    message2 += userCommand.getIvMessage();
+
+                    final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+                    Location[] locations = {Location.ALL};
+                    if (locationsArg != null) {
+                        locations = userCommand.getLocations();
+                    }
+                    String ivMessage = userCommand.getIvMessage();
+                    message2 += ivMessage;
+
+                    String levelMessage = userCommand.getLevelMessage();
+                    message2 += (!ivMessage.isEmpty() && !levelMessage.isEmpty() ? " and" : "") + levelMessage;
+
+                    String cpMessage = userCommand.getCpMessage();
+                    message2 += ((!ivMessage.isEmpty() || !levelMessage.isEmpty()) && !cpMessage.isEmpty() ? " and" : "") + cpMessage;
+
+                    message2 += String.format(" %s %s", getLocalString("In"),Location.listToString(locations));
+
+                    channel.sendMessage(message2).queue();
+                    return;
+                }
+                case "clearpokemoncommand": {
+                    dataManager.clearPokemon(author.getId(), new ArrayList<>(Arrays.asList(pokemons)));
+                    final String message2 = String.format("%s %s %s %s",
+                            author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(pokemons),getLocalString("InAnyLocations"));
+                    channel.sendMessage(message2).queue();
+                    return;
+                }
+                case "clearpokelocationcommand": {
+                    final Location[] locations2 = userCommand.getLocations();
+                    dataManager.clearLocationsPokemon(author.getId(), locations2);
+                    final String message2 = String.format("%s %s %s",
+                            author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOfPokemonIn"),Location.listToString(locations2));
+                    channel.sendMessage(message2).queue();
+                }
+            }
+        } else if (matchingCommand.contains("preset")) {
+
+            final Argument locationsArg = userCommand.getArg(ArgType.Locations);
+            Location[] locations = {Location.ALL};
+            if (locationsArg != null) {
+                locations = userCommand.getLocations();
+            }
+
+            switch (matchingCommand) {
+                case "loadpresetcommand": {
+                    NotificationLimit limit = config.getNotificationLimit(guild.getMember(author));
+
+                    boolean isSupporter = isSupporter(author.getId());
+
+                    if (limit != null && limit.presetLimit != null && dataManager.countPresets(author.getId(), config.countLocationsInLimits()) + locations.length > limit.presetLimit) {
+                        channel.sendMessageFormat("%s %s %s %s %s",
+                                author,
+                                getLocalString("ExceedLimitMessageStart"),
+                                limit.presetLimit,
+                                getLocalString("ExceedPresetLimitMessageEnd"),
+                                (limit.presetLimit > 0 ? getLocalString("ExceededNonZeroPresetLimitMessage") : "")).queue();
+                        return;
+                    } else if (limit == null && isSupporter) {
+                        novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), isSupporter));
+                    }
+
+                    Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
+                    String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
+
+                    for (String preset : presets) {
+                        for (Location location : locations) {
+                            dataManager.addPreset(author.getId(), preset, location);
+                        }
+                    }
+
+                    String message = String.format("%s %s %s %s", 
+                            author.getAsMention(),
+                            getLocalString("LoadPresetMessageStart"),
+                            UtilityFunctions.arrayToString(presets),
+                            presets.length > 1 ? getLocalString("Presets") : getLocalString("Preset"));
+
+                    message += String.format(" %s %s", getLocalString("In"),Location.listToString(locations));
+                    channel.sendMessage(message).queue();
+                    return;
+                }
+                case "delpresetcommand": {
+                    Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
+                    String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
+
+                    for (String preset : presets) {
+                        for (Location location : locations) {
+                            dataManager.deletePreset(author.getId(), preset, location);
+                        }
+                    }
+
+                    String message = String.format("%s %s %s %s", 
+                            author.getAsMention(),
+                            getLocalString("DelPresetMessageStart"),
+                            UtilityFunctions.arrayToString(presets),
+                            presets.length > 1 ? getLocalString("Presets") : getLocalString("Preset"));
+
+                    message += String.format(" %s %s", getLocalString("In"), Location.listToString(locations));
+                    channel.sendMessage(message).queue();
+                    return;
+                }
+                case "clearpresetcommand": {
+                    Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
+                    String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
+                    dataManager.clearPreset(author.getId(), presets);
+                    channel.sendMessageFormat("%s %s %s %s %s.", 
+                            author,
+                            getLocalString("DelPresetMessageStart"),
+                            UtilityFunctions.arrayToString(presets),
+                            presets.length > 1 ? getLocalString("Presets") : getLocalString("Preset"),
+                            getLocalString("InAnyLocations")
+                            ).queue();
+                    return;
+                }
+                case "clearpresetlocationcommand": {
+                    locations = userCommand.getLocations();
+                    dataManager.clearLocationsPresets(author.getId(), locations);
+                    channel.sendMessageFormat("%s %s %s",
+                            author,
+                            getLocalString("ClearPresetLocationMessage"),
+                            Location.listToString(locations)).queue();
+                    return;
+                }
+            }
+        } else if (matchingCommand.equals("clearlocationcommand")) {
+            final Location[] locations2 = userCommand.getLocations();
+            dataManager.clearLocationsPokemon(author.getId(), locations2);
+            dataManager.clearLocationsRaids(author.getId(), locations2);
+            final String message2 = String.format("%s %s %s",
+                    author.getAsMention(),
+                    getLocalString("ClearLocationMessage"),
+                    Location.listToString(locations2));
+            channel.sendMessage(message2).queue();
         }
     }
 
-    private String getLocalString(String key){
-        return formatStr(formatStr(getLocalString(getLocalString(key,messagesBundle),timeUnitsBundle),messagesBundle),messagesBundle);
+    private Message getApiQuotasMessage() {
+        EmbedBuilder builder = new EmbedBuilder();
+        builder.setTitle("Google API Key Usage");
+        int geocodingRequests = reverseGeocoder.getRequests();
+        builder.addField("Reverse Geocoding",String.format("%s key%s active. %s request%s this session.",
+                config.getGeocodingKeys().size(),
+                config.getGeocodingKeys().size() == 1 ? "" : "s",
+                geocodingRequests,
+                geocodingRequests == 1 ? "" : "s"),
+                false);
+        int timeZoneRequests = timeZones.getRequests();
+        builder.addField("Time Zones",String.format("%s key%s active. %s request%s this session.",
+                config.getTimeZoneKeys().size(),
+                config.getTimeZoneKeys().size() == 1 ? "" : "s",
+                timeZoneRequests,
+                timeZoneRequests == 1 ? "" : "s"),
+                false);
+        int mapRequests = Spawn.getRequests();
+        builder.addField("Static Maps",String.format("%s key%s active. %s request%s this session.",
+                config.getStaticMapKeys().size(),
+                config.getStaticMapKeys().size() == 1? "" : "s",
+                mapRequests,
+                mapRequests == 1 ? "" : "s"),
+                false);
+        MessageBuilder messageBuilder = new MessageBuilder(builder.build());
+        return messageBuilder.build();
     }
 
-    private String getLocalString(String key, ResourceBundle resourceBundle){
-        if(resourceBundle.containsKey(key)) {
+    private String findMatch(String cmdStr) {
+        for (String key : messagesBundle.keySet()) {
+            if(messagesBundle.getString(key).equals(cmdStr)){
+                return key.toLowerCase();
+            }
+        }
+
+        return null;
+    }
+
+    public String getLocalString(String key) {
+        if(!localStringCache.containsKey(key)){
+            localStringCache.put(key, formatStr(formatStr(getLocalString(getLocalString(key, messagesBundle), timeUnitsBundle), messagesBundle), messagesBundle));
+        }
+        return localStringCache.get(key);
+    }
+
+    private String getLocalString(String key, ResourceBundle resourceBundle) {
+        if (resourceBundle.containsKey(key)) {
             return formatStr(resourceBundle.getString(key), resourceBundle);
-        }else{
+        } else {
             return key;
         }
     }
-    
+
     private String formatStr(String string, ResourceBundle resourceBundle) {
         for (String key : resourceBundle.keySet()) {
-            if(resourceBundle.containsKey(key)) {
-                string = string.replace("<" + key + ">", resourceBundle.getString(key));
+            if (resourceBundle.containsKey(key)) {
+                string = string.replace("<" + key.toLowerCase() + ">", resourceBundle.getString(key));
             }
         }
         return string;
     }
 
     public void parseRaidChatMsg(User author, String msg, TextChannel textChannel) {
-        if (!msg.startsWith("!") || author.isBot()) return;
+        if (!msg.startsWith(getLocalString("Prefix")) || author.isBot()) return;
 
-        if (msg.startsWith("!joinraid")) {
-            String groupCode = msg.substring(msg.indexOf("raid ") + 5).trim();
+        if (msg.startsWith(getLocalString("JoinRaidCommand"))) {
+            String groupCode = msg.substring(msg.indexOf(" ") + 1).trim();
 
             RaidLobby lobby = lobbyManager.getLobby(groupCode);
 
@@ -657,7 +859,7 @@ public class NovaBot {
                         lobby.getChannel().getAsMention(),
                         lobby.memberCount(),
                         lobby.lobbyCode
-                                                                                             ));
+                ));
             }
 
 //        } else if (msg.equals("!activeraids")) {
@@ -696,86 +898,112 @@ public class NovaBot {
     }
 
     public void parseRaidLobbyMsg(User author, String msg, TextChannel textChannel) {
-        if (!msg.startsWith("!")) return;
+        if (!msg.startsWith(getLocalString("Prefix"))) return;
 
         RaidLobby lobby = lobbyManager.getLobbyByChannelId(textChannel.getId());
 
-        if (msg.equals("!help")) {
-            textChannel.sendMessage("My raid lobby commands are: " +
-                                    "```" +
-                                    "!leave\n" +
-                                    "!map\n" +
-                                    "!timeleft\n" +
-                                    "!status\n" +
-                                    (lobby.spawn.bossId != 0 ? "!boss\n" : "") +
-                                    (lobby.spawn.bossId != 0 ? "!maxcp\n" : "") +
-                                    "!team\n" +
-                                    "!code\n" +
-                                    "```").queue();
+        if (msg.equals(getLocalString("HelpCommand"))) {
+            textChannel.sendMessageFormat("%s " +
+                    "```" +
+                    "%s\n" +
+                    "%s\n" +
+                    "%s\n" +
+                    "%s\n" +
+                    (lobby.spawn.bossId != 0 ? "%s\n" : "") +
+                    (lobby.spawn.bossId != 0 ? "%s\n" : "") +
+                    "%s\n" +
+                    "%s\n" +
+                    "```",
+                    getLocalString("RaidLobbyHelpStart"),
+                    getLocalString("LeaveCommand"),
+                    getLocalString("MapCommand"),
+                    getLocalString("TimeLeftCommand"),
+                    getLocalString("StatusCommand"),
+                    getLocalString("BossCommand"),
+                    getLocalString("MaxCpCommand"),
+                    getLocalString("TeamCommand"),
+                    getLocalString("CodeCommand")).queue();
             return;
         }
 
-        if (msg.equals("!leave")) {
+        if (msg.equals(getLocalString("LeaveCommand"))) {
             lobby.leaveLobby(author.getId());
             return;
         }
 
-        if (msg.equals("!map")) {
+        if (msg.equals(getLocalString("MapCommand"))) {
             textChannel.sendMessage(lobby.spawn.properties.get("gmaps")).queue();
             return;
         }
 
-        if (msg.equals("!timeleft")) {
+        if (msg.equals(getLocalString("TimeLeftCommand"))) {
 
             if (lobby.spawn.bossId != 0) {
-                textChannel.sendMessageFormat("Raid ends at %s (%s remaining)", lobby.spawn.getDisappearTime(printFormat24hr), lobby.spawn.timeLeft(lobby.spawn.raidEnd)).queue();
+                textChannel.sendMessageFormat("%s %s (%s %s)",
+                        getLocalString("RaidEndsAt"),
+                        lobby.spawn.getDisappearTime(printFormat24hr),
+                        lobby.spawn.timeLeft(lobby.spawn.raidEnd),
+                        getLocalString("Remaining")).queue();
             } else {
-                textChannel.sendMessageFormat("Raid starts at %s (%s remaining)", lobby.spawn.getStartTime(printFormat24hr), lobby.spawn.timeLeft(lobby.spawn.battleStart)).queue();
+                textChannel.sendMessageFormat("%s %s (%s %s)",
+                        getLocalString("RaidStartsAt"),
+                        lobby.spawn.getStartTime(printFormat24hr),
+                        lobby.spawn.timeLeft(lobby.spawn.battleStart),
+                        getLocalString("Remaining")).queue();
             }
             return;
         }
 
-        if (msg.equals("!status")) {
+        if (msg.equals(getLocalString("StatusCommand"))) {
             textChannel.sendMessage(lobby.getStatusMessage()).queue();
             return;
         }
 
-        if (msg.equals("!boss")) {
+        if (msg.equals(getLocalString("BossCommand"))) {
             if (lobby.spawn.bossId == 0) {
-                textChannel.sendMessageFormat("The boss hasn't spawned yet. It will appear at %s",
-                                              lobby.spawn.properties.get("24h_start")).queue();
+                textChannel.sendMessageFormat("%s %s",
+                        getLocalString("BossNotSpawnedYet"),
+                        lobby.spawn.properties.get("24h_start")).queue();
             } else {
                 textChannel.sendMessage(lobby.getBossInfoMessage()).queue();
             }
             return;
         }
 
-        if (msg.equals("!maxcp")) {
+        if (msg.equals(getLocalString("MaxCpCommand"))) {
             if (lobby.spawn.bossId == 0) {
-                textChannel.sendMessageFormat("The boss hasn't spawned yet. It will appear at %s",
-                                              lobby.spawn.properties.get("24h_start")).queue();
+                textChannel.sendMessageFormat("%s %s",
+                        getLocalString("BossNotSpawnedYet"),
+                        lobby.spawn.properties.get("24h_start")).queue();
             } else {
                 textChannel.sendMessage(lobby.getMaxCpMessage()).queue();
             }
             return;
         }
 
-        if (msg.equals("!team")) {
+        if (msg.equals(getLocalString("TeamCommand"))) {
             textChannel.sendMessage(lobby.getTeamMessage()).queue();
             return;
         }
 
-        if (msg.equals("!code")) {
-            textChannel.sendMessageFormat("This lobby can be joined using the command `!joinraid %s`", lobby.lobbyCode).queue();
+        if (msg.equals(getLocalString("CodeCommand"))) {
+            textChannel.sendMessageFormat("%s `%s %s`",
+                    getLocalString("CodeMessageStart"),
+                    getLocalString("JoinRaidCommand"),
+                    lobby.lobbyCode).queue();
         }
     }
 
     public void setup() {
-        messagesBundle = ResourceBundle.getBundle("Messages");
-        timeUnitsBundle = ResourceBundle.getBundle("TimeUnits");
+        messagesBundle = ResourceBundle.getBundle("Messages",new Locale(locale));
+        timeUnitsBundle = ResourceBundle.getBundle("TimeUnits",new Locale(locale));
         TimeUnit.SetBundle(timeUnitsBundle);
+        Team.setBundle(messagesBundle);
+        SpawnLocation.novaBot = this;
+        Location.all = getLocalString("All");
         loadConfig();
         loadSuburbs();
+
         if (config.useGeofences() && (geofencing == null || !geofencing.loaded)) {
             loadGeofences();
         }
@@ -787,14 +1015,13 @@ public class NovaBot {
 
         reverseGeocoder = new ReverseGeocoder(this);
 
-        dbManager = new DBManager(this);
+        timeZones = new TimeZones(this);
 
-        dbManager.scanDbConnect();
-        dbManager.novabotdbConnect();
+        dataManager = new DataManager(this);
 
         if (config.isRaidOrganisationEnabled()) {
             lobbyManager = new LobbyManager(this);
-            RaidNotificationSender.nextId = dbManager.highestRaidLobbyId() + 1;
+            RaidNotificationSender.setNextId(dataManager.highestRaidLobbyId() + 1);
         }
     }
 
@@ -807,8 +1034,12 @@ public class NovaBot {
     }
 
     private boolean isAdmin(User author) {
-        for (Role role : guild.getMember(author).getRoles()) {
-            if (role.getId().equals(config.getAdminRole())) return true;
+        for (Guild g : jda.getGuilds()) {
+            Member member = g.getMember(author);
+            if(member == null) continue;
+            for (Role role : member.getRoles()) {
+                if (role.getId().equals(config.getAdminRole())) return true;
+            }
         }
         return false;
     }
@@ -828,28 +1059,52 @@ public class NovaBot {
     public void start() {
         novabotLog.info("Connecting to db");
         novabotLog.info("Connected");
+        novabotLog.info("Purging unknown spawnpoints so they can be geocoded again");
+        int purged = dataManager.purgeUnknownSpawnpoints();
+        novabotLog.info(String.format("Purged %s spawnpoints",purged));
+
+        Game pokemonGo = Game.of(Game.GameType.DEFAULT, "Pokemon Go");
         try {
+            novabotLog.info("Logging in main bot");
             jda = new JDABuilder(AccountType.BOT)
                     .setAutoReconnect(true)
-                    .setGame(Game.of(Game.GameType.DEFAULT, "Pokemon Go"))
+                    .setGame(pokemonGo)
                     .setToken(config.getToken())
                     .buildBlocking();
 
-            jda.addEventListener(new MessageListener(this));
+            jda.addEventListener(new MessageListener(this,true));
 
+            notificationBots.add(jda);
+            if (config.getNotificationTokens().size() > 0){
+                int botNum = 1;
+                for (String token : config.getNotificationTokens()) {
+                    if (!token.equals(config.getToken())) {
+                        novabotLog.info("Logging in notification bot #" + botNum);
+                        notificationBots.add(new JDABuilder(AccountType.BOT)
+                                .setAutoReconnect(true)
+                                .setGame(pokemonGo)
+                                .setToken(token)
+                                .addEventListener(new MessageListener(this, false))
+                                .buildBlocking());
+                        botNum++;
+                    }
+                }
+            }
 
             for (Guild guild1 : jda.getGuilds()) {
-                guild = guild1;
-                novabotLog.debug(guild.getName());
+                novabotLog.info("Connected to guild: " + guild1.getName());
+                if (guild == null) {
+                    guild = guild1;
 
-                if(config.getCommandChannelId() != null) {
-                    TextChannel channel = guild.getTextChannelById(config.getCommandChannelId());
-                    if (channel != null) {
-                        if (config.showStartupMessage()) {
-                            channel.sendMessage(getLocalString("StartUpMessage")).queue();
+                    if (config.getCommandChannelId() != null) {
+                        TextChannel channel = guild.getTextChannelById(config.getCommandChannelId());
+                        if (channel != null) {
+                            if (config.showStartupMessage()) {
+                                channel.sendMessage(getLocalString("StartUpMessage")).queue();
+                            }
+                        } else {
+                            novabotLog.info(String.format("couldn't find command channel by id from config: %s", config.getCommandChannelId()));
                         }
-                    } else {
-                        novabotLog.info(String.format("couldn't find command channel by id from config: %s", config.getCommandChannelId()));
                     }
                 }
             }
@@ -867,13 +1122,27 @@ public class NovaBot {
 
             if (config.useScanDb()) {
                 notificationsManager = new NotificationsManager(this, testing);
+                notificationsManager.start();
             }
 
         } catch (LoginException | InterruptedException | RateLimitedException ex2) {
-            ex2.printStackTrace();
+            novabotLog.error("Error starting bot",ex2);
         }
 
 
         novabotLog.info("connected");
+    }
+
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
+    public synchronized JDA getNextNotificationBot() {
+        if (lastNotificationBot == notificationBots.size() - 1) {
+            lastNotificationBot = 0;
+            return notificationBots.get(lastNotificationBot);
+        }
+        ++lastNotificationBot;
+        return notificationBots.get(lastNotificationBot);
     }
 }

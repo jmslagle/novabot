@@ -1,7 +1,7 @@
 package com.github.novskey.novabot.maps;
 
 import com.github.novskey.novabot.core.NovaBot;
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.Util.UtilityFunctions;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 
@@ -45,8 +45,8 @@ public class Geofencing
         for (GeofenceIdentifier identifier : geofencesMap.keySet()) {
             String str = String.format("  %s", identifier.name);
 
-            if (identifier.hasAliases()) str += String.format("     aliases: %s", identifier.getAliasList());
-            stringBuilder.append(String.format("%s%n", str));
+            if (identifier.hasAliases()) str += String.format(", aliases: %s", identifier.getAliasList());
+            stringBuilder.append(String.format("`%s`%n", str));
         }
 
         return stringBuilder.toString();
@@ -67,9 +67,9 @@ public class Geofencing
         return geofenceIdentifiers;
     }
 
-    public void loadGeofences() {
-        novaBot.novabotLog.info("Loading geofences from geofences.txt...");
-        File file = new File("geofences.txt");
+    public void loadGeofences(String geofences) {
+        novaBot.novabotLog.info(String.format("Loading geofences from %s...", geofences));
+        File file = new File(geofences);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -124,7 +124,7 @@ public class Geofencing
                             gf.createPolygon(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()]))));
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            geofenceLog.info("Couldn't find geofence file " + geofences);
         }
 
         loaded = true;

@@ -1,8 +1,10 @@
 package com.github.novskey.novabot.pokemon;
 
+import com.github.novskey.novabot.Util.UtilityFunctions;
+import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.core.Spawn;
 import com.github.novskey.novabot.core.Types;
-import com.github.novskey.Util.UtilityFunctions;
+import com.github.novskey.novabot.data.SpawnLocation;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -15,8 +17,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static com.github.novskey.novabot.maps.Geofencing.getGeofence;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class PokeSpawn extends Spawn
 {
@@ -45,6 +47,7 @@ public class PokeSpawn extends Spawn
     public PokeSpawn(int i) {
         super();
         this.id = i;
+        properties.put("pkmn",Pokemon.getFilterName(i));
     }
 
     public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final Integer attack, final Integer defense, final Integer stamina, final Integer move1, final Integer move2, final float weight, final float height, final Integer gender, final Integer form, Integer cp) {
@@ -53,19 +56,6 @@ public class PokeSpawn extends Spawn
         this.form = null;
         this.suburb = null;
         this.disappearTime = disappearTime;
-        properties.put("24h_time", getDespawnTime(printFormat24hr));
-        properties.put("12h_time", getDespawnTime(printFormat12hr));
-        properties.put("time_left",timeLeft());
-
-        this.id = id;
-        properties.put("pkmn_id", String.valueOf(id));
-
-        String name = UtilityFunctions.capitaliseFirst(Pokemon.idToName(this.id));
-        if (name.startsWith("Unown")) {
-            name = "Unown";
-        }
-
-        properties.put("pkmn",name);
 
         this.lat = lat;
         properties.put("lat", String.valueOf(lat));
@@ -73,18 +63,28 @@ public class PokeSpawn extends Spawn
         this.lon = lon;
         properties.put("lng", String.valueOf(lon));
 
+        properties.put("time_left",timeLeft());
+
+        this.id = id;
+        properties.put("pkmn_id", String.valueOf(id));
+
+        properties.put("pkmn",Pokemon.getFilterName(id));
+
+
         if (novaBot.config.suburbsEnabled()) {
-            novaBot.reverseGeocoder.geocodedLocation(lat, lon).getProperties().forEach(properties::put);
+            this.geocodedLocation = novaBot.reverseGeocoder.geocodedLocation(lat, lon);
+            geocodedLocation.getProperties().forEach(properties::put);
         }
 
         this.geofenceIdentifiers = getGeofence(lat,lon);
+
+        this.spawnLocation = new SpawnLocation(geocodedLocation, geofenceIdentifiers);
 
         properties.put("geofence", GeofenceIdentifier.listToString(geofenceIdentifiers));
 
         properties.put("gmaps",getGmapsLink());
 
         properties.put("applemaps",getAppleMapsLink());
-
 
         this.iv_attack = attack;
         properties.put("atk", String.valueOf(iv_attack));
@@ -137,6 +137,8 @@ public class PokeSpawn extends Spawn
 
         properties.put("lvl30cp", cp == null ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 30)));
         properties.put("lvl35cp", cp == null ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 35)));
+
+        properties.put("weather","unkn");
     }
 
     public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final Integer attack, final Integer defense, final Integer stamina, final Integer move1, final Integer move2, final float weight, final float height, final Integer gender, final Integer form, Integer cp, double cpModifier) {
@@ -151,11 +153,32 @@ public class PokeSpawn extends Spawn
         properties.put("level", String.valueOf(level));
     }
 
+    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, int weight, int height, Integer gender, Integer form, Integer cp, Integer level, int weather) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,level);
+        properties.replace("weather",getWeather(weather));
+    }
+
+    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, int weather) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,cpMod);
+        properties.replace("weather",getWeather(weather));
+    }
+
     public Message buildMessage(String formatFile) {
         if(builtMessages.get(formatFile) == null) {
 
             if (!properties.containsKey("city")) {
-                novaBot.reverseGeocoder.geocodedLocation(lat, lon).getProperties().forEach(properties::put);
+                this.geocodedLocation = novaBot.reverseGeocoder.geocodedLocation(lat, lon);
+                geocodedLocation.getProperties().forEach(properties::put);
+            }
+
+            if (!properties.containsKey("24h_time")){
+                this.timeZone = novaBot.config.useGoogleTimeZones() ?  novaBot.timeZones.getTimeZone(lat,lon) : novaBot.config.getTimeZone();
+                if(timeZone == null){
+                    timeZone = novaBot.timeZones.getTimeZone(lat,lon);
+                }
+
+                properties.put("24h_time", getDespawnTime(printFormat24hr));
+                properties.put("12h_time", getDespawnTime(printFormat12hr));
             }
 
             final MessageBuilder messageBuilder = new MessageBuilder();
@@ -223,60 +246,13 @@ public class PokeSpawn extends Spawn
         return "[" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + (iv != null ? PokeSpawn.df.format(this.iv) : "unkn") + "%,CP: " + this.cp + ", " + this.move_1 + ", " + this.move_2 + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
     }
 
-//    public static void main(final String[] args) {
-//
-//        testing = true;
-//        loadConfig();
-//        loadGeofences();
-//
-////        DBManager.novabotdbConnect();
-//
-////        PokeSpawn spawn = new PokeSpawn(149, -35.214385, 149.0405493, new Timestamp(DBManager.getCurrentTime().getTime() + 6000), 1, 1, 1, "Dragon Tail", "Outrage", 13.0f, 13.0f, 3, 0, 2142,0.743 );
-//        PokeSpawn spawn = new PokeSpawn(149,
-//                -35.214385,
-//                149.0405493,
-//                UtilityFunctions.getCurrentTime(ZoneId.of("UTC")).toInstant().plusSeconds(300),
-//                0,
-//                0,
-//                0,
-//                "unkn",
-//                "unkn",
-//                0,
-//                0,
-//                0,
-//                0,
-//                0,
-//                0);
-//
-//        Instant now = Instant.now() ;                       // Simulating fetching a `Timestamp` from database by using current moment in UTC.
-////        TimeZone.setDefault(TimeZone.getTimeZone("Australia/Adelaide"));
-//        ZoneId     zoneIdDefault = ZoneId.systemDefault() ;
-//        ZoneOffset zoneOffset    = zoneIdDefault.getRules().getOffset(now) ;
-//
-//        java.sql.Timestamp ts = java.sql.Timestamp.from(now) ;  // Actually in UTC, but it's `toString` method applies JVM’s current default time zone while generating string.
-//        Instant instant = ts.toInstant() ;                  // Same moment, also in UTC.
-//        ZoneId z = ZoneId.of( "Australia/Adelaide" ) ;        // Or call your global var: `Globals.LOCALZONEID`.
-//        ZonedDateTime zdt = instant.atZone( z );            // Same moment, same point on timeline, but with wall-clock time seen in a particular zone.
-//
-//        System.out.println("Original instant: " + now);
-//        System.out.println("instant to timestamp: " + ts);
-//        System.out.println("Timestamp to instant: " +instant.toString());
-//        System.out.println("ZonedDateTime: " +zdt);
-//
-//        System.out.println("Current adelaide time: " + printFormat24hr.format(UtilityFunctions.getCurrentTime(config.getTimeZone())));
-//        System.out.println("UTC disappear time " + spawn.disappearTime);
-//        System.out.println("24h_time in " + config.getTimeZone() + " " + spawn.properties.get("24h_time"));
-//        System.out.println("12h_time in " + config.getTimeZone() + " " + spawn.properties.get("12h_time"));
-//        System.out.println("time_left: " + spawn.properties.get("time_left"));
-////        System.out.println(config.formatStr(spawn.properties,config.getTitleFormatting()));
-//        if(spawn.encountered()){
-//            System.out.println(config.formatStr(spawn.properties,config.getEncounterBodyFormatting()));
-//        }else {
-//            System.out.println(config.formatStr(spawn.properties, config.getBodyFormatting()));
-//        }
-//        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(1L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,0.743 ).hashCode());
-//        System.out.println(new PokeSpawn(12, -35.0, 149.0, new Time(214L), 1, 1, 1, "", "", 13.0f, 13.0f, 3, 1, 2142,.743 ).hashCode());
-//    }
+    public static void main(String[] args) {
+        NovaBot novaBot = new NovaBot();
+        novaBot.setup();
+        Spawn.setNovaBot(novaBot);
+        PokeSpawn pokeSpawn = new PokeSpawn(201);
+        System.out.println(pokeSpawn.properties.get("pkmn"));
+    }
 
     private boolean encountered() {
         return iv_attack != null;
@@ -300,7 +276,7 @@ public class PokeSpawn extends Spawn
     }
 
     private String getDespawnTime(DateTimeFormatter printFormat) {
-        return printFormat.format(disappearTime.withZoneSameInstant(novaBot.config.getTimeZone()));
+        return printFormat.format(disappearTime.withZoneSameInstant(timeZone));
     }
 
     private String getGender() {

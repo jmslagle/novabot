@@ -25,6 +25,19 @@ public class Raid {
     }
 
     @Override
+    public int hashCode() {
+        return bossId *
+                (location == null ? 1 : location.toDbString().hashCode());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!obj.getClass().equals(this.getClass())) return false;
+        Raid raid = (Raid) obj;
+        return raid.bossId == this.bossId && raid.location.toDbString().equals(this.location.toDbString());
+    }
+
+    @Override
     public String toString() {
         return String.format("RAID: %s,%s",bossId,location);
     }
@@ -52,6 +65,5 @@ public class Raid {
         String strengthsArray[] = new String[strengths.size()];
         return strengths.toArray(strengthsArray);
     }
-
 
 }

@@ -24,10 +24,10 @@ class PokeNotifier implements Runnable
         try {
             notifierLog.debug("Total threads: " + ManagementFactory.getThreadMXBean().getThreadCount());
             notifierLog.info("checking for pokemon to notify");
-            manager.pokeNotifSenderExecutor.submit(new PokeNotificationSender(novaBot, novaBot.dbManager.getNewPokemon()));
+            novaBot.dataManager.getNewPokemon();
             notifierLog.debug("Done checking and adding to queue for processing");
         } catch(Exception e){
-                notifierLog.error("An error ocurred in PokeNotifier", e);
+            notifierLog.error("An error ocurred in PokeNotifier", e);
         }
     }
 }
