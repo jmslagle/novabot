@@ -349,6 +349,7 @@ public class DBManager implements IDataBase {
         switch (novaBot.config.getScannerType()) {
             case RocketMap:
             case SloppyRocketMap:
+            case SkoodatRocketMap:
             case PhilMap:
                 sql = "  SELECT COUNT(*) " +
                         "FROM pokemon " +
@@ -369,6 +370,16 @@ public class DBManager implements IDataBase {
         try (Connection connection = getScanConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
+            switch (novaBot.config.getScannerType()){
+                case RocketMap:
+                case SloppyRocketMap:
+                case SkoodatRocketMap:
+                case PhilMap:
+                    statement.setInt(2,intervalLength);
+                    break;
+                default:
+                    break;
+            }
 
             dbLog.debug(statement.toString());
             System.out.println(statement);
