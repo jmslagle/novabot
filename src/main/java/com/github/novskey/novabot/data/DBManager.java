@@ -512,7 +512,7 @@ public class DBManager implements IDataBase {
                     toDelete.add(lobbyCode);
                 } else {
                     dbLog.info(String.format("Found a raid for gym id %s, lobby code %s", gymId, lobbyCode));
-                    RaidLobby lobby = new RaidLobby(spawn, lobbyCode, novaBot, channelId, roleId, inviteCode);
+                    RaidLobby lobby = new RaidLobby(spawn, lobbyCode, novaBot, channelId, roleId, inviteCode, true);
                     lobby.nextTimeLeftUpdate = nextTimeLeftUpdate;
                     lobby.loadMembers();
 
@@ -1136,10 +1136,7 @@ public class DBManager implements IDataBase {
                         newSpawns++;
                         hashCodes.add(pokeSpawn.hashCode());
 
-                        synchronized (novaBot.notificationsManager.pokeQueue) {
-                            novaBot.notificationsManager.pokeQueue.add(pokeSpawn);
-                            novaBot.notificationsManager.pokeQueue.notify();
-                        }
+                        novaBot.notificationsManager.pokeQueue.add(pokeSpawn);
 //                        pokeSpawns.add(pokeSpawn);
                     } else {
                         dbLog.debug("pokemon already seen, ignoring");

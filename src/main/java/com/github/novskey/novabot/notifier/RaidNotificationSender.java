@@ -23,7 +23,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
 
     public static final Logger notificationLog = LoggerFactory.getLogger("Raid-Notif-Sender");
-    private static boolean firstRun = true;
+    private static Boolean firstRun = true;
     private Logger localLog;
 
     private JDA jdaInstance;
@@ -54,12 +54,15 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
     public void run() {
         try {
             while (novaBot.config.raidsEnabled()) {
-                if (firstRun){
-                    localLog.info("Not sending messages on first run");
-                    firstRun = false;
-                    continue;
+                synchronized (firstRun) {
+                    if (firstRun) {
+                        localLog.info("Not sending messages on first run");
+                        firstRun = false;
+                        continue;
+                    }
                 }
 
+                localLog.info("Waiting to retrieve object from raidqueue");
                 RaidSpawn raidSpawn = novaBot.notificationsManager.raidQueue.take();
                 localLog.info("Checking " + raidSpawn);
 

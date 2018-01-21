@@ -41,7 +41,7 @@ public class RaidLobby {
     private boolean delete = false;
     private boolean created = false;
 
-    public RaidLobby(RaidSpawn raidSpawn, String lobbyCode, NovaBot novaBot) {
+    public RaidLobby(RaidSpawn raidSpawn, String lobbyCode, NovaBot novaBot, boolean restored) {
         this.spawn = raidSpawn;
         this.lobbyCode = lobbyCode;
         this.novaBot = novaBot;
@@ -54,11 +54,13 @@ public class RaidLobby {
             nextTimeLeftUpdate -= 5;
         }
 
-        novaBot.dataManager.newLobby(lobbyCode, spawn.gymId, memberCount(), channelId, roleId, nextTimeLeftUpdate, inviteCode);
+        if(!restored) {
+            novaBot.dataManager.newLobby(lobbyCode, spawn.gymId, memberCount(), channelId, roleId, nextTimeLeftUpdate, inviteCode);
+        }
     }
 
-    public RaidLobby(RaidSpawn spawn, String lobbyCode, NovaBot novaBot, String channelId, String roleId, String inviteCode) {
-        this(spawn, lobbyCode, novaBot);
+    public RaidLobby(RaidSpawn spawn, String lobbyCode, NovaBot novaBot, String channelId, String roleId, String inviteCode, boolean restored) {
+        this(spawn, lobbyCode, novaBot, restored);
         this.channelId = channelId;
         this.roleId = roleId;
         this.inviteCode = inviteCode;

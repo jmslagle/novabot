@@ -105,7 +105,7 @@ public class LobbyManager {
     }
 
     public void newRaid(String lobbyCode, RaidSpawn raidSpawn) {
-        activeLobbies.put(lobbyCode, new RaidLobby(raidSpawn, lobbyCode, novaBot));
+        activeLobbies.put(lobbyCode, new RaidLobby(raidSpawn, lobbyCode, novaBot, false));
     }
 
     public void addLobbies(ArrayList<RaidLobby> lobbies) {
