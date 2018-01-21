@@ -102,10 +102,13 @@ public class NovaBot {
         }
     }
 
+
     public void loadConfig() {
         try {
             config = new Config(
-                    new Ini(Paths.get(configName).toFile()),this);
+
+                    new Ini(Paths.get(configName).toFile())
+            );
         } catch (IOException e) {
             novabotLog.error(String.format("Couldn't find config file %s, aborting", configName));
             System.exit(0);
