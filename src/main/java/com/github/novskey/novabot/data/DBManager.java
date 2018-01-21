@@ -1921,7 +1921,7 @@ public class DBManager implements IDataBase {
                 int minLvl = rs.getInt(6);
                 int maxCp = rs.getInt(7);
                 int minCp = rs.getInt(8);
-                Location location = Location.fromDbString(rs.getString(9),novaBot);
+                Location location = Location.fromDbString(rs.getString(9).toLowerCase(),novaBot);
                 if (location == null){
                     dbLog.warn("Location is null, not dumping pokemon setting");
                     continue;
@@ -1952,7 +1952,7 @@ public class DBManager implements IDataBase {
             while (rs.next()){
                 String userId = rs.getString(1);
                 int bossId = rs.getInt(2);
-                Location location = Location.fromDbString(rs.getString(3),novaBot);
+                Location location = Location.fromDbString(rs.getString(3).toLowerCase(),novaBot);
 
                 if (location == null){
                     dbLog.warn("Location is null, not dumping raid setting");
@@ -1984,7 +1984,7 @@ public class DBManager implements IDataBase {
             while (rs.next()){
                 String userId = rs.getString(1);
                 String presetName = rs.getString(2);
-                Location location = Location.fromDbString(rs.getString(3),novaBot);
+                Location location = Location.fromDbString(rs.getString(3).toLowerCase(),novaBot);
 
                 if (location == null){
                     dbLog.warn("Location is null, not dumping preset setting");
