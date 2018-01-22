@@ -16,13 +16,12 @@ import com.github.novskey.novabot.raids.RaidLobby;
 import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
-import org.ini4j.Ini;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
-import java.io.IOException;
 import java.nio.file.Paths;
+
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -69,7 +68,8 @@ public class NovaBot {
     private int lastNotificationBot = 0;
     public DataManager dataManager;
 
-    public NovaBot(String config, String geofences, String supporterLevels, String suburbs, String gkeys, String formatting, String raidChannels, String pokeChannels, String presets) {
+    public NovaBot(String config, String geofences, String supporterLevels, String suburbs, String gkeys,
+                   String formatting, String raidChannels, String pokeChannels, String presets) {
         this.configName = config;
         this.geofences = geofences;
         this.supporterLevels = supporterLevels;
@@ -104,15 +104,9 @@ public class NovaBot {
 
 
     public void loadConfig() {
-        try {
-            config = new Config(
 
-                    new Ini(Paths.get(configName).toFile())
-            );
-        } catch (IOException e) {
-            novabotLog.error(String.format("Couldn't find config file %s, aborting", configName));
-            System.exit(0);
-        }
+        config = new Config(testing ? "config.example.ini" : configName, gkeys, formatting, raidChannels, pokeChannels,
+                supporterLevels, presets, guild, jda);
     }
 
     public void loadGeofences() {
@@ -416,14 +410,14 @@ public class NovaBot {
 //                            ? "!!activeraids\n"
 //                            : "") +
                     (config.useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
-                    (config.suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
+                    (suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
                     getLocalString("HelpMessageOtherCommands")).queue();
             return;
         } else if (config.useGeofences() && (msg.equals(getLocalString("RegionListCommand")) || msg.equals(getLocalString("RegionsCommand")))) {
             MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("RegionListMessageStart"), Geofencing.getListMessage());
             builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
             return;
-        } else if (config.suburbsEnabled() && (msg.equals(getLocalString("SuburbListCommand")) || msg.equals(getLocalString("SuburbsCommand")))) {
+        } else if (suburbsEnabled() && (msg.equals(getLocalString("SuburbListCommand")) || msg.equals(getLocalString("SuburbsCommand")))) {
             MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("SuburbListMessageStart"), suburbs.getListMessage());
             builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
             return;
@@ -1110,7 +1104,7 @@ public class NovaBot {
                 }
             }
 
-            config.loadEmotes();
+            config.loadEmotes(guild, jda);
 
             guild.getMember(jda.getSelfUser()).getRoles().forEach(System.out::println);
 
@@ -1132,6 +1126,10 @@ public class NovaBot {
 
 
         novabotLog.info("connected");
+    }
+
+    public boolean suburbsEnabled() {
+        return this.suburbs.notEmpty();
     }
 
     public void setLocale(String locale) {
