@@ -152,7 +152,7 @@ public class Pokemon {
         } else {
             url += id;
         }
-        return url + ".png";
+        return url + ".png?1";
     }
 
     public Location getLocation() {

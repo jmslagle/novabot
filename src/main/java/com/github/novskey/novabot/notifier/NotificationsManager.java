@@ -41,6 +41,7 @@ public class NotificationsManager {
                 novaBot.lobbyManager.addLobbies(novaBot.dataManager.getActiveLobbies());
             }
             for (int i = 1; i <= novaBot.config.getRaidThreads(); i++) {
+                novaBot.novabotLog.info("Starting raid thread " + i);
                 new Thread(new RaidNotificationSender(novaBot,i)).start();
             }
         }

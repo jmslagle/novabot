@@ -115,14 +115,15 @@ public class Geofencing
                     points.add(new Coordinate(lat,lon));
                 }
             }
-            first = points.get(0);
-            last = points.get(points.size()-1);
-            if(first != last){
-                points.add(first);
+            if (points.size() > 0) {
+                first = points.get(0);
+                last = points.get(points.size() - 1);
+                if (first != last) {
+                    points.add(first);
+                }
+                geofencesMap.put(new GeofenceIdentifier(name, aliases),
+                        gf.createPolygon(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()]))));
             }
-           geofencesMap.put(new GeofenceIdentifier(name,aliases),
-                            gf.createPolygon(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()]))));
-
         } catch (FileNotFoundException e) {
             geofenceLog.info("Couldn't find geofence file " + geofences);
         }

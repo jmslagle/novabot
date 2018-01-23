@@ -114,9 +114,11 @@ public class DBCache implements IDataBase {
     public void clearPokemon(String id, ArrayList<Pokemon> pokemons) {
         Set<Pokemon> settings = this.pokemons.get(id);
 
+        HashSet<Integer> pokemonIds = new HashSet<>();
+        pokemons.forEach(p -> pokemonIds.add(p.getID()));
+
         if (settings != null){
-            HashSet<Pokemon> pokemonSet = new HashSet<>(pokemons);
-            settings.removeIf(pokemonSet::contains);
+            settings.removeIf(pokemon -> pokemonIds.contains(pokemon.getID()));
         }
     }
 
@@ -124,9 +126,10 @@ public class DBCache implements IDataBase {
     public void clearRaid(String id, ArrayList<Raid> raids) {
         Set<Raid> settings = this.raids.get(id);
 
+        HashSet<Integer> bossIds = new HashSet<>();
+        raids.forEach(r -> bossIds.add(r.bossId));
         if (settings != null){
-            HashSet<Raid> raidSet = new HashSet<>(raids);
-            settings.removeIf(raidSet::contains);
+            settings.removeIf(raid -> bossIds.contains(raid.bossId));
         }
     }
 
@@ -279,7 +282,10 @@ public class DBCache implements IDataBase {
         ArrayList<String> userIds = new ArrayList<>();
 
         userIds.addAll(UtilityFunctions.filterByValue(unPausedUsers,pokeSet -> {
-            Stream<Pokemon> matchingIds = pokeSet.stream().filter(pokemon -> pokemon.getID() == pokeSpawn.id);
+            Stream<Pokemon> matchingIds = pokeSet.stream().filter(
+                    pokemon ->
+                    (pokemon.getID() == pokeSpawn.id) ||
+                    (pokemon.getID() == ((pokeSpawn.form != null) ? 201 : pokeSpawn.id)));
             return matchingIds.anyMatch(poke -> {
                 if (!pokeSpawn.spawnLocation.intersect(poke.getLocation())) return false;
 

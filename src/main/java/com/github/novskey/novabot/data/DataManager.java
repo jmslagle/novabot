@@ -28,7 +28,7 @@ public class DataManager implements IDataBase {
         novaBot.setup();
 
         System.out.println(novaBot.dataManager.getUserIDsToNotify(new PokeSpawn(
-                1,
+                201,
                 -35.265134, 149.122796,
                 ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
                 15,
@@ -39,7 +39,7 @@ public class DataManager implements IDataBase {
                 0,
                 0,
                 0,
-                0,
+                1,
                 200,
                 .1)));
     }

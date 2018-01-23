@@ -96,7 +96,7 @@ public class Spawn {
     }
 
     protected String getGmapsLink() {
-        return String.format("https://www.google.com/maps?q=loc:%s,%s", this.lat, this.lon);
+        return String.format("https://www.google.com/maps?q=%s,%s", this.lat, this.lon);
     }
 
     public static void setNovaBot(NovaBot novaBot) {

@@ -33,7 +33,7 @@ public class DBManager implements IDataBase {
 
     public final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
     private ZonedDateTime lastCheckedRaids;
-    private StringBuilder blacklistQMarks = null;
+    private StringBuilder blacklistQuery = new StringBuilder();
     private final NovaBot novaBot;
     private java.lang.String scanUrl;
     private String nbUrl;
@@ -363,7 +363,7 @@ public class DBManager implements IDataBase {
                         "AND expire_timestamp > " +
                         (novaBot.config.getScanProtocol().equals("postgresql") ?
                             "extract(epoch from (now() - INTERVAL '" + intervalLength + "' " + intervalType.toDbString() + "))":
-                            "UNIX_TIMESTAMP(UTC_TIMESTAMP() - INTERVAL '" + intervalLength + "'" + intervalType.toDbString() + ")");
+                            "UNIX_TIMESTAMP(now() - INTERVAL '" + intervalLength + "'" + intervalType.toDbString() + ")");
                 break;
         }
 
@@ -840,15 +840,15 @@ public class DBManager implements IDataBase {
 
         final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
 
-        if (blacklistQMarks == null) {
-            blacklistQMarks = new StringBuilder("(");
+        if (blacklistQuery.length() == 0 && novaBot.config.getBlacklist().size() > 0) {
+            blacklistQuery = new StringBuilder("pokemon_id NOT IN (");
             for (int i = 0; i < novaBot.config.getBlacklist().size(); ++i) {
-                blacklistQMarks.append("?");
+                blacklistQuery.append("?");
                 if (i != novaBot.config.getBlacklist().size() - 1) {
-                    blacklistQMarks.append(",");
+                    blacklistQuery.append(",");
                 }
             }
-            blacklistQMarks.append(")");
+            blacklistQuery.append(") AND ");
         }
 
         String sql = null;
@@ -866,8 +866,8 @@ public class DBManager implements IDataBase {
                         "       move_2," +
                         "       display " +
                         "FROM sightings " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND expire_timestamp > " +
+                        "WHERE " + blacklistQuery + " " +
+                        "expire_timestamp > " +
                         (novaBot.config.getScanProtocol().equals("mysql")
                                 ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
                                 : "extract(epoch from now())");
@@ -890,8 +890,8 @@ public class DBManager implements IDataBase {
                         "       level, " +
                         "       weather_boosted_condition " +
                         "FROM sightings " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND updated >= " +
+                        "WHERE " + blacklistQuery + " " +
+                        "updated >= " +
                         (novaBot.config.getScanProtocol().equals("mysql")
                                 ? "UNIX_TIMESTAMP(? - INTERVAL 1 SECOND)"
                                 : "extract(epoch from (?::timestamptz - INTERVAL '1' SECOND)) ") +
@@ -919,8 +919,8 @@ public class DBManager implements IDataBase {
                         "       cp, " +
                         "       cp_multiplier " +
                         "FROM pokemon " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND last_modified >= (? - INTERVAL 1 SECOND) " +
+                        "WHERE " + blacklistQuery + " " +
+                        "last_modified >= (? - INTERVAL 1 SECOND) " +
                         "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
                 break;
             case PhilMap:
@@ -942,8 +942,8 @@ public class DBManager implements IDataBase {
                         "       cp_multiplier, " +
                         "       weather_boosted " +
                         "FROM pokemon " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND last_modified >= (? - INTERVAL 1 SECOND) " +
+                        "WHERE " + blacklistQuery + " " +
+                        "last_modified >= (? - INTERVAL 1 SECOND) " +
                         "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
                 break;
             case SloppyRocketMap:
@@ -965,8 +965,8 @@ public class DBManager implements IDataBase {
                         "       cp_multiplier, " +
                         "       weather_boosted_condition " +
                         "FROM pokemon " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND last_modified >= (? - INTERVAL 1 SECOND) " +
+                        "WHERE " + blacklistQuery + " " +
+                        "last_modified >= (? - INTERVAL 1 SECOND) " +
                         "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
                 break;
             case SkoodatRocketMap:
@@ -988,8 +988,8 @@ public class DBManager implements IDataBase {
                         "       cp_multiplier, " +
                         "       weather_id " +
                         "FROM pokemon " +
-                        "WHERE pokemon_id NOT IN " + blacklistQMarks + " " +
-                        "AND last_modified >= (? - INTERVAL 1 SECOND) " +
+                        "WHERE " + blacklistQuery + " " +
+                        "last_modified >= (? - INTERVAL 1 SECOND) " +
                         "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
                 break;
         }

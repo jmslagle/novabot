@@ -443,8 +443,8 @@ public class RaidLobby {
         try {
             Role role = novaBot.guild.getRoleById(roleId);
             memberIds.addAll(novaBot.guild.getMembersWithRoles(role).stream().map(member -> member.getUser().getId()).collect(Collectors.toList()));
-        }catch (NullPointerException e){
-            raidLobbyLog.warn("Couldn't load members, couldnt find role by Id");
+        }catch (NullPointerException | IllegalArgumentException e){
+            raidLobbyLog.warn("Couldn't load members, couldnt find role by Id or ID was null");
         }
     }
 

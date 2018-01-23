@@ -8,6 +8,7 @@ import com.github.novskey.novabot.raids.RaidLobby;
 import com.github.novskey.novabot.raids.RaidSpawn;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     public static final Logger notificationLog = LoggerFactory.getLogger("Raid-Notif-Sender");
     private static Boolean firstRun = true;
+    private final int id;
     private Logger localLog;
 
     private JDA jdaInstance;
@@ -43,6 +45,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
     public RaidNotificationSender(NovaBot novaBot, int id) {
         this.novaBot = novaBot;
         this.jdaInstance = novaBot.getNextNotificationBot();
+        this.id =id;
         localLog = LoggerFactory.getLogger("Raid-Notif-Sender-" + id);
     }
 
@@ -52,6 +55,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     @Override
     public void run() {
+        novaBot.novabotLog.info("Started raid thread " + id);
         try {
             while (novaBot.config.raidsEnabled()) {
                 synchronized (firstRun) {
@@ -179,6 +183,12 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     private void sendChannelAlert(Message message, String channelId, int raidLevel) {
         localLog.info("Sending public alert message to channel " + channelId);
+        TextChannel channel = jdaInstance.getTextChannelById(channelId);
+
+        if(channel == null){
+            localLog.warn(String.format("Couldn't find from ID %s",channel));
+            return;
+        }
         jdaInstance.getTextChannelById(channelId).sendMessage(message).queue(m -> {
             if (novaBot.config.isRaidOrganisationEnabled() && raidLevel >= 3) {
                 System.out.println(String.format("adding reaction to raid with raidlevel %s", raidLevel));
