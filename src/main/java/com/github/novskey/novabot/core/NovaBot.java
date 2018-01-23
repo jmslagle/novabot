@@ -53,7 +53,7 @@ public class NovaBot {
     private boolean testing = false;
     private CommandLineOptions cliopt;
     private Config config;
-    public SuburbManager suburbs;
+    private SuburbManager suburbs;
     public ArrayList<Invite> invites = new ArrayList<>();
     public JDA jda;
     public LobbyManager lobbyManager;
@@ -114,7 +114,7 @@ public class NovaBot {
     }
 
     private void loadSuburbs() {
-        suburbs = new SuburbManager(Paths.get(suburbsName), this);
+        setSuburbs(new SuburbManager(Paths.get(suburbsName), this));
     }
 
     public static void main(String[] args) {
@@ -374,7 +374,7 @@ public class NovaBot {
             builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
             return;
         } else if (suburbsEnabled() && (msg.equals(getLocalString("SuburbListCommand")) || msg.equals(getLocalString("SuburbsCommand")))) {
-            MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("SuburbListMessageStart"), suburbs.getListMessage());
+            MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("SuburbListMessageStart"), getSuburbs().getListMessage());
             builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
             return;
         }
@@ -1076,7 +1076,7 @@ public class NovaBot {
     }
 
     public boolean suburbsEnabled() {
-        return this.suburbs.notEmpty();
+        return this.getSuburbs().notEmpty();
     }
 
     private void setLocale(String locale) {
@@ -1166,5 +1166,13 @@ public class NovaBot {
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public SuburbManager getSuburbs() {
+        return suburbs;
+    }
+
+    public void setSuburbs(SuburbManager suburbs) {
+        this.suburbs = suburbs;
     }
 }
