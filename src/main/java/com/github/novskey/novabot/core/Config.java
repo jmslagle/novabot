@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.util.*;
 
@@ -227,7 +229,7 @@ public class Config {
         novaBot.novabotLog.info("Finished loading " + novaBot.configName);
 
         novaBot.novabotLog.info(String.format("Loading %s...", novaBot.gkeys));
-        geocodingKeys = loadKeys(new File(novaBot.gkeys));
+        geocodingKeys = loadKeys(Paths.get(novaBot.gkeys));
 
         geoApis.clear();
         for (String s : geocodingKeys) {
@@ -828,7 +830,7 @@ public class Config {
 
         Ini formatting;
         try {
-            formatting = new Ini(new File(fileName));
+            formatting = new Ini(Paths.get(fileName).toFile());
 
             Format format = new Format();
 
@@ -853,7 +855,7 @@ public class Config {
         }
     }
 
-    private HashMap<GeofenceIdentifier, String> loadGeofencedChannels(File file, HashMap<GeofenceIdentifier, String> map) {
+    private HashMap<GeofenceIdentifier, String> loadGeofencedChannels(Path file, HashMap<GeofenceIdentifier, String> map) {
         Scanner sc = null;
         try {
             sc = new Scanner(file);
@@ -873,13 +875,15 @@ public class Config {
             }
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find %s", file.toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
 
         return map;
     }
 
-    private ArrayList<String> loadKeys(File gkeys) {
+    private ArrayList<String> loadKeys(Path gkeys) {
 
         ArrayList<String> keys = new ArrayList<>();
 
@@ -892,8 +896,10 @@ public class Config {
             }
 
         } catch (FileNotFoundException e) {
-            novaBot.novabotLog.warn(String.format("Couldn't find gkeys file %s. Aborting", gkeys.getName()));
+            novaBot.novabotLog.warn(String.format("Couldn't find gkeys file %s. Aborting", gkeys.getFileName().toString()));
             System.exit(0);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return keys;
@@ -902,7 +908,7 @@ public class Config {
     private void loadPokemonChannels() {
         if (novaBot.geofencing == null || !novaBot.geofencing.loaded) novaBot.loadGeofences();
 
-        File file = new File(novaBot.pokeChannels);
+        Path file = Paths.get(novaBot.pokeChannels);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -1015,11 +1021,13 @@ public class Config {
 
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find pokechannels file: %s, ignoring.", novaBot.pokeChannels));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void loadPresets() {
-        File file = new File(novaBot.presets);
+        Path file = Paths.get(novaBot.presets);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -1076,13 +1084,15 @@ public class Config {
 
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.presets));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void loadRaidChannels() {
         if (novaBot.geofencing == null || !novaBot.geofencing.loaded) novaBot.loadGeofences();
 
-        File file = new File(novaBot.raidChannels);
+        Path file = Paths.get(novaBot.raidChannels);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -1215,11 +1225,13 @@ public class Config {
 
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find raidchannels file: %s, ignoring.", novaBot.pokeChannels));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void loadSupporterRoles() {
-        File file = new File(novaBot.supporterLevels);
+        Path file = Paths.get(novaBot.supporterLevels);
 
         try {
             Scanner sc = new Scanner(file);
@@ -1235,6 +1247,8 @@ public class Config {
             }
         } catch (FileNotFoundException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.supporterLevels));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

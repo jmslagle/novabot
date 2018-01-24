@@ -3,13 +3,14 @@ package com.github.novskey.novabot.core;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class SuburbManager {
     private final ArrayList<String> suburbs = new ArrayList<>();
 
-    public SuburbManager(File file, NovaBot novaBot) {
+    public SuburbManager(Path file, NovaBot novaBot) {
         try {
             Scanner in = new Scanner(file);
 

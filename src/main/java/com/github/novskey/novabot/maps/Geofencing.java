@@ -1,15 +1,19 @@
 package com.github.novskey.novabot.maps;
 
-import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.Util.UtilityFunctions;
-import org.locationtech.jts.geom.*;
+import com.github.novskey.novabot.core.NovaBot;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -69,7 +73,7 @@ public class Geofencing
 
     public void loadGeofences(String geofences) {
         novaBot.novabotLog.info(String.format("Loading geofences from %s...", geofences));
-        File file = new File(geofences);
+        Path file = Paths.get(geofences);
 
         try (Scanner in = new Scanner(file)) {
 
@@ -126,6 +130,8 @@ public class Geofencing
             }
         } catch (FileNotFoundException e) {
             geofenceLog.info("Couldn't find geofence file " + geofences);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         loaded = true;

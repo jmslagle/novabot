@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -105,9 +105,7 @@ public class NovaBot {
     public void loadConfig() {
         try {
             config = new Config(
-                    new Ini(new File(testing ? "config.example.ini" : configName)),
-                    this
-            );
+                    new Ini(Paths.get(configName).toFile()),this);
         } catch (IOException e) {
             novabotLog.error(String.format("Couldn't find config file %s, aborting", configName));
             System.exit(0);
@@ -120,7 +118,7 @@ public class NovaBot {
     }
 
     public void loadSuburbs() {
-        suburbs = new SuburbManager(new File(suburbsName), this);
+        suburbs = new SuburbManager(Paths.get(suburbsName), this);
     }
 
     public static void main(String[] args) {
