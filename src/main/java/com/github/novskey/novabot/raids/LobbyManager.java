@@ -10,13 +10,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Owner on 2/07/2017.
  */
 public class LobbyManager {
 
-    final HashMap<String, RaidLobby> activeLobbies = new HashMap<>();
+    final ConcurrentHashMap<String, RaidLobby> activeLobbies = new ConcurrentHashMap<>();
     private static final Logger lobbyManagerLog = LoggerFactory.getLogger("Lobby-Manager");
 
     private final RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
