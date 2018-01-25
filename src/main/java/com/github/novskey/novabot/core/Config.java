@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
@@ -848,39 +849,11 @@ public class Config {
             }
 
             formats.put(fileName, format);
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find formatting file %s", fileName));
         } catch (IOException e) {
             novaBot.novabotLog.error(String.format("Error loading formatting file %s", fileName),e);
         }
-    }
-
-    private HashMap<GeofenceIdentifier, String> loadGeofencedChannels(Path file, HashMap<GeofenceIdentifier, String> map) {
-        Scanner sc = null;
-        try {
-            sc = new Scanner(file);
-            while (sc.hasNext()) {
-                String line = sc.nextLine().toLowerCase();
-
-                String[] split = line.split("=");
-
-                ArrayList<GeofenceIdentifier> geofenceIdentifiers = GeofenceIdentifier.fromString(split[0].trim());
-
-                String channelId = split[1].trim();
-
-                for (GeofenceIdentifier geofenceIdentifier : geofenceIdentifiers) {
-                    map.put(geofenceIdentifier, channelId);
-                }
-
-            }
-        } catch (FileNotFoundException e) {
-            novaBot.novabotLog.warn(String.format("Couldn't find %s", file.toString()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        return map;
     }
 
     private ArrayList<String> loadKeys(Path gkeys) {
@@ -895,7 +868,7 @@ public class Config {
                 keys.add(key);
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find gkeys file %s. Aborting", gkeys.getFileName().toString()));
             System.exit(0);
         } catch (IOException e) {
@@ -1019,7 +992,7 @@ public class Config {
                 System.out.println("couldn't find channel id");
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find pokechannels file: %s, ignoring.", novaBot.pokeChannels));
         } catch (IOException e) {
             e.printStackTrace();
@@ -1082,7 +1055,7 @@ public class Config {
                 System.out.println("couldn't find preset name");
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.presets));
         } catch (IOException e) {
             e.printStackTrace();
@@ -1223,7 +1196,7 @@ public class Config {
                 System.out.println("couldn't find channel id");
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find raidchannels file: %s, ignoring.", novaBot.pokeChannels));
         } catch (IOException e) {
             e.printStackTrace();
@@ -1245,7 +1218,7 @@ public class Config {
 
                 roleLimits.put(roleId, NotificationLimit.fromString(line));
             }
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn(String.format("Couldn't find %s, ignoring", novaBot.supporterLevels));
         } catch (IOException e) {
             e.printStackTrace();
