@@ -57,7 +57,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
     public void run() {
         novaBot.novabotLog.info("Started raid thread " + id);
         try {
-            while (novaBot.config.raidsEnabled()) {
+            while (novaBot.getConfig().raidsEnabled()) {
                 synchronized (firstRun) {
                     if (firstRun) {
                         localLog.info("Not sending messages on first run");
@@ -70,7 +70,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                 RaidSpawn raidSpawn = novaBot.notificationsManager.raidQueue.take();
                 localLog.info("Checking " + raidSpawn);
 
-                if (raidSpawn.properties.get("time_left_start").startsWith("-") && raidSpawn.bossId == 0) {
+                if (raidSpawn.getProperties().get("time_left_start").startsWith("-") && raidSpawn.bossId == 0) {
                     localLog.info("Raid started but no boss Id, not posting");
                     continue;
                 }
@@ -80,7 +80,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                     continue;
                 }
 
-                if (novaBot.config.isRaidOrganisationEnabled()) {
+                if (novaBot.getConfig().isRaidOrganisationEnabled()) {
                     RaidLobby lobbyFromId = novaBot.lobbyManager.getLobbyByGymId(raidSpawn.gymId);
 
                     if (lobbyFromId != null && lobbyFromId.spawn.bossId == 0) {
@@ -107,18 +107,18 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                     toNotify.addAll(novaBot.dataManager.getUserIDsToNotify(raidSpawn));
                 }
 
-                ArrayList<String> matchingPresets = novaBot.config.findMatchingPresets(raidSpawn);
+                ArrayList<String> matchingPresets = novaBot.getConfig().findMatchingPresets(raidSpawn);
 
                 for (String preset : matchingPresets) {
                     toNotify.addAll(novaBot.dataManager.getUserIDsToNotify(preset, raidSpawn));
                 }
 
-                toNotify.forEach(id -> notifyUser(id, raidSpawn.buildMessage("formatting.ini"), raidSpawn.raidLevel >= 3 && novaBot.config.isRaidOrganisationEnabled()));
+                toNotify.forEach(id -> notifyUser(id, raidSpawn.buildMessage("formatting.ini"), raidSpawn.raidLevel >= 3 && novaBot.getConfig().isRaidOrganisationEnabled()));
 
-                if (!novaBot.config.isRaidChannelsEnabled()) continue;
+                if (!novaBot.getConfig().isRaidChannelsEnabled()) continue;
 
                 for (GeofenceIdentifier identifier : raidSpawn.getGeofences()) {
-                    ArrayList<AlertChannel> channels = novaBot.config.getRaidChannels(identifier);
+                    ArrayList<AlertChannel> channels = novaBot.getConfig().getRaidChannels(identifier);
 
                     if (channels == null) continue;
 
@@ -129,7 +129,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                     }
                 }
 
-                ArrayList<AlertChannel> noGeofences = novaBot.config.getNonGeofencedRaidChannels();
+                ArrayList<AlertChannel> noGeofences = novaBot.getConfig().getNonGeofencedRaidChannels();
 
                 if (noGeofences != null) {
                     for (AlertChannel channel : noGeofences) {
@@ -145,10 +145,10 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
     }
 
     private void checkAndPost(AlertChannel channel, RaidSpawn raidSpawn) {
-        localLog.info(String.format("Checking %s against filter %s", raidSpawn, channel.filterName));
-        if (novaBot.config.matchesFilter(novaBot.config.raidFilters.get(channel.filterName), raidSpawn)) {
+        localLog.info(String.format("Checking %s against filter %s", raidSpawn, channel.getFilterName()));
+        if (novaBot.getConfig().matchesFilter(novaBot.getConfig().raidFilters.get(channel.getFilterName()), raidSpawn)) {
             localLog.info("Raid passed filter, posting to Discord");
-            sendChannelAlert(raidSpawn.buildMessage(channel.formattingName), channel.channelId, raidSpawn.raidLevel);
+            sendChannelAlert(raidSpawn.buildMessage(channel.getFormattingName()), channel.getChannelId(), raidSpawn.raidLevel);
         }
     }
 
@@ -190,7 +190,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
             return;
         }
         jdaInstance.getTextChannelById(channelId).sendMessage(message).queue(m -> {
-            if (novaBot.config.isRaidOrganisationEnabled() && raidLevel >= 3) {
+            if (novaBot.getConfig().isRaidOrganisationEnabled() && raidLevel >= 3) {
                 System.out.println(String.format("adding reaction to raid with raidlevel %s", raidLevel));
                 m.addReaction(WHITE_GREEN_CHECK).queue();
             }
