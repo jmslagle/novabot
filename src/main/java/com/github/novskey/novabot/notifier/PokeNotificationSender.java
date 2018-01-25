@@ -84,7 +84,7 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
     }
 
     private void checkAndPost(AlertChannel channel, PokeSpawn pokeSpawn) {
-        if (novaBot.getConfig().matchesFilter(novaBot.getConfig().pokeFilters.get(channel.getFilterName()), pokeSpawn, channel.getFilterName())) {
+        if (novaBot.getConfig().matchesFilter(novaBot.getConfig().getPokeFilters().get(channel.getFilterName()), pokeSpawn, channel.getFilterName())) {
             localLog.info("Pokemon passed filter, posting to Discord");
             sendChannelAlert(pokeSpawn.buildMessage(channel.getFormattingName()), channel.getChannelId());
         } else {
