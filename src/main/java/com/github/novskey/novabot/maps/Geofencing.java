@@ -10,8 +10,8 @@ import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -128,7 +128,7 @@ public class Geofencing
                 geofencesMap.put(new GeofenceIdentifier(name, aliases),
                         gf.createPolygon(new CoordinateArraySequence(points.toArray(new Coordinate[points.size()]))));
             }
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             geofenceLog.info("Couldn't find geofence file " + geofences);
         } catch (IOException e) {
             e.printStackTrace();

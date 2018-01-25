@@ -1,9 +1,8 @@
 package com.github.novskey.novabot.core;
 
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -21,7 +20,7 @@ public class SuburbManager {
                 suburbs.add(in.nextLine().toLowerCase().trim());
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFileException e) {
             novaBot.novabotLog.warn("Couldn't find suburbs.txt, ignoring");
         } catch (IOException e) {
             e.printStackTrace();
