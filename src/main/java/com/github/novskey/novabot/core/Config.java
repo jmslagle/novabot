@@ -19,7 +19,6 @@ import net.dv8tion.jda.core.entities.*;
 import org.ini4j.Ini;
 
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,14 +37,14 @@ public class Config {
 
     private static final String[] formatKeys = new String[]{"pokemon", "raidEgg", "raidBoss"};
     private static final String[] formattingVars = new String[]{"title", "titleUrl", "body", "content", "showMap", "mapZoom", "mapWidth", "mapHeight"};
-    public final HashMap<String, JsonObject> pokeFilters = new HashMap<>();
-    public final HashMap<String, JsonObject> raidFilters = new HashMap<>();
+    private final HashMap<String, JsonObject> pokeFilters = new HashMap<>();
+    private final HashMap<String, JsonObject> raidFilters = new HashMap<>();
     private final HashMap<String, NotificationLimit> roleLimits = new HashMap<>();
     private final HashMap<String, Format> formats = new HashMap<>();
     private AlertChannels pokeChannels;
     private final AlertChannels raidChannels = new AlertChannels();
-    public HashMap<String, String> presets = new HashMap<>();
-    public ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
+    private HashMap<String, String> presets = new HashMap<>();
+    private ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
     private ArrayList<Integer> blacklist = new ArrayList<>();
     private ArrayList<String> notificationTokens = new ArrayList<>();
     private boolean logging = false;
@@ -216,8 +215,8 @@ public class Config {
 
         String raidBossStr = config.get("raidBosses", "[2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359]");
 
-        raidBosses.clear();
-        UtilityFunctions.parseList(raidBossStr).forEach(str -> raidBosses.add(Integer.valueOf(str)));
+        getRaidBosses().clear();
+        UtilityFunctions.parseList(raidBossStr).forEach(str -> getRaidBosses().add(Integer.valueOf(str)));
 
         useScanDb = config.get("useScanDb", Boolean.class, useScanDb);
 
@@ -304,8 +303,8 @@ public class Config {
     public ArrayList<String> findMatchingPresets(RaidSpawn raidSpawn) {
         ArrayList<String> matching = new ArrayList<>();
 
-        for (Map.Entry<String, String> entry : presets.entrySet()) {
-            if (matchesFilter(raidFilters.get(entry.getValue()), raidSpawn)) {
+        for (Map.Entry<String, String> entry : getPresets().entrySet()) {
+            if (matchesFilter(getRaidFilters().get(entry.getValue()), raidSpawn)) {
                 matching.add(entry.getKey());
             }
         }
@@ -315,8 +314,8 @@ public class Config {
     public ArrayList<String> findMatchingPresets(PokeSpawn pokeSpawn) {
         ArrayList<String> matching = new ArrayList<>();
 
-        for (Map.Entry<String, String> entry : presets.entrySet()) {
-            JsonObject filter = pokeFilters.get(entry.getValue());
+        for (Map.Entry<String, String> entry : getPresets().entrySet()) {
+            JsonObject filter = getPokeFilters().get(entry.getValue());
             if (filter != null && matchesFilter(filter, pokeSpawn, entry.getValue())) {
                 matching.add(entry.getKey());
             }
@@ -393,7 +392,7 @@ public class Config {
     public String getPresetsList() {
         StringBuilder list = new StringBuilder("```");
 
-        for (String presetName : presets.keySet()) {
+        for (String presetName : getPresets().keySet()) {
             list.append(String.format("  %s%n", presetName));
         }
 
@@ -471,7 +470,7 @@ public class Config {
         novaBot.setup();
 
         PokeSpawn pokeSpawn = new PokeSpawn(248);
-        System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().pokeFilters.get("ultrarare.json"),pokeSpawn,"ultrarare.json"));
+        System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().getPokeFilters().get("ultrarare.json"),pokeSpawn,"ultrarare.json"));
 
     }
 
@@ -653,7 +652,7 @@ public class Config {
 
 
     public boolean presetsEnabled() {
-        return presets.size() > 0;
+        return getPresets().size() > 0;
     }
 
     public boolean raidsEnabled() {
@@ -830,8 +829,8 @@ public class Config {
                             case "filter":
                                 filterName = value;
 
-                                if (!pokeFilters.containsKey(filterName)) {
-                                    loadFilter(filterName, pokeFilters);
+                                if (!getPokeFilters().containsKey(filterName)) {
+                                    loadFilter(filterName, getPokeFilters());
                                 }
                                 break;
                             case "formatting":
@@ -1024,8 +1023,8 @@ public class Config {
                             case "filter":
                                 filterName = value;
 
-                                if (!raidFilters.containsKey(filterName)) {
-                                    loadFilter(filterName, raidFilters);
+                                if (!getRaidFilters().containsKey(filterName)) {
+                                    loadFilter(filterName, getRaidFilters());
                                 }
                                 break;
                             case "formatting":
@@ -1103,16 +1102,16 @@ public class Config {
         if (filterName != null) {
             if (pokemon != null) {
                 if (pokemon) {
-                    if (!pokeFilters.containsKey(filterName)) {
-                        loadFilter(filterName, pokeFilters);
+                    if (!getPokeFilters().containsKey(filterName)) {
+                        loadFilter(filterName, getPokeFilters());
                     }
                 } else {
-                    if (!raidFilters.containsKey(filterName)) {
-                        loadFilter(filterName, raidFilters);
+                    if (!getRaidFilters().containsKey(filterName)) {
+                        loadFilter(filterName, getRaidFilters());
                     }
                 }
 
-                presets.put(presetName, filterName);
+                getPresets().put(presetName, filterName);
             } else {
                 System.out.println("couldn't find type value");
             }

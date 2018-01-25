@@ -270,7 +270,7 @@ public class NovaBot {
                 }
             }
             return;
-        } else if (getConfig().presets.size() > 0 && (msg.equals(getLocalString("PresetSettingsCommand")))) {
+        } else if (getConfig().getPresets().size() > 0 && (msg.equals(getLocalString("PresetSettingsCommand")))) {
             UserPref userPref = dataManager.getUserPref(author.getId());
             novabotLog.debug("!presetsettings");
             if (userPref == null || userPref.isPresetEmpty()) {
@@ -285,7 +285,7 @@ public class NovaBot {
                 }
             }
             return;
-        } else if (getConfig().presets.size() > 0 && (msg.equals(getLocalString("PresetsCommand")) || msg.equals(getLocalString("PresetListCommand")))) {
+        } else if (getConfig().getPresets().size() > 0 && (msg.equals(getLocalString("PresetsCommand")) || msg.equals(getLocalString("PresetListCommand")))) {
             MessageBuilder builder = new MessageBuilder();
             builder.appendFormat("%s, %s%s", author, getLocalString("PresetListMessageStart"), getConfig().getPresetsList());
 
@@ -353,7 +353,7 @@ public class NovaBot {
             channel.sendMessageFormat(getLocalString("HelpMessageStart") +
                     (getConfig().pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
                     (getConfig().raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
-                    (getConfig().presets.size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
+                    (getConfig().getPresets().size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
                     getLocalString("HelpMessageOtherCommandsStart") +
                     (getConfig().statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
                     (getConfig().isRaidOrganisationEnabled()
@@ -438,7 +438,7 @@ public class NovaBot {
             ArrayList<String> nonRaidBosses = new ArrayList<>();
 
             for (Pokemon pokemon : userCommand.getUniquePokemon()) {
-                if (!getConfig().raidBosses.contains(pokemon.getID())) {
+                if (!getConfig().getRaidBosses().contains(pokemon.getID())) {
                     nonRaidBosses.add(Pokemon.idToName(pokemon.getID()));
                 }
             }
