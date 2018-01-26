@@ -1,6 +1,7 @@
 package com.github.novskey.novabot.core;
 
 import com.github.novskey.novabot.Util.UtilityFunctions;
+import com.github.novskey.novabot.data.ScannerDb;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import com.github.novskey.novabot.maps.Geofencing;
 import com.github.novskey.novabot.notifier.PokeNotificationSender;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.Data;
 import net.dv8tion.jda.core.entities.*;
 import org.ini4j.Ini;
+import org.ini4j.Profile;
 
 
 import java.io.FileNotFoundException;
@@ -41,17 +43,17 @@ public class Config {
     private final HashMap<String, JsonObject> raidFilters = new HashMap<>();
     private final HashMap<String, NotificationLimit> roleLimits = new HashMap<>();
     private final HashMap<String, Format> formats = new HashMap<>();
-    private AlertChannels pokeChannels;
+    private AlertChannels pokeChannels = new AlertChannels();
     private final AlertChannels raidChannels = new AlertChannels();
     private HashMap<String, String> presets = new HashMap<>();
     private ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
     private ArrayList<Integer> blacklist = new ArrayList<>();
     private ArrayList<String> notificationTokens = new ArrayList<>();
+    private HashSet<ScannerDb> scannerDbs = new HashSet<ScannerDb>();
     private boolean logging = false;
     private boolean stats = true;
     private boolean startupMessage = false;
     private boolean countLocationsInLimits = true;
-    private ScannerType scannerType = ScannerType.RocketMap;
     private boolean useScanDb = true;
     private boolean raidsEnabled = true;
     private boolean pokemonEnabled = true;
@@ -69,13 +71,6 @@ public class Config {
     private String roleLogId = null;
     private String userUpdatesId = null;
     private String raidLobbyCategory = null;
-    private String scanUser;
-    private String scanPass;
-    private String scanIp;
-    private String scanPort = "3306";
-    private String scanDbName;
-    private String scanProtocol = "mysql";
-    private String scanUseSSL = "false";
     private String nbUser;
     private String nbPass;
     private String nbIp;
@@ -97,10 +92,9 @@ public class Config {
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
     private HashMap<String, GeoApiContext> geoApis = new HashMap<>();
     private int nbMaxConnections = 8;
-    private int scanMaxConnections = 8;
 
-    public Config(String configName, String gkeys, String formatting, String raidChannelFile, String pokeChannelFile,
-                  String supporterLevelFile, String presetsFile) {
+    public Config(String configName, String gkeys, String formatting, String raidChannelsFile, String pokeChannelsFile,
+                  String supporterLevelsFile, String presetsFile) {
 
         Ini configIni = null;
         try {
@@ -114,14 +108,17 @@ public class Config {
 
         log.info(String.format("Loading %s...", configName));
 
-        loadBaseConfig(configName, configIni);
+        loadBaseConfig(configName, configIni, gkeys, formatting, raidChannelsFile, supporterLevelsFile, pokeChannelsFile, presetsFile);
 
-        loadScannerDbConfig(configIni);
+        for (String s : configIni.keySet()) {
+            if (s.contains("scanner db")){
+                scannerDbs.add(loadScannerDbConfig(configIni.get(s)));
+            }
+        }
 
         loadNovaBotDbConfig(configIni);
 
         log.info("Finished loading " + configName);
-
 
         log.info(String.format("Loading %s...", gkeys));
         geocodingKeys = loadKeys(Paths.get(gkeys));
@@ -145,19 +142,19 @@ public class Config {
 
 
         if (raidsEnabled()) {
-            log.info(String.format("Loading %s...", raidChannelFile));
-            loadRaidChannels(raidChannelFile, formatting);
-            log.info("Finished loading " + raidChannelFile);
+            log.info(String.format("Loading %s...", raidChannelsFile));
+            loadRaidChannels(raidChannelsFile, formatting);
+            log.info("Finished loading " + raidChannelsFile);
         }
 
-        log.info(String.format("Loading %s...", supporterLevelFile));
-        loadSupporterRoles(supporterLevelFile);
-        log.info("Finished loading " + supporterLevelFile);
+        log.info(String.format("Loading %s...", supporterLevelsFile));
+        loadSupporterRoles(supporterLevelsFile);
+        log.info("Finished loading " + supporterLevelsFile);
 
         if (pokemonEnabled()) {
-            log.info(String.format("Loading %s...", pokeChannelFile));
-            pokeChannels = loadPokemonChannels(pokeChannelFile, formatting);
-            log.info("Finished loading " + pokeChannelFile);
+            log.info(String.format("Loading %s...", pokeChannelsFile));
+            pokeChannels = loadPokemonChannels(pokeChannelsFile, formatting);
+            log.info("Finished loading " + pokeChannelsFile);
         } else {
             pokeChannels = new AlertChannels();
         }
@@ -180,21 +177,21 @@ public class Config {
         nbUseSSL = novabotDb.get("useSSL",nbUseSSL);
     }
 
-    private void loadScannerDbConfig(Ini configIni) {
-        Ini.Section scannerDb = configIni.get("scanner db");
-        scanUser = scannerDb.get("user", scanUser);
-        scanPass = scannerDb.get("password", scanPass);
-        scanIp = scannerDb.get("ip", scanIp);
-        scanPort = scannerDb.get("port", scanPort);
-        scanDbName = scannerDb.get("dbName", scanDbName);
-        scanProtocol = scannerDb.get("protocol", scanProtocol);
-        scanUseSSL = scannerDb.get("useSSL",scanUseSSL);
-        scanMaxConnections = scannerDb.get("maxConnections",Integer.class,scanMaxConnections);
-        nbMaxConnections = scannerDb.get("maxConnections",Integer.class,nbMaxConnections);
-
+    private ScannerDb loadScannerDbConfig(Profile.Section section) {
+        String      user               = section.get("user");
+        String      pass               = section.get("password");
+        String      ip                 = section.get("ip");
+        String      port               = section.get("port", "3306");
+        String      dbName             = section.get("dbName");
+        String      protocol           = section.get("protocol", "mysql");
+        String      useSSL             = section.get("useSSL","false");
+        ScannerType scannerType        = ScannerType.fromString(section.get("scannerType","rocketmap"));
+        Integer     maxConnections     = section.get("maxConnections", Integer.class, 8);
+        int         id                 = section.size();
+        return new ScannerDb(user,pass,ip,port,dbName,protocol,useSSL,scannerType,maxConnections,id);
     }
 
-    private void loadBaseConfig(String configName, Ini configIni) {
+    private void loadBaseConfig(String configName, Ini configIni, String gkeys, String formatting, String raidChannelsFile, String supporterLevels, String pokeChannelsFile, String presetsFile) {
         Ini.Section config = configIni.get("config");
 
         token = config.get("token", token);
@@ -221,8 +218,6 @@ public class Config {
         useScanDb = config.get("useScanDb", Boolean.class, useScanDb);
 
         allowAllLocation = config.get("allowAllLocation", Boolean.class, allowAllLocation);
-
-        scannerType = ScannerType.fromString(config.get("scannerType",scannerType.toString()));
 
         googleSuburbField = config.get("googleSuburbField", googleSuburbField);
 
@@ -294,6 +289,51 @@ public class Config {
         }
 
         raidLobbyCategory = config.get("raidLobbyCategory",raidLobbyCategory);
+
+        log.info("Finished loading " + configName);
+
+        log.info(String.format("Loading %s...", gkeys));
+        geocodingKeys = loadKeys(Paths.get(gkeys));
+
+        geoApis.clear();
+        for (String s : geocodingKeys) {
+            GeoApiContext api = new GeoApiContext();
+            api.setApiKey(s);
+            geoApis.put(s,api);
+        }
+
+        timeZoneKeys.clear();
+        timeZoneKeys.addAll(geocodingKeys);
+        staticMapKeys.clear();
+        staticMapKeys.addAll(geocodingKeys);
+        log.info("Finished loading " + gkeys);
+
+        log.info(String.format("Loading %s...", formatting));
+        loadFormatting(formatting);
+        log.info("Finished loading " + formatting);
+
+
+        if (raidsEnabled()) {
+            log.info(String.format("Loading %s...", raidChannelsFile));
+            loadRaidChannels(raidChannelsFile,formatting);
+            log.info("Finished loading " + raidChannelsFile);
+        }
+
+        log.info(String.format("Loading %s...", supporterLevels));
+        loadSupporterRoles(supporterLevels);
+        log.info("Finished loading " + supporterLevels);
+
+        if (pokemonEnabled()) {
+            log.info(String.format("Loading %s...", pokeChannelsFile));
+            loadPokemonChannels(pokeChannelsFile,formatting);
+            log.info("Finished loading " + pokeChannelsFile);
+        }
+
+        log.info(String.format("Loading %s...", presetsFile));
+        loadPresets(presetsFile);
+        log.info("Finished loading " + presetsFile);
+
+        log.info("Finished configuring");
     }
 
     public boolean countLocationsInLimits() {

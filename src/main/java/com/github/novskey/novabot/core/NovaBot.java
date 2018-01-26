@@ -4,6 +4,7 @@ import com.github.novskey.novabot.Util.CommandLineOptions;
 import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.Util.UtilityFunctions;
 import com.github.novskey.novabot.data.DataManager;
+import com.github.novskey.novabot.data.Preset;
 import com.github.novskey.novabot.data.SpawnLocation;
 import com.github.novskey.novabot.maps.Geofencing;
 import com.github.novskey.novabot.maps.ReverseGeocoder;
@@ -24,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.nio.file.Paths;
-
-
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -168,11 +167,9 @@ public class NovaBot {
 
         if (msg.equals(getLocalString("ReloadCommand"))) {
             if (isAdmin(author)) {
-                loadConfig();
-                loadSuburbs();
-                loadGeofences();
+                setup();
+                channel.sendMessageFormat("%s, %s", author, getLocalString("ReloadMessage")).queue();
             }
-            channel.sendMessageFormat("%s, %s", author, getLocalString("ReloadMessage")).queue();
             return;
         }
 
@@ -461,7 +458,7 @@ public class NovaBot {
 
                     boolean isSupporter = isSupporter(author.getId());
 
-                    if (limit != null && limit.raidLimit != null && dataManager.countRaids(author.getId(), getConfig().countLocationsInLimits()) + raids.length > limit.raidLimit) {
+                    if (limit != null && limit.raidLimit != null && dataManager.countRaids(author.getId(), raids, getConfig().countLocationsInLimits())> limit.raidLimit) {
                         channel.sendMessageFormat("%s %s %s %s. " +
                                 (limit.raidLimit > 0 ? getLocalString("ExceededNonZeroRaidLimitMessage") : ""),
                                 author,
@@ -546,7 +543,7 @@ public class NovaBot {
 
                     boolean isSupporter = isSupporter(author.getId());
 
-                    if (limit != null && limit.pokemonLimit != null && dataManager.countPokemon(author.getId(), getConfig().countLocationsInLimits()) + pokemons.length > limit.pokemonLimit) {
+                    if (limit != null && limit.pokemonLimit != null && dataManager.countPokemon(author.getId(), pokemons, getConfig().countLocationsInLimits()) > limit.pokemonLimit) {
                         channel.sendMessageFormat("%s %s %s %s",
                                 author,
                                 getLocalString("ExceedLimitMessageStart"),
@@ -639,25 +636,34 @@ public class NovaBot {
 
                     boolean isSupporter = isSupporter(author.getId());
 
-                    if (limit != null && limit.presetLimit != null && dataManager.countPresets(author.getId(), getConfig().countLocationsInLimits()) + locations.length > limit.presetLimit) {
+                    Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
+                    String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
+
+                    ArrayList<Preset> potentialPresets = new ArrayList<>();
+
+                    for (String preset : presets) {
+                        for (Location location : locations) {
+                            potentialPresets.add(new Preset(preset,location));
+                        }
+                    }
+
+                    if (limit != null &&
+                        limit.presetLimit != null &&
+                        dataManager.countPresets(author.getId(), potentialPresets, getConfig().countLocationsInLimits())
+                          > limit.presetLimit) {
                         channel.sendMessageFormat("%s %s %s %s %s",
-                                author,
-                                getLocalString("ExceedLimitMessageStart"),
-                                limit.presetLimit,
-                                getLocalString("ExceedPresetLimitMessageEnd"),
-                                (limit.presetLimit > 0 ? getLocalString("ExceededNonZeroPresetLimitMessage") : "")).queue();
+                                                  author,
+                                                  getLocalString("ExceedLimitMessageStart"),
+                                                  limit.presetLimit,
+                                                  getLocalString("ExceedPresetLimitMessageEnd"),
+                                                  (limit.presetLimit > 0 ? getLocalString("ExceededNonZeroPresetLimitMessage") : "")).queue();
                         return;
                     } else if (limit == null && isSupporter) {
                         novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter", author.getName()));
                     }
 
-                    Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
-                    String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
-
-                    for (String preset : presets) {
-                        for (Location location : locations) {
-                            dataManager.addPreset(author.getId(), preset, location);
-                        }
+                    for (Preset potentialPreset : potentialPresets) {
+                        dataManager.addPreset(author.getId(),potentialPreset.presetName,potentialPreset.location);
                     }
 
                     String message = String.format("%s %s %s %s", 
@@ -957,7 +963,7 @@ public class NovaBot {
         loadConfig();
         loadSuburbs();
 
-        if (getConfig().useGeofences() && (geofencing == null || !geofencing.loaded)) {
+        if (geofencing == null || !geofencing.loaded) {
             loadGeofences();
         }
 
@@ -970,7 +976,7 @@ public class NovaBot {
 
         timeZones = new TimeZones(this);
 
-        dataManager = new DataManager(this);
+        dataManager = new DataManager(this, config.getScannerDbs());
 
         if (getConfig().isRaidOrganisationEnabled()) {
             lobbyManager = new LobbyManager(this);
@@ -1001,7 +1007,7 @@ public class NovaBot {
         return false;
     }
 
-    private void start() {
+    public void start() {
         novabotLog.info("Connecting to db");
         novabotLog.info("Connected");
         novabotLog.info("Purging unknown spawnpoints so they can be geocoded again");
@@ -1139,7 +1145,7 @@ public class NovaBot {
         return configName;
     }
 
-    private String getSupporterLevels() {
+    public String getSupporterLevels() {
         return supporterLevels;
     }
 
@@ -1151,11 +1157,11 @@ public class NovaBot {
         return formatting;
     }
 
-    private String getRaidChannels() {
+    public String getRaidChannels() {
         return raidChannels;
     }
 
-    private String getPokeChannels() {
+    public String getPokeChannels() {
         return pokeChannels;
     }
 

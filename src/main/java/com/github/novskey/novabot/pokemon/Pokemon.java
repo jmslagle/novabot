@@ -1,10 +1,14 @@
 package com.github.novskey.novabot.pokemon;
 
 import com.github.novskey.novabot.core.Location;
+import com.github.novskey.novabot.core.NovaBot;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.entities.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +156,7 @@ public class Pokemon {
         } else {
             url += id;
         }
-        return url + ".png?1";
+        return url + ".png?2";
     }
 
     public Location getLocation() {
@@ -459,7 +463,19 @@ public class Pokemon {
     }
 
     public static void main(String[] args) {
-        System.out.println(maxCpAtLevel(382,20));
+        NovaBot novaBot = new NovaBot();
+        novaBot.setup();
+        novaBot.start();
+        TextChannel channel = novaBot.jda.getTextChannelById("403381296853942272");
+
+        for (int id = 1; id <= 383; id++) {
+            MessageBuilder builder = new MessageBuilder(getFilterName(id));
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setThumbnail(getIcon(id));
+            builder.setEmbed(embedBuilder.build());
+            channel.sendMessage(builder.build()).queue();
+        }
+
     }
 
     private static float[] getBaseStats(int id) {

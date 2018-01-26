@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Created by Paris on 18/01/2018.
@@ -20,8 +21,13 @@ import java.util.ArrayList;
 public class DataManager implements IDataBase {
 
     private final NovaBot novaBot;
-    public final DBManager dbManager;
+    public final SettingsDBManager settingsDbManager;
     private final DBCache dbCache;
+
+
+    public static final String MySQL_DRIVER = "com.mysql.jdbc.Driver";
+    public static final String PgSQL_DRIVER = "org.postgresql.Driver";
+    private final HashSet<ScanDBManager> scanDBManagers = new HashSet<>();
 
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
@@ -44,120 +50,124 @@ public class DataManager implements IDataBase {
                 .1)));
     }
 
-    public DataManager (NovaBot novaBot){
+    public DataManager(NovaBot novaBot, HashSet<ScannerDb> scannerDbs){
         this.novaBot = novaBot;
 
-        dbManager = new DBManager(novaBot);
+        settingsDbManager = new SettingsDBManager(novaBot);
+        settingsDbManager.novabotdbConnect();
 
-        dbManager.scanDbConnect();
-        dbManager.novabotdbConnect();
+        int scannerDbId = 1;
+        for (ScannerDb scannerDb : scannerDbs) {
+            scanDBManagers.add(new ScanDBManager(novaBot,scannerDb,scannerDbId));
+            scannerDbId++;
+        }
 
         dbCache = new DBCache(novaBot);
-        dbCache.users = dbManager.dumpUsers();
-        dbCache.pokemons = dbManager.dumpPokemon();
-        dbCache.raids = dbManager.dumpRaids();
-        dbCache.presets = dbManager.dumpPresets();
-        dbCache.raidLobbies = dbManager.dumpRaidLobbies();
-        dbCache.spawnInfo = dbManager.dumpSpawnInfo();
+        dbCache.users = settingsDbManager.dumpUsers();
+        dbCache.pokemons = settingsDbManager.dumpPokemon();
+        dbCache.raids = settingsDbManager.dumpRaids();
+        dbCache.presets = settingsDbManager.dumpPresets();
+        dbCache.raidLobbies = settingsDbManager.dumpRaidLobbies();
+        dbCache.spawnInfo = settingsDbManager.dumpSpawnInfo();
     }
 
     @Override
     public void addPokemon(String userID, Pokemon pokemon) {
         dbCache.addPokemon(userID,pokemon);
-        dbManager.addPokemon(userID,pokemon);
+        settingsDbManager.addPokemon(userID, pokemon);
     }
 
     @Override
     public void addPreset(String userID, String preset, Location location) {
         dbCache.addPreset(userID,preset,location);
-        dbManager.addPreset(userID, preset, location);
+        settingsDbManager.addPreset(userID, preset, location);
     }
 
     @Override
     public void addRaid(String userID, Raid raid) {
         dbCache.addRaid(userID,raid);
-        dbManager.addRaid(userID,raid);
+        settingsDbManager.addRaid(userID, raid);
     }
 
     @Override
     public void addUser(String userID) {
         dbCache.addUser(userID);
-        dbManager.addUser(userID);
+        settingsDbManager.addUser(userID);
     }
 
     @Override
     public void clearPreset(String id, String[] presets) {
         dbCache.clearPreset(id, presets);
-        dbManager.clearPreset(id, presets);
+        settingsDbManager.clearPreset(id, presets);
     }
 
     @Override
     public void clearLocationsPresets(String id, Location[] locations) {
         dbCache.clearLocationsPresets(id, locations);
-        dbManager.clearLocationsPresets(id, locations);
+        settingsDbManager.clearLocationsPresets(id, locations);
     }
 
     @Override
     public void clearLocationsPokemon(String id, Location[] locations) {
         dbCache.clearLocationsPokemon(id, locations);
-        dbManager.clearLocationsPokemon(id, locations);
+        settingsDbManager.clearLocationsPokemon(id, locations);
     }
 
     @Override
     public void clearLocationsRaids(String id, Location[] locations) {
         dbCache.clearLocationsRaids(id, locations);
-        dbManager.clearLocationsRaids(id, locations);
+        settingsDbManager.clearLocationsRaids(id, locations);
     }
 
     @Override
     public void clearPokemon(String id, ArrayList<Pokemon> pokemons) {
         dbCache.clearPokemon(id, pokemons);
-        dbManager.clearPokemon(id, pokemons);
+        settingsDbManager.clearPokemon(id, pokemons);
     }
 
     @Override
     public void clearRaid(String id, ArrayList<Raid> raids) {
         dbCache.clearRaid(id, raids);
-        dbManager.clearRaid(id, raids);
+        settingsDbManager.clearRaid(id, raids);
     }
 
     @Override
-    public int countPokemon(String id, boolean countLocations) {
-        return dbCache.countPokemon(id, countLocations);
+    public int countPokemon(String id, Pokemon[] potentialPokemon, boolean countLocations) {
+        return dbCache.countPokemon(id, potentialPokemon, countLocations);
     }
 
     @Override
-    public int countPresets(String userID, boolean countLocations) {
-        return dbCache.countPresets(userID, countLocations);
+    public int countPresets(String userID, ArrayList<Preset> potentialPresets, boolean countLocations) {
+        return dbCache.countPresets(userID, potentialPresets, countLocations);
     }
 
     @Override
-    public int countRaids(String id, boolean countLocations) {
-        return dbCache.countRaids(id, countLocations);
+    public int countRaids(String id, Raid[] potentialRaids, boolean countLocations) {
+        return dbCache.countRaids(id, potentialRaids, countLocations);
     }
 
     @Override
     public void deletePokemon(String userID, Pokemon pokemon) {
         dbCache.deletePokemon(userID,pokemon);
-        dbManager.deletePokemon(userID,pokemon);
+        settingsDbManager.deletePokemon(userID, pokemon);
     }
 
     @Override
     public void deletePreset(String userId, String preset, Location location) {
         dbCache.deletePreset(userId, preset, location);
-        dbManager.deletePreset(userId, preset, location);
+        settingsDbManager.deletePreset(userId, preset, location);
     }
 
     @Override
     public void deleteRaid(String userID, Raid raid) {
         dbCache.deleteRaid(userID, raid);
-        dbManager.deleteRaid(userID, raid);
+        settingsDbManager.deleteRaid(userID, raid);
     }
 
     @Override
     public void endLobby(String lobbyCode) {
         dbCache.endLobby(lobbyCode);
-        dbManager.endLobby(lobbyCode);
+        settingsDbManager.endLobby(lobbyCode);
     }
 
     @Override
@@ -193,13 +203,13 @@ public class DataManager implements IDataBase {
     @Override
     public void logNewUser(String userID) {
         dbCache.logNewUser(userID);
-        dbManager.logNewUser(userID);
+        settingsDbManager.logNewUser(userID);
     }
 
     @Override
     public void newLobby(String lobbyCode, String gymId, int memberCount, String channelId, String roleId, long nextTimeLeftUpdate, String inviteCode) {
         dbCache.newLobby(lobbyCode, gymId, memberCount, channelId, roleId, nextTimeLeftUpdate, inviteCode);
-        dbManager.newLobby(lobbyCode, gymId, memberCount, channelId, roleId, nextTimeLeftUpdate, inviteCode);
+        settingsDbManager.newLobby(lobbyCode, gymId, memberCount, channelId, roleId, nextTimeLeftUpdate, inviteCode);
     }
 
     @Override
@@ -210,49 +220,49 @@ public class DataManager implements IDataBase {
     @Override
     public void pauseUser(String id) {
         dbCache.pauseUser(id);
-        dbManager.pauseUser(id);
+        settingsDbManager.pauseUser(id);
     }
 
     @Override
     public void resetPokemon(String id) {
         dbCache.resetPokemon(id);
-        dbManager.resetPokemon(id);
+        settingsDbManager.resetPokemon(id);
     }
 
     @Override
     public void resetPresets(String id) {
         dbCache.resetPresets(id);
-        dbManager.resetPresets(id);
+        settingsDbManager.resetPresets(id);
     }
 
     @Override
     public void resetRaids(String id) {
         dbCache.resetRaids(id);
-        dbManager.resetRaids(id);
+        settingsDbManager.resetRaids(id);
     }
 
     @Override
     public void resetUser(String id) {
         dbCache.resetUser(id);
-        dbManager.resetUser(id);
+        settingsDbManager.resetUser(id);
     }
 
     @Override
     public void setGeocodedLocation(double lat, double lon, GeocodedLocation location) {
         dbCache.setGeocodedLocation(lat, lon, location);
-        dbManager.setGeocodedLocation(lat, lon, location);
+        settingsDbManager.setGeocodedLocation(lat, lon, location);
     }
 
     @Override
     public void unPauseUser(String id) {
         dbCache.unPauseUser(id);
-        dbManager.unPauseUser(id);
+        settingsDbManager.unPauseUser(id);
     }
 
     @Override
     public void updateLobby(String lobbyCode, int memberCount, int nextTimeLeftUpdate, String inviteCode) {
         dbCache.updateLobby(lobbyCode, memberCount, nextTimeLeftUpdate, inviteCode);
-        dbManager.updateLobby(lobbyCode, memberCount, nextTimeLeftUpdate, inviteCode);
+        settingsDbManager.updateLobby(lobbyCode, memberCount, nextTimeLeftUpdate, inviteCode);
     }
 
     @Override
@@ -268,22 +278,32 @@ public class DataManager implements IDataBase {
     @Override
     public void setZoneId(double lat, double lon, ZoneId zoneId) {
         dbCache.setZoneId(lat, lon, zoneId);
-        dbManager.setZoneId(lat, lon, zoneId);
+        settingsDbManager.setZoneId(lat, lon, zoneId);
     }
 
     public int countSpawns(int id, TimeUnit timeUnit, int intervalLength) {
-        return dbManager.countSpawns(id,timeUnit,intervalLength);
+        int sum = 0;
+
+        for (ScanDBManager scanDBManager : scanDBManagers) {
+            sum += scanDBManager.countSpawns(id,timeUnit,intervalLength);
+        }
+
+        return sum;
     }
 
     public ArrayList<RaidLobby> getActiveLobbies() {
-        return dbManager.getActiveLobbies();
+        return settingsDbManager.getActiveLobbies();
     }
 
     public void getNewPokemon() {
-        dbManager.getNewPokemon();
+        for (ScanDBManager scanDBManager : scanDBManagers) {
+            new Thread(scanDBManager::getNewPokemon).start();
+        }
     }
 
     public void getCurrentRaids() {
-        dbManager.getCurrentRaids();
+        for (ScanDBManager scanDBManager : scanDBManagers) {
+            new Thread(scanDBManager::getCurrentRaids).start();
+        }
     }
 }

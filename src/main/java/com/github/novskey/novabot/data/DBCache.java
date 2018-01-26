@@ -134,7 +134,7 @@ public class DBCache implements IDataBase {
     }
 
     @Override
-    public int countPokemon(String id, boolean countLocations) {
+    public int countPokemon(String id, Pokemon[] potentialPokemon, boolean countLocations) {
         Set<Pokemon> settings = pokemons.get(id);
 
         int count = 0;
@@ -149,6 +149,13 @@ public class DBCache implements IDataBase {
                     noDuplicateLocations.add(noLocation);
                 }
 
+                if (potentialPokemon != null){
+                    for (Pokemon pokemon : potentialPokemon) {
+                        Pokemon noLocation = new Pokemon(pokemon.name,Location.ALL, pokemon.miniv,pokemon.maxiv, pokemon.minlvl, pokemon.maxlvl, pokemon.mincp, pokemon.maxcp);
+                        noDuplicateLocations.add(noLocation);
+                    }
+                }
+
                 count = noDuplicateLocations.size();
             }
         }
@@ -156,8 +163,8 @@ public class DBCache implements IDataBase {
     }
 
     @Override
-    public int countPresets(String userID, boolean countLocations) {
-        Set<Preset> settings = presets.get(userID);
+    public int countPresets(String userID, ArrayList<Preset> potentialPresets, boolean countLocations) {
+        Set<Preset> settings = this.presets.get(userID);
 
         int count = 0;
         if (settings != null){
@@ -171,6 +178,13 @@ public class DBCache implements IDataBase {
                     noDuplicateLocations.add(noLocation);
                 }
 
+                if (potentialPresets != null){
+                    for (Preset preset : potentialPresets) {
+                        Preset noLocation = new Preset(preset.presetName, Location.ALL);
+                        noDuplicateLocations.add(noLocation);
+                    }
+                }
+
                 count = noDuplicateLocations.size();
             }
         }
@@ -178,7 +192,7 @@ public class DBCache implements IDataBase {
     }
 
     @Override
-    public int countRaids(String id, boolean countLocations) {
+    public int countRaids(String id, Raid[] potentialRaids, boolean countLocations) {
         Set<Raid> settings = raids.get(id);
 
         int count = 0;
@@ -191,6 +205,13 @@ public class DBCache implements IDataBase {
                 for (Raid raid : settings) {
                     Raid noLocation = new Raid(raid.bossId, Location.ALL);
                     noDuplicateLocations.add(noLocation);
+                }
+
+                if (potentialRaids != null){
+                    for (Raid raid : potentialRaids) {
+                        Raid noLocation = new Raid(raid.bossId, Location.ALL);
+                        noDuplicateLocations.add(noLocation);
+                    }
                 }
 
                 count = noDuplicateLocations.size();

@@ -36,11 +36,11 @@ public interface IDataBase {
 
     void clearRaid(String id, ArrayList<Raid> raids);
 
-    int countPokemon(String id, boolean countLocations);
+    int countPokemon(String id, Pokemon[] potentialPokemon, boolean countLocations);
 
-    int countPresets(String userID, boolean countLocations);
+    int countPresets(String userID, ArrayList<Preset> presetsList, boolean countLocations);
 
-    int countRaids(String id, boolean countLocations);
+    int countRaids(String id, Raid[] potentialRaids, boolean countLocations);
 
     void deletePokemon(String userID, Pokemon pokemon);
 

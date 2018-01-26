@@ -15,14 +15,14 @@ class NotificationSender {
 
         boolean passedChecks = true;
 
-        int pokeCount = novaBot.dataManager.countPokemon(user.getId(), novaBot.getConfig().countLocationsInLimits());
+        int pokeCount = novaBot.dataManager.countPokemon(user.getId(), null, novaBot.getConfig().countLocationsInLimits());
         if (limit.pokemonLimit != null && pokeCount > limit.pokemonLimit) {
             resetUser(user,limit);
             passedChecks = false;
         }
 
         if (passedChecks) {
-            int presetCount = novaBot.dataManager.countPresets(user.getId(), novaBot.getConfig().countLocationsInLimits());
+            int presetCount = novaBot.dataManager.countPresets(user.getId(), null, novaBot.getConfig().countLocationsInLimits());
             if (limit.presetLimit != null && presetCount > limit.presetLimit) {
                 resetUser(user,limit);
                 passedChecks = false;
@@ -30,7 +30,7 @@ class NotificationSender {
             }
 
             if (passedChecks) {
-                int raidCount = novaBot.dataManager.countRaids(user.getId(), novaBot.getConfig().countLocationsInLimits());
+                int raidCount = novaBot.dataManager.countRaids(user.getId(), null, novaBot.getConfig().countLocationsInLimits());
                 if (limit.raidLimit != null && raidCount > limit.raidLimit) {
                     resetUser(user,limit);
                     passedChecks = false;
