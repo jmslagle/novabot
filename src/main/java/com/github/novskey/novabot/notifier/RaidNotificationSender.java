@@ -146,7 +146,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     private void checkAndPost(AlertChannel channel, RaidSpawn raidSpawn) {
         localLog.info(String.format("Checking %s against filter %s", raidSpawn, channel.getFilterName()));
-        if (novaBot.getConfig().matchesFilter(novaBot.getConfig().getRaidFilters().get(channel.getFilterName()), raidSpawn)) {
+        if (novaBot.getConfig().getFilterProcessor().matchesFilter(channel.getFilterName(), raidSpawn)) {
             localLog.info("Raid passed filter, posting to Discord");
             sendChannelAlert(raidSpawn.buildMessage(channel.getFormattingName()), channel.getChannelId(), raidSpawn.raidLevel);
         }
