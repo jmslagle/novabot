@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.github.novskey.novabot.core.ScannerType.RocketMap;
+import static com.github.novskey.novabot.core.ScannerType.*;
 import static com.github.novskey.novabot.data.DataManager.MySQL_DRIVER;
 import static com.github.novskey.novabot.data.DataManager.PgSQL_DRIVER;
 
@@ -117,7 +117,7 @@ public class ScanDBManager  {
         StringBuilder knownIdQMarks = new StringBuilder();
 
         if (knownRaids.size() > 0) {
-            if (scannerDb.getScannerType() == ScannerType.PhilMap || scannerDb.getScannerType() == RocketMap) {
+            if (scannerDb.getScannerType() == ScannerType.PhilMap || scannerDb.getScannerType() == RocketMap || scannerDb.getScannerType() == SkoodatRocketMap || scannerDb.getScannerType() == SloppyRocketMap) {
                 knownIdQMarks.append("gym.gym_id NOT IN (");
             } else {
                 knownIdQMarks.append("forts.id NOT in (");
