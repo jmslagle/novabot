@@ -20,7 +20,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>3.4.0_323</version>
+            <version>3.5.0_327</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

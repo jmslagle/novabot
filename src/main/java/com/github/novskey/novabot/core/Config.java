@@ -45,7 +45,7 @@ public class Config {
     private final HashMap<String, Format> formats = new HashMap<>();
     private AlertChannels pokeChannels = new AlertChannels();
     private final AlertChannels raidChannels = new AlertChannels();
-    private HashMap<String, String> presets = new HashMap<>();
+    private TreeMap<String, String> presets = new TreeMap<>();
     private ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
     private ArrayList<Integer> blacklist = new ArrayList<>();
     private ArrayList<String> notificationTokens = new ArrayList<>();
@@ -92,6 +92,7 @@ public class Config {
     private HashMap<GeofenceIdentifier, String> raidChats = new HashMap<>();
     private HashMap<String, GeoApiContext> geoApis = new HashMap<>();
     private int nbMaxConnections = 8;
+    private String mainGuild = null;
 
     public Config(String configName, String gkeys, String formatting, String raidChannelsFile, String pokeChannelsFile,
                   String supporterLevelsFile, String presetsFile) {
@@ -290,50 +291,11 @@ public class Config {
 
         raidLobbyCategory = config.get("raidLobbyCategory",raidLobbyCategory);
 
-        log.info("Finished loading " + configName);
+        mainGuild = config.get("mainGuild",mainGuild);
 
-        log.info(String.format("Loading %s...", gkeys));
-        geocodingKeys = loadKeys(Paths.get(gkeys));
-
-        geoApis.clear();
-        for (String s : geocodingKeys) {
-            GeoApiContext api = new GeoApiContext();
-            api.setApiKey(s);
-            geoApis.put(s,api);
+        if (mainGuild == null){
+            log.warn("Couldn't find mainGuild in %s. novabot will use the first guild it finds as main guild.", configName);
         }
-
-        timeZoneKeys.clear();
-        timeZoneKeys.addAll(geocodingKeys);
-        staticMapKeys.clear();
-        staticMapKeys.addAll(geocodingKeys);
-        log.info("Finished loading " + gkeys);
-
-        log.info(String.format("Loading %s...", formatting));
-        loadFormatting(formatting);
-        log.info("Finished loading " + formatting);
-
-
-        if (raidsEnabled()) {
-            log.info(String.format("Loading %s...", raidChannelsFile));
-            loadRaidChannels(raidChannelsFile,formatting);
-            log.info("Finished loading " + raidChannelsFile);
-        }
-
-        log.info(String.format("Loading %s...", supporterLevels));
-        loadSupporterRoles(supporterLevels);
-        log.info("Finished loading " + supporterLevels);
-
-        if (pokemonEnabled()) {
-            log.info(String.format("Loading %s...", pokeChannelsFile));
-            loadPokemonChannels(pokeChannelsFile,formatting);
-            log.info("Finished loading " + pokeChannelsFile);
-        }
-
-        log.info(String.format("Loading %s...", presetsFile));
-        loadPresets(presetsFile);
-        log.info("Finished loading " + presetsFile);
-
-        log.info("Finished configuring");
     }
 
     public boolean countLocationsInLimits() {

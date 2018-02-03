@@ -14,7 +14,9 @@ public enum ArgType
     Int,
     Level,
     IV,
-    Preset, CP;
+    Preset,
+    GymName,
+    CP, Egg;
 
     public static void main(final String[] args) {
         final HashSet<ArgType> hashSet = new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
@@ -42,6 +44,10 @@ public enum ArgType
                 return "IV";
             case Level:
                 return "level";
+            case GymName:
+                return "gym name";
+            case Egg:
+                return "egg level";
             case CP:
                 return "cp";
             case Preset:

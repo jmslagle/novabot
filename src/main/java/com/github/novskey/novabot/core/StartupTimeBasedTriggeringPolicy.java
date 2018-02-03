@@ -10,6 +10,7 @@ public class StartupTimeBasedTriggeringPolicy<E>
 
     @Override
     public void start() {
+        System.out.println("hi");
         super.start();
         nextCheck = 0L;
         isTriggeringEvent(null, null);

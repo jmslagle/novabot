@@ -40,6 +40,7 @@ public class NotificationsManager {
             if (novaBot.getConfig().isRaidOrganisationEnabled()) {
                 novaBot.lobbyManager.addLobbies(novaBot.dataManager.getActiveLobbies());
             }
+
             for (int i = 1; i <= novaBot.getConfig().getRaidThreads(); i++) {
                 novaBot.novabotLog.info("Starting raid thread " + i);
                 new Thread(new RaidNotificationSender(novaBot,i)).start();

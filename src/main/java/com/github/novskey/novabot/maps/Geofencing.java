@@ -15,23 +15,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 
 public class Geofencing
 {
-//    private static final GeoPolygon innernorth;
-//    private static final GeoPolygon innersouth;
-//    private static final GeoPolygon gungahlin;
-//    private static final GeoPolygon belconnen;
-//    private static final GeoPolygon woden;
-//    private static final GeoPolygon weston;
-//    private static final GeoPolygon queanbeyan;
-//    private static final GeoPolygon tuggeranong;
-//    private static final HashMap<GeoPolygon, Region> geofences;
 
-    static final HashMap<GeofenceIdentifier,Polygon> geofencesMap = new HashMap<>();
+    static final TreeMap<GeofenceIdentifier,Polygon> geofencesMap = new TreeMap<>(Comparator.comparing(o -> o.name));
 
     final static GeometryFactory gf = new GeometryFactory();
 

@@ -18,7 +18,6 @@ import com.github.novskey.novabot.raids.Raid;
 import com.github.novskey.novabot.raids.RaidLobby;
 import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +30,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
 import static com.github.novskey.novabot.core.Spawn.printFormat24hr;
+import static com.github.novskey.novabot.core.Weather.None;
 
 public class NovaBot {
 
@@ -69,9 +70,12 @@ public class NovaBot {
     private HashMap<String, String> localStringCache = new HashMap<>(100);
     private String locale = "en";
     public TimeZones timeZones;
-    private ArrayList<JDA> notificationBots = new ArrayList<>();
+    private HashMap<String, JDA> notificationBots = new HashMap<>();
+    private ArrayList<String> botTokens = new ArrayList<>();
     private int lastNotificationBot = 0;
     public DataManager dataManager;
+
+    private HashMap<String, Integer> botTokenUses = new HashMap<>();
 
     public NovaBot(CommandLineOptions cliopt) {
         this.configName = cliopt.getConfig();
@@ -97,6 +101,34 @@ public class NovaBot {
                     m -> m.addReaction(WHITE_GREEN_CHECK).queue()
             );
         }
+    }
+
+    public DataManager getDataManager() {
+        return dataManager;
+    }
+
+    public JDA getUserJDA(String userID) {
+        com.github.novskey.novabot.data.User user = dataManager.getUser(userID);
+
+        String token = null;
+
+        if (user == null){
+            token = getNextUserBotToken();
+            dataManager.addUser(userID,token);
+        }else{
+            if (user.getBotToken() == null){
+                token = getNextUserBotToken();
+                dataManager.setBotToken(userID,token);
+            }else{
+                token = user.getBotToken();
+            }
+        }
+
+        if (token == null){
+                novabotLog.error(String.format("Null JDA for userID = %s. %s", userID,notificationBots));
+        }
+
+        return (token == null ? null : notificationBots.get(token));
     }
 
 
@@ -130,6 +162,7 @@ public class NovaBot {
         novaBot.setLocale(cliopt.getLocale());
         novaBot.setup();
         novaBot.start();
+        novaBot.getUserJDA("107730875596169216");
     }
 
     public void parseModMsg(Message msg, TextChannel channel) {
@@ -154,6 +187,16 @@ public class NovaBot {
 
         if (!msg.startsWith(getLocalString("Prefix"))) {
             return;
+        }
+
+        com.github.novskey.novabot.data.User user = dataManager.getUser(author.getId());
+
+        if (user == null) {
+            dataManager.addUser(author.getId(), getNextUserBotToken());
+        }else{
+            if (user.getBotToken() == null){
+                dataManager.setBotToken(author.getId(),getNextUserBotToken());
+            }
         }
 
         if (msg.equals(getLocalString("ApiQuotasCommand"))){
@@ -348,12 +391,12 @@ public class NovaBot {
 //            }
         } else if (msg.equals(getLocalString("HelpCommand"))) {
             channel.sendMessageFormat(getLocalString("HelpMessageStart") +
-                    (getConfig().pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
-                    (getConfig().raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
-                    (getConfig().getPresets().size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
-                    getLocalString("HelpMessageOtherCommandsStart") +
-                    (getConfig().statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
-                    (getConfig().isRaidOrganisationEnabled()
+                                      (getConfig().pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
+                                      (getConfig().raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
+                                      (getConfig().getPresets().size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
+                                      getLocalString("HelpMessageOtherCommandsStart") +
+                                      (getConfig().statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
+                                      (getConfig().isRaidOrganisationEnabled()
                             && getConfig().getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
                             || channel.getType() == ChannelType.PRIVATE
                             ? getLocalString("HelpMessageJoinLobbyCommand")
@@ -363,9 +406,9 @@ public class NovaBot {
 //                            || channel.getType() == ChannelType.PRIVATE
 //                            ? "!!activeraids\n"
 //                            : "") +
-                    (getConfig().useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
-                    (suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
-                    getLocalString("HelpMessageOtherCommands")).queue();
+                                      (getConfig().useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
+                                      (suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
+                                      getLocalString("HelpMessageOtherCommands")).queue();
             return;
         } else if (getConfig().useGeofences() && (msg.equals(getLocalString("RegionListCommand")) || msg.equals(getLocalString("RegionsCommand")))) {
             MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("RegionListMessageStart"), Geofencing.getListMessage());
@@ -470,37 +513,37 @@ public class NovaBot {
                         novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter: %s", author.getName(), true));
                     }
 
-                    if (dataManager.notContainsUser(author.getId())) {
-                        dataManager.addUser(author.getId());
-                    }
-
                     for (Raid raid : raids) {
                         novabotLog.debug("adding raid " + raid);
                         dataManager.addRaid(author.getId(), raid);
                     }
 
-                    String message2 = String.format("%s, %s %s",author.getAsMention(),getLocalString("YouWillNowBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+                    if (raids.length == 0){
+                        channel.sendMessageFormat("%s, please include either a raid boss name or an egg level",author).queue();
+                        return;
+                    }
+
+                    String message2 = String.format("%s, %s %s", author.getAsMention(), getLocalString("YouWillNowBeNotifiedOf"), Raid.getRaidsString(raids));
 
                     final Argument locationsArg = userCommand.getArg(ArgType.Locations);
                     Location[] locations = {Location.ALL};
                     if (locationsArg != null) {
                         locations = userCommand.getLocations();
                     }
-                    message2 += String.format(" %s %s", getLocalString("RaidsIn"),Location.listToString(locations));
+                    message2 += String.format(" %s %s", getLocalString("In"),Location.listToString(locations));
                     channel.sendMessage(message2).queue();
 
                     return;
                 }
                 case "delraidcommand": {
-                    if (dataManager.notContainsUser(author.getId())) {
-                        dataManager.addUser(author.getId());
-                    }
-
                     for (Raid raid : raids) {
                         novabotLog.debug("deleting raid " + raid);
                         dataManager.deleteRaid(author.getId(), raid);
                     }
-
+                    if (raids.length == 0){
+                        channel.sendMessageFormat("%s, please include either a raid boss name or an egg level",author).queue();
+                        return;
+                    }
                     String message2 = String.format("%s, %s %s",author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
 
                     final Argument locationsArg = userCommand.getArg(ArgType.Locations);
@@ -508,15 +551,12 @@ public class NovaBot {
                     if (locationsArg != null) {
                         locations = userCommand.getLocations();
                     }
-                    message2 += String.format(" %s %s",getLocalString("RaidsIn"),Location.listToString(locations));
+                    message2 += String.format(" %s %s", getLocalString("RaidsIn"), Location.listToString(locations));
                     channel.sendMessage(message2).queue();
 
                     return;
                 }
                 case "clearraidcommand": {
-                    if (dataManager.notContainsUser(author.getId())) {
-                        dataManager.addUser(author.getId());
-                    }
                     novabotLog.debug("clearing raids " + UtilityFunctions.arrayToString(raids));
                     dataManager.clearRaid(author.getId(), new ArrayList<>(Arrays.asList(raids)));
 
@@ -555,14 +595,11 @@ public class NovaBot {
                         novabotLog.error(String.format("LIMIT IS NULL: %s, is supporter", author.getName()));
                     }
 
-                    if (dataManager.notContainsUser(author.getId())) {
-                        dataManager.addUser(author.getId());
-                    }
                     for (final Pokemon pokemon : pokemons) {
                         novabotLog.debug("adding pokemon " + pokemon);
                         dataManager.addPokemon(author.getId(), pokemon);
                     }
-                    String message2 = String.format("%s, %s %s",author.getAsMention(),getLocalString("YouWillNowBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+                    String message2 = String.format("%s, %s %s", author.getAsMention(), getLocalString("YouWillNowBeNotifiedOf"), Pokemon.listToString(userCommand.getUniquePokemon()));
                     String ivMessage = userCommand.getIvMessage();
                     message2 += ivMessage;
 
@@ -585,7 +622,7 @@ public class NovaBot {
                     for (final Pokemon pokemon : pokemons) {
                         dataManager.deletePokemon(author.getId(), pokemon);
                     }
-                    String message2 = String.format("%s %s %s",author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(userCommand.getUniquePokemon()));
+                    String message2 = String.format("%s %s %s", author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOf"), Pokemon.listToString(userCommand.getUniquePokemon()));
                     message2 += userCommand.getIvMessage();
 
                     final Argument locationsArg = userCommand.getArg(ArgType.Locations);
@@ -610,7 +647,7 @@ public class NovaBot {
                 case "clearpokemoncommand": {
                     dataManager.clearPokemon(author.getId(), new ArrayList<>(Arrays.asList(pokemons)));
                     final String message2 = String.format("%s %s %s %s",
-                            author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOf"),Pokemon.listToString(pokemons),getLocalString("InAnyLocations"));
+                                                          author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOf"), Pokemon.listToString(pokemons), getLocalString("InAnyLocations"));
                     channel.sendMessage(message2).queue();
                     return;
                 }
@@ -618,7 +655,7 @@ public class NovaBot {
                     final Location[] locations2 = userCommand.getLocations();
                     dataManager.clearLocationsPokemon(author.getId(), locations2);
                     final String message2 = String.format("%s %s %s",
-                            author.getAsMention(),getLocalString("YouWillNoLongerBeNotifiedOfPokemonIn"),Location.listToString(locations2));
+                                                          author.getAsMention(), getLocalString("YouWillNoLongerBeNotifiedOfPokemonIn"), Location.listToString(locations2));
                     channel.sendMessage(message2).queue();
                 }
             }
@@ -666,7 +703,7 @@ public class NovaBot {
                         dataManager.addPreset(author.getId(),potentialPreset.presetName,potentialPreset.location);
                     }
 
-                    String message = String.format("%s %s %s %s", 
+                    String message = String.format("%s %s %s %s",
                             author.getAsMention(),
                             getLocalString("LoadPresetMessageStart"),
                             UtilityFunctions.arrayToString(presets),
@@ -686,7 +723,7 @@ public class NovaBot {
                         }
                     }
 
-                    String message = String.format("%s %s %s %s", 
+                    String message = String.format("%s %s %s %s",
                             author.getAsMention(),
                             getLocalString("DelPresetMessageStart"),
                             UtilityFunctions.arrayToString(presets),
@@ -700,7 +737,7 @@ public class NovaBot {
                     Object[] presetsObj = userCommand.getArg(ArgType.Preset).getParams();
                     String[] presets = Arrays.copyOf(presetsObj, presetsObj.length, String[].class);
                     dataManager.clearPreset(author.getId(), presets);
-                    channel.sendMessageFormat("%s %s %s %s %s.", 
+                    channel.sendMessageFormat("%s %s %s %s %s.",
                             author,
                             getLocalString("DelPresetMessageStart"),
                             UtilityFunctions.arrayToString(presets),
@@ -728,6 +765,28 @@ public class NovaBot {
                     Location.listToString(locations2));
             channel.sendMessage(message2).queue();
         }
+    }
+
+    private synchronized String getNextUserBotToken() {
+        int min = Integer.MAX_VALUE;
+        String minToken = null;
+
+        for (Map.Entry<String, Integer> entry : botTokenUses.entrySet()) {
+            if (entry.getValue() < min){
+                min = entry.getValue();
+                minToken = entry.getKey();
+            }
+        }
+
+        if (minToken != null) {
+            botTokenUses.merge(minToken, 1, Integer::sum);
+        }
+
+        if (minToken == null){
+            novabotLog.warn("Null nextUserBotToken: " + botTokenUses);
+        }
+
+        return minToken;
     }
 
     private Message getApiQuotasMessage() {
@@ -767,31 +826,6 @@ public class NovaBot {
 
         return null;
     }
-
-    public String getLocalString(String key) {
-        if(!localStringCache.containsKey(key)){
-            localStringCache.put(key, formatStr(formatStr(getLocalString(getLocalString(key, messagesBundle), timeUnitsBundle), messagesBundle), messagesBundle));
-        }
-        return localStringCache.get(key);
-    }
-
-    private String getLocalString(String key, ResourceBundle resourceBundle) {
-        if (resourceBundle.containsKey(key)) {
-            return formatStr(resourceBundle.getString(key), resourceBundle);
-        } else {
-            return key;
-        }
-    }
-
-    private String formatStr(String string, ResourceBundle resourceBundle) {
-        for (String key : resourceBundle.keySet()) {
-            if (resourceBundle.containsKey(key)) {
-                string = string.replace("<" + key.toLowerCase() + ">", resourceBundle.getString(key));
-            }
-        }
-        return string;
-    }
-
     public void parseRaidChatMsg(User author, String msg, TextChannel textChannel) {
         if (!msg.startsWith(getLocalString("Prefix")) || author.isBot()) return;
 
@@ -957,15 +991,14 @@ public class NovaBot {
         StringLocalizer.init(ResourceBundle.getBundle("Messages",new Locale(locale)),
                 ResourceBundle.getBundle("TimeUnits",new Locale(locale)));
         TimeUnit.SetBundle(timeUnitsBundle);
-        Team.setBundle(messagesBundle);
         SpawnLocation.novaBot = this;
         Location.all = getLocalString("All");
-        loadConfig();
-        loadSuburbs();
-
         if (geofencing == null || !geofencing.loaded) {
             loadGeofences();
         }
+
+        loadConfig();
+        loadSuburbs();
 
         Spawn.setNovaBot(this);
 
@@ -977,6 +1010,8 @@ public class NovaBot {
         timeZones = new TimeZones(this);
 
         dataManager = new DataManager(this, config.getScannerDbs());
+
+        botTokenUses.putAll(dataManager.getTokenUses());
 
         if (getConfig().isRaidOrganisationEnabled()) {
             lobbyManager = new LobbyManager(this);
@@ -1025,42 +1060,77 @@ public class NovaBot {
 
             jda.addEventListener(new MessageListener(this,true));
 
-            notificationBots.add(jda);
+            notificationBots.put(getConfig().getToken(),jda);
+            botTokens.add(getConfig().getToken());
+            if(!botTokenUses.containsKey(getConfig().getToken())){
+                botTokenUses.put(getConfig().getToken(), 0);
+            }
             if (getConfig().getNotificationTokens().size() > 0){
                 int botNum = 1;
                 for (String token : getConfig().getNotificationTokens()) {
                     if (!token.equals(getConfig().getToken())) {
                         novabotLog.info("Logging in notification bot #" + botNum);
-                        notificationBots.add(new JDABuilder(AccountType.BOT)
+                        notificationBots.put(token, (new JDABuilder(AccountType.BOT)
                                 .setAutoReconnect(true)
                                 .setGame(pokemonGo)
                                 .setToken(token)
                                 .addEventListener(new MessageListener(this, false))
-                                .buildBlocking());
+                                .buildBlocking()));
                         botNum++;
+                    }
+                    botTokens.add(token);
+                    if(!botTokenUses.containsKey(token)){
+                        botTokenUses.put(token, 0);
                     }
                 }
             }
+
+            ArrayList<String> toRemove = new ArrayList<>();
+            for (String botToken : botTokenUses.keySet()) {
+                if (!notificationBots.containsKey(botToken)){
+                    novabotLog.info(String.format("Bot token %s from the DB no longer exists in config file, queuing for removal", botToken));
+                    toRemove.add(botToken);
+                }
+            }
+
+            botTokens.removeAll(toRemove);
+            toRemove.forEach(botTokenUses::remove);
+            if(toRemove.size() > 0) {
+                dataManager.clearTokens(toRemove);
+            }
+
+            novabotLog.info("Loaded notification bots: " + notificationBots);
 
             for (Guild guild1 : jda.getGuilds()) {
                 novabotLog.info("Connected to guild: " + guild1.getName());
-                if (guild == null) {
+                if (config.getMainGuild() == null && guild == null) {
                     guild = guild1;
-
-                    if (getConfig().getCommandChannelId() != null) {
-                        TextChannel channel = guild.getTextChannelById(getConfig().getCommandChannelId());
-                        if (channel != null) {
-                            if (getConfig().showStartupMessage()) {
-                                channel.sendMessage(getLocalString("StartUpMessage")).queue();
-                            }
-                        } else {
-                            novabotLog.info(String.format("couldn't find command channel by id from config: %s", getConfig().getCommandChannelId()));
-                        }
-                    }
                 }
+
+                loadEmotes(guild1, jda);
             }
 
-            loadEmotes(guild, jda);
+            if (config.getMainGuild() != null){
+                guild = jda.getGuildById(config.getMainGuild());
+            }
+
+            if (guild == null){
+                novabotLog.error("No main guild was set, make sure your bot is connected to at least one discord server.");
+                System.exit(0);
+            }
+
+            novabotLog.info(String.format("Set %s as main guild", guild.getName()));
+
+            if (getConfig().getCommandChannelId() != null) {
+                TextChannel channel = guild.getTextChannelById(getConfig().getCommandChannelId());
+                if (channel != null) {
+                    if (getConfig().showStartupMessage()) {
+                        channel.sendMessage(getLocalString("StartUpMessage")).queue();
+                    }
+                } else {
+                    novabotLog.info(String.format("couldn't find command channel by id from config: %s", getConfig().getCommandChannelId()));
+                }
+            }
 
             guild.getMember(jda.getSelfUser()).getRoles().forEach(System.out::println);
 
@@ -1076,7 +1146,7 @@ public class NovaBot {
                 notificationsManager.start();
             }
 
-        } catch (LoginException | InterruptedException | RateLimitedException ex2) {
+        } catch (LoginException | InterruptedException ex2) {
             novabotLog.error("Error starting bot",ex2);
         }
 
@@ -1102,7 +1172,7 @@ public class NovaBot {
 
                 guild.getController().createEmote(type, Icon.from(Paths.get(path).toFile())).queue(emote ->
                         Types.emotes.put(type, emote));
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 novabotLog.warn(String.format("Couldn't find emote file: %s, ignoring.", path));
             }
             else {
@@ -1112,29 +1182,47 @@ public class NovaBot {
         novabotLog.info(String.format("Finished loading type emojis: %s", Types.emotes.toString()));
 
         for (Team team : Team.values()) {
-            List<Emote> found = jda.getEmotesByName(team.toString().toLowerCase(), true);
+            List<Emote> found = jda.getEmotesByName(team.toString(), true);
             String path = null;
             if (found.size() == 0) try {
                 path = "static/icons/" + team.toString().toLowerCase() + ".png";
                 guild.getController().createEmote(team.toString().toLowerCase(), Icon.from(Paths.get(path).toFile())).queue(emote ->
                         Team.emotes.put(team, emote));
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 novabotLog.warn(String.format("Couldn't find emote file: %s, ignoring.", path));
             }
             else {
                 Team.emotes.put(team, found.get(0));
             }
         }
+
         novabotLog.info(String.format("Finished loading team emojis: %s", Team.emotes.toString()));
+
+        for (Weather weather : Weather.values()) {
+            if (weather == None) continue;
+            List<Emote> found = jda.getEmotesByName(weather.toEmoteName(), true);
+            String path = null;
+            if(found.size() == 0) try {
+                path = "static/icons/" + weather.toEmoteName().toLowerCase() + ".png";
+                guild.getController().createEmote(weather.toEmoteName().toLowerCase(), Icon.from(Paths.get(path).toFile())).queue(emote -> Weather.emotes.put(weather,emote));
+            } catch (IOException | IllegalArgumentException e) {
+                novabotLog.warn(String.format("Couldn't find emote file: %s, ignoring.", path));
+            } else {
+                Weather.emotes.put(weather, found.get(0));
+            }
+        }
+
+        novabotLog.info(String.format("Finished loading weather emojis: %s", Weather.emotes.toString()));
+
     }
 
     public synchronized JDA getNextNotificationBot() {
-        if (lastNotificationBot == notificationBots.size() - 1) {
+        if (lastNotificationBot == botTokens.size() - 1) {
             lastNotificationBot = 0;
-            return notificationBots.get(lastNotificationBot);
+            return notificationBots.get(botTokens.get(lastNotificationBot));
         }
         ++lastNotificationBot;
-        return notificationBots.get(lastNotificationBot);
+        return notificationBots.get(botTokens.get(lastNotificationBot));
     }
 
     public DateTimeFormatter getFormatter() {

@@ -36,36 +36,24 @@ public class DBCache implements IDataBase {
 
     @Override
     public void addPokemon(String userID, Pokemon pokemon) {
-        Set<Pokemon> settings = pokemons.get(userID);
-        if(settings == null){
-            settings = ConcurrentHashMap.newKeySet();
-            pokemons.put(userID,settings);
-        }
+        pokemons.computeIfAbsent(userID, k -> ConcurrentHashMap.newKeySet());
         pokemons.get(userID).add(pokemon);
     }
 
     @Override
     public void addPreset(String userID, String preset, Location location) {
-        Set<Preset> settings = presets.get(userID);
-        if(settings == null){
-            settings = ConcurrentHashMap.newKeySet();
-            presets.put(userID,settings);
-        }
+        presets.computeIfAbsent(userID, k -> ConcurrentHashMap.newKeySet());
         presets.get(userID).add(new Preset(preset,location));
     }
 
     @Override
     public void addRaid(String userID, Raid raid) {
-        Set<Raid> settings = raids.get(userID);
-        if(settings == null){
-            settings = ConcurrentHashMap.newKeySet();
-            raids.put(userID,settings);
-        }
+        raids.computeIfAbsent(userID, k -> ConcurrentHashMap.newKeySet());
         raids.get(userID).add(raid);
     }
 
     @Override
-    public void addUser(String userID) {
+    public void addUser(String userID, String botToken) {
         users.put(userID,new User(userID));
     }
 
@@ -134,30 +122,45 @@ public class DBCache implements IDataBase {
     }
 
     @Override
+    public void clearTokens(ArrayList<String> toRemove) {
+        users.values().forEach(user -> {
+            if(toRemove.contains(user.botToken)){
+                user.botToken = null;
+            }
+        });
+    }
+
+    @Override
     public int countPokemon(String id, Pokemon[] potentialPokemon, boolean countLocations) {
         Set<Pokemon> settings = pokemons.get(id);
 
-        int count = 0;
-        if (settings != null){
-            if (countLocations){
-                count = settings.size();
-            }else{
-                HashSet<Pokemon> noDuplicateLocations = new HashSet<>();
+        int count;
+        if (settings == null) {
+            settings = new HashSet<>();
+        }
 
-                for (Pokemon pokemon : settings) {
+        if (countLocations){
+            HashSet<Pokemon> temp = new HashSet<>(settings);
+            if(potentialPokemon != null) {
+                temp.addAll(Arrays.asList(potentialPokemon));
+            }
+            count = temp.size();
+        }else{
+            HashSet<Pokemon> noDuplicateLocations = new HashSet<>();
+
+            for (Pokemon pokemon : settings) {
+                Pokemon noLocation = new Pokemon(pokemon.name,Location.ALL, pokemon.miniv,pokemon.maxiv, pokemon.minlvl, pokemon.maxlvl, pokemon.mincp, pokemon.maxcp);
+                noDuplicateLocations.add(noLocation);
+            }
+
+            if (potentialPokemon != null){
+                for (Pokemon pokemon : potentialPokemon) {
                     Pokemon noLocation = new Pokemon(pokemon.name,Location.ALL, pokemon.miniv,pokemon.maxiv, pokemon.minlvl, pokemon.maxlvl, pokemon.mincp, pokemon.maxcp);
                     noDuplicateLocations.add(noLocation);
                 }
-
-                if (potentialPokemon != null){
-                    for (Pokemon pokemon : potentialPokemon) {
-                        Pokemon noLocation = new Pokemon(pokemon.name,Location.ALL, pokemon.miniv,pokemon.maxiv, pokemon.minlvl, pokemon.maxlvl, pokemon.mincp, pokemon.maxcp);
-                        noDuplicateLocations.add(noLocation);
-                    }
-                }
-
-                count = noDuplicateLocations.size();
             }
+
+            count = noDuplicateLocations.size();
         }
         return count;
     }
@@ -167,26 +170,32 @@ public class DBCache implements IDataBase {
         Set<Preset> settings = this.presets.get(userID);
 
         int count = 0;
-        if (settings != null){
-            if (countLocations){
-                count = settings.size();
-            }else{
-                HashSet<Preset> noDuplicateLocations = new HashSet<>();
 
-                for (Preset preset : settings) {
+        if (settings == null) {
+            settings = new HashSet<>();
+        }
+        if (countLocations){
+            HashSet<Preset> temp = new HashSet<>(settings);
+            if(potentialPresets != null) {
+                temp.addAll(potentialPresets);
+            }
+            count = temp.size();
+        }else{
+            HashSet<Preset> noDuplicateLocations = new HashSet<>();
+
+            for (Preset preset : settings) {
+                Preset noLocation = new Preset(preset.presetName, Location.ALL);
+                noDuplicateLocations.add(noLocation);
+            }
+
+            if (potentialPresets != null){
+                for (Preset preset : potentialPresets) {
                     Preset noLocation = new Preset(preset.presetName, Location.ALL);
                     noDuplicateLocations.add(noLocation);
                 }
-
-                if (potentialPresets != null){
-                    for (Preset preset : potentialPresets) {
-                        Preset noLocation = new Preset(preset.presetName, Location.ALL);
-                        noDuplicateLocations.add(noLocation);
-                    }
-                }
-
-                count = noDuplicateLocations.size();
             }
+
+            count = noDuplicateLocations.size();
         }
         return count;
     }
@@ -196,26 +205,32 @@ public class DBCache implements IDataBase {
         Set<Raid> settings = raids.get(id);
 
         int count = 0;
-        if (settings != null){
-            if (countLocations){
-                count = settings.size();
-            }else{
-                HashSet<Raid> noDuplicateLocations = new HashSet<>();
 
-                for (Raid raid : settings) {
+        if (settings == null) {
+            settings = new HashSet<>();
+        }
+        if (countLocations){
+            HashSet<Raid> temp = new HashSet<>(settings);
+            if (potentialRaids != null) {
+                temp.addAll(Arrays.asList(potentialRaids));
+            }
+            count = temp.size();
+        }else{
+            HashSet<Raid> noDuplicateLocations = new HashSet<>();
+
+            for (Raid raid : settings) {
+                Raid noLocation = new Raid(raid.bossId, Location.ALL);
+                noDuplicateLocations.add(noLocation);
+            }
+
+            if (potentialRaids != null){
+                for (Raid raid : potentialRaids) {
                     Raid noLocation = new Raid(raid.bossId, Location.ALL);
                     noDuplicateLocations.add(noLocation);
                 }
-
-                if (potentialRaids != null){
-                    for (Raid raid : potentialRaids) {
-                        Raid noLocation = new Raid(raid.bossId, Location.ALL);
-                        noDuplicateLocations.add(noLocation);
-                    }
-                }
-
-                count = noDuplicateLocations.size();
             }
+
+            count = noDuplicateLocations.size();
         }
         return count;
     }
@@ -260,20 +275,22 @@ public class DBCache implements IDataBase {
     }
 
     @Override
+    public User getUser(String id) {
+        return users.get(id);
+    }
+
+    @Override
     public ArrayList<String> getUserIDsToNotify(RaidSpawn raidSpawn) {
         ConcurrentMap<String, Set<Raid>> unPausedUsers = UtilityFunctions.concurrentFilterByKey(raids, id -> {
             User user = users.get(id);
             return !(user == null || user.paused);
         });
 
-        ArrayList<String> userIds = new ArrayList<>();
-
-        userIds.addAll(UtilityFunctions.filterByValue(unPausedUsers,raidsSet -> {
-            Stream<Raid> matchingIds = raidsSet.stream().filter(r -> r.bossId == raidSpawn.bossId);
+        return new ArrayList<>(UtilityFunctions.filterByValue(unPausedUsers, raidsSet -> {
+            Stream<Raid> matchingIds = raidsSet.stream().filter(r -> (r.gymName.equals("") || r.gymName.equalsIgnoreCase(raidSpawn.getProperties().get("gym_name"))) &&
+                                                                 ((r.bossId == raidSpawn.bossId) || (r.bossId == 0 && (r.eggLevel == raidSpawn.raidLevel))));
             return matchingIds.anyMatch(raid -> raidSpawn.getSpawnLocation().intersect(raid.location));
         }).keySet());
-
-        return userIds;
     }
 
     @Override
@@ -283,14 +300,10 @@ public class DBCache implements IDataBase {
             return !(user == null || user.paused);
         });
 
-        ArrayList<String> userIds = new ArrayList<>();
-
-        userIds.addAll(UtilityFunctions.filterByValue(unPausedUsers,presetsSet -> {
+        return new ArrayList<>(UtilityFunctions.filterByValue(unPausedUsers, presetsSet -> {
             Stream<Preset> matchingNames = presetsSet.stream().filter(p -> p.presetName.equals(preset));
             return matchingNames.anyMatch(pre -> spawn.getSpawnLocation().intersect(pre.location));
         }).keySet());
-
-        return userIds;
     }
 
     @Override
@@ -300,13 +313,11 @@ public class DBCache implements IDataBase {
             return !(user == null || user.paused);
         });
 
-        ArrayList<String> userIds = new ArrayList<>();
-
-        userIds.addAll(UtilityFunctions.filterByValue(unPausedUsers,pokeSet -> {
+        return new ArrayList<>(UtilityFunctions.filterByValue(unPausedUsers, pokeSet -> {
             Stream<Pokemon> matchingIds = pokeSet.stream().filter(
                     pokemon ->
-                    (pokemon.getID() == pokeSpawn.id) ||
-                    (pokemon.getID() == ((pokeSpawn.form != null) ? 201 : pokeSpawn.id)));
+                            (pokemon.getID() == pokeSpawn.id) ||
+                            (pokemon.getID() == ((pokeSpawn.form != null) ? 201 : pokeSpawn.id)));
             return matchingIds.anyMatch(poke -> {
                 if (!pokeSpawn.getSpawnLocation().intersect(poke.getLocation())) return false;
 
@@ -324,8 +335,6 @@ public class DBCache implements IDataBase {
 
             });
         }).keySet());
-
-        return userIds;
     }
 
     @Override
@@ -401,6 +410,11 @@ public class DBCache implements IDataBase {
     }
 
     @Override
+    public void setBotToken(String id, String botToken) {
+        users.get(id).setBotToken(botToken);
+    }
+
+    @Override
     public void setGeocodedLocation(double lat, double lon, GeocodedLocation location) {
         SpawnPoint point = new SpawnPoint(lat,lon);
 
@@ -408,6 +422,7 @@ public class DBCache implements IDataBase {
 
         if (info == null){
             info = new SpawnInfo(point);
+            spawnInfo.put(point,info);
         }
         info.geocodedLocation = location;
     }

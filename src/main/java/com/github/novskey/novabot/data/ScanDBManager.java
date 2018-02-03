@@ -18,8 +18,9 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
-import static com.github.novskey.novabot.core.ScannerType.RocketMap;
+import static com.github.novskey.novabot.core.ScannerType.*;
 import static com.github.novskey.novabot.data.DataManager.MySQL_DRIVER;
 import static com.github.novskey.novabot.data.DataManager.PgSQL_DRIVER;
 
@@ -38,6 +39,7 @@ public class ScanDBManager  {
     private final NovaBot novaBot;
 
     private com.github.novskey.novabot.data.DataSource scanDataSource;
+    private HashSet<String> gymNames = new HashSet<>();
 
     public ScanDBManager (NovaBot novabot, ScannerDb scannerDb, int id){
         this.novaBot = novabot;
@@ -47,6 +49,45 @@ public class ScanDBManager  {
         lastChecked = ZonedDateTime.now(UtilityFunctions.UTC);
         lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
         scanDbConnect();
+        if(novabot.getConfig().raidsEnabled()) {
+            gymNames = fetchGymNames();
+        }
+    }
+
+    public HashSet<String> fetchGymNames() {
+        HashSet<String> names = new HashSet<>();
+
+        String sql = null;
+        switch (scannerDb.getScannerType()) {
+            case RocketMap:
+            case SloppyRocketMap:
+            case SkoodatRocketMap:
+            case PhilMap:
+                sql = "SELECT name FROM gymdetails";
+                break;
+            case Hydro74000Monocle:
+            case Monocle:
+                sql = "SELECT name FROM forts";
+                break;
+        }
+
+        try (Connection connection = getScanConnection();
+             Statement statement = connection.createStatement()) {
+            ResultSet rs = statement.executeQuery(sql);
+
+            while (rs.next()){
+                String gymName = rs.getString(1);
+                if(gymName != null) {
+                    names.add(gymName.toLowerCase().trim());
+                }
+            }
+
+            dbLog.info(String.format("Found %d gym names", names.size()));
+        } catch (SQLException e) {
+            dbLog.error("Error executing getGymNames",e);
+        }
+
+        return names;
     }
 
     public int countSpawns(int id, TimeUnit intervalType, int intervalLength) {
@@ -104,7 +145,7 @@ public class ScanDBManager  {
         return numSpawns;
     }
 
-    public void getCurrentRaids() {
+    public void getCurrentRaids(boolean firstRun) {
         dbLog.info("Checking which known gyms need to be updated");
 
         checkKnownRaids();
@@ -117,7 +158,7 @@ public class ScanDBManager  {
         StringBuilder knownIdQMarks = new StringBuilder();
 
         if (knownRaids.size() > 0) {
-            if (scannerDb.getScannerType() == ScannerType.PhilMap || scannerDb.getScannerType() == RocketMap) {
+            if (scannerDb.getScannerType() == ScannerType.PhilMap || scannerDb.getScannerType() == RocketMap || scannerDb.getScannerType() == SkoodatRocketMap || scannerDb.getScannerType() == SloppyRocketMap) {
                 knownIdQMarks.append("gym.gym_id NOT IN (");
             } else {
                 knownIdQMarks.append("forts.id NOT in (");
@@ -131,9 +172,7 @@ public class ScanDBManager  {
             knownIdQMarks.append(") AND");
         }
 
-        ArrayList<String> knownIds = new ArrayList<>();
-
-        knownIds.addAll(knownRaids.keySet());
+        ArrayList<String> knownIds = new ArrayList<>(knownRaids.keySet());
 
         if (knownRaids.containsKey(null)) {
             System.out.println("NULL, OH NO KNOWNRAIDS CONTAINS NULL? WHY???");
@@ -263,6 +302,11 @@ public class ScanDBManager  {
             final ResultSet rs = statement.executeQuery();
             dbLog.info("Query complete");
 
+
+            if (firstRun) {
+                dbLog.info("Not sending adding to processing queue on first run");
+            }
+
             while (rs.next()) {
                 rows++;
                 RaidSpawn raidSpawn = null;
@@ -325,7 +369,9 @@ public class ScanDBManager  {
 
                 knownRaids.put(gymId, raidSpawn);
 
-                novaBot.notificationsManager.raidQueue.add(raidSpawn);
+                if (!firstRun) {
+                    novaBot.notificationsManager.raidQueue.add(raidSpawn);
+                }
             }
         } catch (SQLException e) {
             lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
@@ -333,6 +379,10 @@ public class ScanDBManager  {
         }
         dbLog.info(String.format("Returned %s rows", rows));
 
+    }
+
+    public HashSet<String> getGymNames() {
+        return gymNames;
     }
 
     public void getNewPokemon() {

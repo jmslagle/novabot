@@ -13,7 +13,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Created by Paris on 18/01/2018.
@@ -28,6 +30,26 @@ public class DataManager implements IDataBase {
     public static final String MySQL_DRIVER = "com.mysql.jdbc.Driver";
     public static final String PgSQL_DRIVER = "org.postgresql.Driver";
     private final HashSet<ScanDBManager> scanDBManagers = new HashSet<>();
+
+    public HashSet<String> getGymNames() {
+        HashSet<String> gymNames = new HashSet<>();
+
+        scanDBManagers.forEach(db -> gymNames.addAll(db.getGymNames()));
+
+        return gymNames;
+    }
+
+    public Map<String, Integer> getTokenUses() {
+        HashMap<String, Integer> tokenUses = new HashMap<>();
+
+        for (User user : dbCache.users.values()) {
+            if (user.getBotToken() != null){
+                tokenUses.merge(user.getBotToken(), 1, Integer::sum);
+            }
+        }
+
+        return tokenUses;
+    }
 
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot();
@@ -90,9 +112,9 @@ public class DataManager implements IDataBase {
     }
 
     @Override
-    public void addUser(String userID) {
-        dbCache.addUser(userID);
-        settingsDbManager.addUser(userID);
+    public void addUser(String userID, String botToken) {
+        dbCache.addUser(userID, botToken);
+        settingsDbManager.addUser(userID, botToken);
     }
 
     @Override
@@ -129,6 +151,12 @@ public class DataManager implements IDataBase {
     public void clearRaid(String id, ArrayList<Raid> raids) {
         dbCache.clearRaid(id, raids);
         settingsDbManager.clearRaid(id, raids);
+    }
+
+    @Override
+    public void clearTokens(ArrayList<String> toRemove) {
+        dbCache.clearTokens(toRemove);
+        settingsDbManager.clearTokens(toRemove);
     }
 
     @Override
@@ -173,6 +201,11 @@ public class DataManager implements IDataBase {
     @Override
     public GeocodedLocation getGeocodedLocation(double lat, double lon) {
         return dbCache.getGeocodedLocation(lat, lon);
+    }
+
+    @Override
+    public User getUser(String id) {
+        return dbCache.getUser(id);
     }
 
     @Override
@@ -248,6 +281,12 @@ public class DataManager implements IDataBase {
     }
 
     @Override
+    public void setBotToken(String id, String botToken) {
+        dbCache.setBotToken(id,botToken);
+        settingsDbManager.setBotToken(id,botToken);
+    }
+
+    @Override
     public void setGeocodedLocation(double lat, double lon, GeocodedLocation location) {
         dbCache.setGeocodedLocation(lat, lon, location);
         settingsDbManager.setGeocodedLocation(lat, lon, location);
@@ -301,9 +340,9 @@ public class DataManager implements IDataBase {
         }
     }
 
-    public void getCurrentRaids() {
+    public void getCurrentRaids(boolean firstRun) {
         for (ScanDBManager scanDBManager : scanDBManagers) {
-            new Thread(scanDBManager::getCurrentRaids).start();
+            new Thread(() -> scanDBManager.getCurrentRaids(firstRun)).start();
         }
     }
 }

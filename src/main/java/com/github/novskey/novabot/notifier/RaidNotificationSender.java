@@ -6,7 +6,6 @@ import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import com.github.novskey.novabot.raids.RaidLobby;
 import com.github.novskey.novabot.raids.RaidSpawn;
-import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -24,11 +23,9 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
 
     public static final Logger notificationLog = LoggerFactory.getLogger("Raid-Notif-Sender");
-    private static Boolean firstRun = true;
     private final int id;
     private Logger localLog;
 
-    private JDA jdaInstance;
 
     private static int nextId = 1;
 
@@ -44,7 +41,6 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     public RaidNotificationSender(NovaBot novaBot, int id) {
         this.novaBot = novaBot;
-        this.jdaInstance = novaBot.getNextNotificationBot();
         this.id =id;
         localLog = LoggerFactory.getLogger("Raid-Notif-Sender-" + id);
     }
@@ -58,14 +54,6 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
         novaBot.novabotLog.info("Started raid thread " + id);
         try {
             while (novaBot.getConfig().raidsEnabled()) {
-                synchronized (firstRun) {
-                    if (firstRun) {
-                        localLog.info("Not sending messages on first run");
-                        firstRun = false;
-                        continue;
-                    }
-                }
-
                 localLog.info("Waiting to retrieve object from raidqueue");
                 RaidSpawn raidSpawn = novaBot.notificationsManager.raidQueue.take();
                 localLog.info("Checking " + raidSpawn);
@@ -99,13 +87,9 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                     }
                 }
 
-                HashSet<String> toNotify = new HashSet<>();
+                localLog.info("Checking if anyone wants: " + raidSpawn);
 
-                if (raidSpawn.bossId != 0) {
-                    localLog.info("Checking if anyone wants: " + raidSpawn);
-
-                    toNotify.addAll(novaBot.dataManager.getUserIDsToNotify(raidSpawn));
-                }
+                HashSet<String> toNotify = new HashSet<>(novaBot.dataManager.getUserIDsToNotify(raidSpawn));
 
                 ArrayList<String> matchingPresets = novaBot.getConfig().findMatchingPresets(raidSpawn);
 
@@ -153,7 +137,7 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
     }
 
     private void notifyUser(final String userID, final Message message, boolean showTick) {
-        final User user = jdaInstance.getUserById(userID);
+        final User user = novaBot.getUserJDA(userID).getUserById(userID);
         if (user == null) return;
 
         ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
@@ -183,13 +167,13 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
     private void sendChannelAlert(Message message, String channelId, int raidLevel) {
         localLog.info("Sending public alert message to channel " + channelId);
-        TextChannel channel = jdaInstance.getTextChannelById(channelId);
+        TextChannel channel = novaBot.getNextNotificationBot().getTextChannelById(channelId);
 
         if(channel == null){
-            localLog.warn(String.format("Couldn't find from ID %s",channel));
+            localLog.warn(String.format("Couldn't find from ID %s",channelId));
             return;
         }
-        jdaInstance.getTextChannelById(channelId).sendMessage(message).queue(m -> {
+        channel.sendMessage(message).queue(m -> {
             if (novaBot.getConfig().isRaidOrganisationEnabled() && raidLevel >= 3) {
                 System.out.println(String.format("adding reaction to raid with raidlevel %s", raidLevel));
                 m.addReaction(WHITE_GREEN_CHECK).queue();

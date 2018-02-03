@@ -4,11 +4,11 @@ package com.github.novskey.novabot.core;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 public class SuburbManager {
-    private final ArrayList<String> suburbs = new ArrayList<>();
+    private final TreeSet<String> suburbs = new TreeSet<>();
 
     public SuburbManager(Path file, NovaBot novaBot) {
         try {
@@ -25,10 +25,6 @@ public class SuburbManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public int indexOf(String suburb) {
-        return suburbs.indexOf(suburb);
     }
 
     public boolean isSuburb(final String suburbStr) {

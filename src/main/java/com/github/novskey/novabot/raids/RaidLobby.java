@@ -1,5 +1,6 @@
 package com.github.novskey.novabot.raids;
 
+import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.Util.UtilityFunctions;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.core.ScheduledExecutor;
@@ -76,17 +77,17 @@ public class RaidLobby {
         if(nextTimeLeftUpdate == 15){
             getChannel().sendMessageFormat("%s %s %s %s!",
                     getRole(),
-                    novaBot.getLocalString("RaidEndSoonMessage"),
+                    StringLocalizer.getLocalString("RaidEndSoonMessage"),
                     15,
-                    novaBot.getLocalString("Minutes")).queueAfter(
+                    StringLocalizer.getLocalString("Minutes")).queueAfter(
                     timeLeft - (15*60*1000),TimeUnit.MILLISECONDS);
         }
 
         getChannel().sendMessageFormat("%s, %s %s %s",
                 getRole(),
-                novaBot.getLocalString("RaidEndedMessage"),
+                StringLocalizer.getLocalString("RaidEndedMessage"),
                 15,
-                novaBot.getLocalString("Minutes")).
+                StringLocalizer.getLocalString("Minutes")).
                 queueAfter(timeLeft,TimeUnit.MILLISECONDS,success -> end(15));
 
 
@@ -95,7 +96,7 @@ public class RaidLobby {
     public void alertRaidNearlyOver() {
         getChannel().sendMessageFormat("%s %s %s!",
                 getRole(),
-                novaBot.getLocalString("RaidEndSoonMessage"),
+                StringLocalizer.getLocalString("RaidEndSoonMessage"),
                 spawn.timeLeft(spawn.raidEnd)).queue();
         novaBot.dataManager.updateLobby(lobbyCode, memberCount(), (int) nextTimeLeftUpdate, inviteCode);
     }
@@ -142,14 +143,14 @@ public class RaidLobby {
 
         embedBuilder.setTitle(String.format("%s - %s %s %s",
                 spawn.getProperties().get("pkmn"),
-                UtilityFunctions.capitaliseFirst(novaBot.getLocalString("Level")),
+                UtilityFunctions.capitaliseFirst(StringLocalizer.getLocalString("Level")),
                 spawn.getProperties().get("level"),
-                novaBot.getLocalString("Raid")));
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("GymOwners")), String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
-        embedBuilder.addField(novaBot.getLocalString("CP"), spawn.getProperties().get("cp"), false);
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("MoveSet")), String.format("%s%s - %s%s", spawn.getProperties().get("quick_move"), spawn.getProperties().get("quick_move_type_icon"), spawn.getProperties().get("charge_move"), spawn.getProperties().get("charge_move_type_icon")), false);
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("MaxCatchableCp")), spawn.getProperties().get("lvl20cp"), false);
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("MaxCatchableCpWithBonus")), spawn.getProperties().get("lvl25cp"), false);
+                StringLocalizer.getLocalString("Raid")));
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("GymOwners")), String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
+        embedBuilder.addField(StringLocalizer.getLocalString("CP"), spawn.getProperties().get("cp"), false);
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("MoveSet")), String.format("%s%s - %s%s", spawn.getProperties().get("quick_move"), spawn.getProperties().get("quick_move_type_icon"), spawn.getProperties().get("charge_move"), spawn.getProperties().get("charge_move_type_icon")), false);
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("MaxCatchableCp")), spawn.getProperties().get("lvl20cp"), false);
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("MaxCatchableCpWithBonus")), spawn.getProperties().get("lvl25cp"), false);
         StringBuilder weaknessEmoteStr = new StringBuilder();
 
         for (String s : Raid.getBossWeaknessEmotes(spawn.bossId)) {
@@ -157,7 +158,7 @@ public class RaidLobby {
             weaknessEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("WeakTo")), weaknessEmoteStr.toString(), true);
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("WeakTo")), weaknessEmoteStr.toString(), true);
 
         StringBuilder strengthEmoteStr = new StringBuilder();
 
@@ -166,7 +167,7 @@ public class RaidLobby {
             strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
         }
 
-        embedBuilder.addField(WordUtils.capitalizeFully(novaBot.getLocalString("StrongAgainst")), strengthEmoteStr.toString(), true);
+        embedBuilder.addField(WordUtils.capitalizeFully(StringLocalizer.getLocalString("StrongAgainst")), strengthEmoteStr.toString(), true);
 
         embedBuilder.setThumbnail(spawn.getIcon());
 
@@ -181,44 +182,48 @@ public class RaidLobby {
 
     public String getMaxCpMessage() {
         return String.format("%s %s, %s %s %s.",
-                novaBot.getLocalString("MaxCpMessageStart"),
+                StringLocalizer.getLocalString("MaxCpMessageStart"),
                 spawn.getProperties().get("lvl20cp"),
-                novaBot.getLocalString("And"),
+                StringLocalizer.getLocalString("And"),
                 spawn.getProperties().get("lvl25cp"),
-                novaBot.getLocalString("MaxCpMessageEnd"));
+                StringLocalizer.getLocalString("MaxCpMessageEnd"));
     }
 
     public Message getStatusMessage(){
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
         if(spawn.bossId != 0) {
-            embedBuilder.setTitle(String.format("Raid status for %s (lvl %s) in %s - Lobby %s",
+            embedBuilder.setTitle(String.format("%s %s (%s %s) %s %s - %s %s",
+                    StringLocalizer.getLocalString("StatusTitleBossStart"),
                     spawn.getProperties().get("pkmn"),
+                    StringLocalizer.getLocalString("Lvl"),
                     spawn.getProperties().get("level"),
+                    StringLocalizer.getLocalString("In"),
                     spawn.getProperties().get("city"),
+                    StringLocalizer.getLocalString("Lobby"),
                     lobbyCode),
                     spawn.getProperties().get("gmaps"));
 
-            embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
+            embedBuilder.setDescription(StringLocalizer.getLocalString("StatusDescription"));
 
-            embedBuilder.addField("Lobby Members", String.valueOf(memberCount()), false);
-            embedBuilder.addField("Address", String.format("%s %s, %s",
+            embedBuilder.addField(StringLocalizer.getLocalString("LobbyMembers"), String.valueOf(memberCount()), false);
+            embedBuilder.addField(StringLocalizer.getLocalString(StringLocalizer.getLocalString("Address")), String.format("%s %s, %s",
                     spawn.getProperties().get("street_num"),
                     spawn.getProperties().get("street"),
                     spawn.getProperties().get("city")
             ), false);
-            embedBuilder.addField("Gym Name", spawn.getProperties().get("gym_name"), false);
-            embedBuilder.addField("Gym Owners", String.format("%s %s",
+            embedBuilder.addField(StringLocalizer.getLocalString("GymName"), spawn.getProperties().get("gym_name"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymOwners"), String.format("%s %s",
                     spawn.getProperties().get("team_name"),
                     spawn.getProperties().get("team_icon")
             ), false);
-            embedBuilder.addField("Raid End Time", String.format("%s (%s)",
+            embedBuilder.addField(StringLocalizer.getLocalString("RaidEndTime"), String.format("%s (%s)",
                     spawn.getProperties().get("24h_end"),
                     spawn.timeLeft(spawn.raidEnd)),
                     false);
-            embedBuilder.addField("Boss Moveset", String.format("%s%s - %s%s", spawn.getProperties().get("quick_move"), spawn.getProperties().get("quick_move_type_icon"), spawn.getProperties().get("charge_move"), spawn.getProperties().get("charge_move_type_icon")), false);
-            embedBuilder.addField("Max catchable CP", spawn.getProperties().get("lvl20cp"), false);
-            embedBuilder.addField("Max catchable CP (with weather bonus)", spawn.getProperties().get("lvl25cp"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("BossMoveset"), String.format("%s%s - %s%s", spawn.getProperties().get("quick_move"), spawn.getProperties().get("quick_move_type_icon"), spawn.getProperties().get("charge_move"), spawn.getProperties().get("charge_move_type_icon")), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("MaxCatchableCp"), spawn.getProperties().get("lvl20cp"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("MaxCatchableCpWithBonus"), spawn.getProperties().get("lvl25cp"), false);
 
             StringBuilder weaknessEmoteStr = new StringBuilder();
 
@@ -229,7 +234,7 @@ public class RaidLobby {
                 }
             }
 
-            embedBuilder.addField("Weak To", weaknessEmoteStr.toString(), true);
+            embedBuilder.addField(StringLocalizer.getLocalString("WeakTo"), weaknessEmoteStr.toString(), true);
 
             StringBuilder strengthEmoteStr = new StringBuilder();
 
@@ -238,27 +243,30 @@ public class RaidLobby {
                 strengthEmoteStr.append(emote == null ? "" : emote.getAsMention());
             }
 
-            embedBuilder.addField("Strong Against", strengthEmoteStr.toString(), true);
+            embedBuilder.addField(StringLocalizer.getLocalString("StrongAgainst"), strengthEmoteStr.toString(), true);
 
             embedBuilder.setThumbnail(spawn.getIcon());
             embedBuilder.setImage(spawn.getImage("formatting.ini"));
         }else{
-            embedBuilder.setTitle(String.format("Raid status for level %s egg in %s - Lobby %s",
+            embedBuilder.setTitle(String.format("%s %s %s %s - %s %s",
+                    StringLocalizer.getLocalString("StatusTitleEggStart"),
                     spawn.getProperties().get("level"),
+                    StringLocalizer.getLocalString("EggIn"),
                     spawn.getProperties().get("city"),
+                    StringLocalizer.getLocalString("Lobby"),
                     lobbyCode));
 
-            embedBuilder.setDescription("Type `!status` to see this message again, and `!help` to see all available raid lobby commands.");
+            embedBuilder.setDescription(StringLocalizer.getLocalString("StatusDescription"));
 
-            embedBuilder.addField("Lobby Members", String.valueOf(memberCount()), false);
-            embedBuilder.addField("Address", String.format("%s %s, %s",
+            embedBuilder.addField(StringLocalizer.getLocalString("LobbyMembers"), String.valueOf(memberCount()), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("Address"), String.format("%s %s, %s",
                     spawn.getProperties().get("street_num"),
                     spawn.getProperties().get("street"),
                     spawn.getProperties().get("city")
             ), false);
-            embedBuilder.addField("Gym Name", spawn.getProperties().get("gym_name"), false);
-            embedBuilder.addField("Gym Owners", String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
-            embedBuilder.addField("Raid Start Time", String.format("%s (%s)",
+            embedBuilder.addField(StringLocalizer.getLocalString("GymName"), spawn.getProperties().get("gym_name"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymOwners"), String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("RaidStartTime"), String.format("%s (%s)",
                     spawn.getProperties().get("24h_start"),
                     spawn.timeLeft(spawn.battleStart)),
                     false);
@@ -273,7 +281,10 @@ public class RaidLobby {
     }
 
     public String getTeamMessage() {
-        StringBuilder str = new StringBuilder(String.format("There are %s users in this raid team:\n\n", memberCount()));
+        StringBuilder str = new StringBuilder(String.format("%s %s %s:\n\n",
+                                                            WordUtils.capitalize(StringLocalizer.getLocalString("ThereAre")),
+                                                            memberCount(),
+                                                            StringLocalizer.getLocalString("UsersInThisTeam")));
 
         for (String memberId : memberIds) {
             str.append(String.format("  %s%n", novaBot.guild.getMemberById(memberId).getEffectiveName()));
@@ -284,6 +295,10 @@ public class RaidLobby {
 
     public void joinLobby(String userId) {
         if (spawn.raidEnd.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) return;
+
+        Member member = novaBot.guild.getMemberById(userId);
+
+        if (member == null) return;
 
         memberIds.add(userId);
 
@@ -323,10 +338,10 @@ public class RaidLobby {
 
             channel.createPermissionOverride(role).setAllow(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_HISTORY).complete();
 
-            if(channel.getPermissionOverride(novaBot.guild.getRoleById(novaBot.getConfig().novabotRole())) == null){
-                channel.createPermissionOverride(novaBot.guild.getRoleById(novaBot.getConfig().novabotRole())).setAllow(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.CREATE_INSTANT_INVITE).complete();
+            if(channel.getPermissionOverride(novaBot.jda.getRoleById(novaBot.getConfig().novabotRole())) == null){
+                channel.createPermissionOverride(novaBot.jda.getRoleById(novaBot.getConfig().novabotRole())).setAllow(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.CREATE_INSTANT_INVITE).complete();
             }else{
-                channel.getPermissionOverride(novaBot.guild.getRoleById(novaBot.getConfig().novabotRole())).getManagerUpdatable().grant(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.CREATE_INSTANT_INVITE).update().complete();
+                channel.getPermissionOverride(novaBot.jda.getRoleById(novaBot.getConfig().novabotRole())).getManagerUpdatable().grant(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.CREATE_INSTANT_INVITE).update().complete();
             }
 
             channel.createInvite().queue(inv -> {
@@ -339,24 +354,31 @@ public class RaidLobby {
             raidLobbyLog.info(String.format("First join for lobbyCode %s, created channel.", lobbyCode));
 
             if (nextTimeLeftUpdate == 15) {
-                getChannel().sendMessageFormat("%s the raid is going to end in %s minutes!", getRole(), 15).queueAfter(
+                getChannel().sendMessageFormat("%s %s %s %s!",
+                                               getRole(),
+                                               StringLocalizer.getLocalString("RaidEndSoonMessage"),
+                                               15,
+                                               StringLocalizer.getLocalString("Minutes")).queueAfter(
                         timeLeft - (15 * 60 * 1000), TimeUnit.MILLISECONDS);
             }
 
-            getChannel().sendMessageFormat("%s, the raid has ended and the raid lobby will be closed in %s minutes", getRole(), 15).
+            getChannel().sendMessageFormat("%s, %s %s %s",
+                                           getRole(),
+                                           StringLocalizer.getLocalString("RaidHasEndedMessage"),
+                                           15,
+                                           StringLocalizer.getLocalString("Minutes")).
                     queueAfter(timeLeft, TimeUnit.MILLISECONDS, success -> end(15));
 
             channel.sendMessage(getStatusMessage()).queue();
             created = true;
         }
 
-        Member member = novaBot.guild.getMemberById(userId);
 
-        novaBot.guild.getController().addRolesToMember(member, novaBot.guild.getRoleById(roleId)).queue();
+        novaBot.guild.getController().addRolesToMember(member, novaBot.jda.getRoleById(roleId)).queue();
 
 
         if (channel == null) {
-            channel = novaBot.guild.getTextChannelById(channelId);
+            channel = novaBot.jda.getTextChannelById(channelId);
         }
 
         if (shutDownService != null) {
@@ -365,7 +387,12 @@ public class RaidLobby {
             shutDownService = null;
         }
 
-        channel.sendMessageFormat("Welcome %s to the raid lobby!\nThere are now %s users in the lobby.", member, memberIds.size()).queue();
+        channel.sendMessageFormat("%s, %s!\n%s %s %s.",
+                                  member,
+                                  StringLocalizer.getLocalString("WelcomeMessage"),
+                                  WordUtils.capitalize(StringLocalizer.getLocalString("ThereAreNow")),
+                                  memberIds.size(),
+                                  StringLocalizer.getLocalString("UsersInTheLobby")).queue();
 
         novaBot.dataManager.updateLobby(lobbyCode, memberCount(), (int) nextTimeLeftUpdate, inviteCode);
     }
@@ -376,7 +403,10 @@ public class RaidLobby {
 
     public void alertEggHatched() {
         if(channelId != null) {
-            getChannel().sendMessageFormat("%s the raid egg has hatched into a %s!", getRole(), spawn.getProperties().get("pkmn")).queue();
+            getChannel().sendMessageFormat("%s %s %s!",
+                                           getRole(),
+                                           StringLocalizer.getLocalString("EggHatchedMessage"),
+                                           spawn.getProperties().get("pkmn")).queue();
             getChannel().sendMessage(getStatusMessage()).queue();
         }
     }
@@ -384,12 +414,20 @@ public class RaidLobby {
     public void leaveLobby(String id) {
         novaBot.guild.getController().removeRolesFromMember(novaBot.guild.getMemberById(id), getRole()).queue();
         memberIds.remove(id);
-        getChannel().sendMessageFormat("%s left the lobby, there are now %s users in the lobby.", novaBot.guild.getMemberById(id), memberCount()).queue();
+        getChannel().sendMessageFormat("%s %s, %s %s %s.",
+                                       novaBot.guild.getMemberById(id),
+                                       StringLocalizer.getLocalString("LeftTheLobby"),
+                                       StringLocalizer.getLocalString("ThereAreNow"),
+                                       memberCount(),
+                                       StringLocalizer.getLocalString("UsersInTheLobby")).queue();
 
         novaBot.dataManager.updateLobby(lobbyCode, memberCount(), (int) nextTimeLeftUpdate, inviteCode);
 
         if (memberCount() == 0) {
-            getChannel().sendMessageFormat("There are no users in the lobby, it will be closed in %s minutes", 10).queue();
+            getChannel().sendMessageFormat("%s %s %s",
+                                           StringLocalizer.getLocalString("NoUsersInLobbyMessage"),
+                                           10,
+                                           StringLocalizer.getLocalString("Minutes")).queue();
             end(10);
         }
     }
@@ -407,8 +445,8 @@ public class RaidLobby {
                     , lobbyCode), spawn.getProperties().get("gmaps"));
             embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
             embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
-            embedBuilder.addField("Gym Name", spawn.getProperties().get("gym_name"), false);
-            embedBuilder.addField("Gym Owners", String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymName"), spawn.getProperties().get("gym_name"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymOwners"), String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
             embedBuilder.addField("Raid End",String.format("%s (%s remaining)"
                     , spawn.getProperties().get("24h_end")
                     ,timeLeft
@@ -425,8 +463,8 @@ public class RaidLobby {
                     , lobbyCode), spawn.getProperties().get("gmaps"));
             embedBuilder.setDescription(String.format("Join the discord lobby to coordinate with other players by clicking the ✅ emoji below this post, or by typing `!joinraid %s` in any raid channel or PM with novabot.",lobbyCode));
             embedBuilder.addField("Team Size", String.valueOf(memberCount()), false);
-            embedBuilder.addField("Gym Name", spawn.getProperties().get("gym_name"), false);
-            embedBuilder.addField("Gym Owners", String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymName"), spawn.getProperties().get("gym_name"), false);
+            embedBuilder.addField(StringLocalizer.getLocalString("GymOwners"), String.format("%s %s", spawn.getProperties().get("team_name"), spawn.getProperties().get("team_icon")), false);
             embedBuilder.addField("Raid Start",String.format("%s (%s remaining)"
                     , spawn.getProperties().get("24h_start")
                     ,timeLeft
@@ -441,7 +479,7 @@ public class RaidLobby {
 
     public void loadMembers() {
         try {
-            Role role = novaBot.guild.getRoleById(roleId);
+            Role role = novaBot.jda.getRoleById(roleId);
             memberIds.addAll(novaBot.guild.getMembersWithRoles(role).stream().map(member -> member.getUser().getId()).collect(Collectors.toList()));
         }catch (NullPointerException | IllegalArgumentException e){
             raidLobbyLog.warn("Couldn't load members, couldnt find role by Id or ID was null");

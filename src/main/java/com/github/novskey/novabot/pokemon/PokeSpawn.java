@@ -4,6 +4,7 @@ import com.github.novskey.novabot.Util.UtilityFunctions;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.core.Spawn;
 import com.github.novskey.novabot.core.Types;
+import com.github.novskey.novabot.core.Weather;
 import com.github.novskey.novabot.data.SpawnLocation;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import net.dv8tion.jda.core.EmbedBuilder;
@@ -139,6 +140,7 @@ public class PokeSpawn extends Spawn
         getProperties().put("lvl35cp", cp == null ? "?" : String.valueOf(Pokemon.maxCpAtLevel(id, 35)));
 
         getProperties().put("weather","unkn");
+        getProperties().put("weather_icon","");
     }
 
     public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final Integer attack, final Integer defense, final Integer stamina, final Integer move1, final Integer move2, final float weight, final float height, final Integer gender, final Integer form, Integer cp, double cpModifier) {
@@ -155,12 +157,20 @@ public class PokeSpawn extends Spawn
 
     public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, int weight, int height, Integer gender, Integer form, Integer cp, Integer level, int weather) {
         this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,level);
-        getProperties().replace("weather",getWeather(weather));
+        Weather w = Weather.fromId(weather);
+        if (w != null) {
+            getProperties().replace("weather", w.toString());
+            getProperties().replace("weather_icon", w.getEmote());
+        }
     }
 
     public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, int weather) {
         this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,cpMod);
-        getProperties().replace("weather",getWeather(weather));
+        Weather w = Weather.fromId(weather);
+        if (w != null) {
+            getProperties().replace("weather", w.toString());
+            getProperties().replace("weather_icon", w.getEmote());
+        }
     }
 
     public Message buildMessage(String formatFile) {
@@ -217,8 +227,6 @@ public class PokeSpawn extends Spawn
     public int hashCode() {
         int hash = (int) (lat * lon);
 
-        hash *= novaBot.getSuburbs().indexOf(suburb);
-
         hash *= id;
 
         hash += (iv == null ? 0 : iv) * 1000;
@@ -241,9 +249,9 @@ public class PokeSpawn extends Spawn
     @Override
     public String toString() {
         if (this.disappearTime == null) {
-            return "[" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.getMove_1() + ", " + this.getMove_2();
+            return getProperties().get("weather") + ": " + Pokemon.idToName(this.id) + " " + PokeSpawn.df.format(this.iv) + "%, " + this.getMove_1() + ", " + this.getMove_2();
         }
-        return "[" + ((this.suburb == null) ? "null" : this.suburb) + "]" + Pokemon.idToName(this.id) + " " + (iv != null ? PokeSpawn.df.format(this.iv) : "unkn") + "%,CP: " + this.cp + ", " + this.getMove_1() + ", " + this.getMove_2() + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
+        return getProperties().get("weather") + ": " + Pokemon.idToName(this.id) + " " + (iv != null ? PokeSpawn.df.format(this.iv) : "unkn") + "%,CP: " + this.cp + ", " + this.getMove_1() + ", " + this.getMove_2() + ", for " + this.timeLeft() + ", disappears at " + this.disappearTime;
     }
 
     public static void main(String[] args) {

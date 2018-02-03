@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.PrivateChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +138,8 @@ public class Pokemon {
 
     public static String getFilterName(int id) {
 
+        if (id <= 0) return "";
+
         if (id > 2010) return "Unown";
 
         return Pokemon.pokemonInfo.getAsJsonObject(Integer.toString(id)).get("name").getAsString();
@@ -226,7 +228,7 @@ public class Pokemon {
 
     @Override
     public String toString() {
-        return String.format("%s (%s,%s)",name,miniv,maxiv);
+        return String.format("%s (%s,%s)iv (%s%s)cp (%s%s)lvl",name,miniv,maxiv,mincp,maxcp,minlvl,maxlvl);
     }
 
     public static String idToName(final int id) {
@@ -466,14 +468,16 @@ public class Pokemon {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
         novaBot.start();
-        TextChannel channel = novaBot.jda.getTextChannelById("403381296853942272");
+        PrivateChannel channel = novaBot.jda.getUserById("107730875596169216").openPrivateChannel().complete();
+        PrivateChannel channel1 = novaBot.jda.getUserById("234884844780257282").openPrivateChannel().complete();
 
-        for (int id = 1; id <= 383; id++) {
+        for (int id = 1; id <= 30; id++) {
             MessageBuilder builder = new MessageBuilder(getFilterName(id));
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setThumbnail(getIcon(id));
             builder.setEmbed(embedBuilder.build());
             channel.sendMessage(builder.build()).queue();
+            channel1.sendMessage(builder.build()).queue();
         }
 
     }

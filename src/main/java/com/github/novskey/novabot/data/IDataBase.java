@@ -22,7 +22,7 @@ public interface IDataBase {
 
     void addRaid(String userID, Raid raid);
 
-    void addUser(String userID);
+    void addUser(String userID, String botToken);
 
     void clearPreset(String id, String[] presets);
 
@@ -35,6 +35,8 @@ public interface IDataBase {
     void clearPokemon(String id, ArrayList<Pokemon> pokemons);
 
     void clearRaid(String id, ArrayList<Raid> raids);
+
+    void clearTokens(ArrayList<String> toRemove);
 
     int countPokemon(String id, Pokemon[] potentialPokemon, boolean countLocations);
 
@@ -51,6 +53,8 @@ public interface IDataBase {
     void endLobby(String lobbyCode);
 
     GeocodedLocation getGeocodedLocation(double lat, double lon);
+
+    User getUser(String id);
 
     ArrayList<String> getUserIDsToNotify(RaidSpawn raidSpawn);
 
@@ -77,6 +81,8 @@ public interface IDataBase {
     void resetRaids(String id);
 
     void resetUser(String id);
+
+    void setBotToken(String id, String nextUserBotToken);
 
     void setGeocodedLocation(double lat, double lon, GeocodedLocation location);
 

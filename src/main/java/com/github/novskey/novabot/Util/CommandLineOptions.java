@@ -48,6 +48,10 @@ public class CommandLineOptions {
                     break;
                 case "-l":
                     parsed.setLocale(args[i + 1]);
+                default:
+                    System.out.println("Unknown argument: " + args[i]);
+                    System.out.println("Valid arguments: -cf, -gf, -sl, -s, -gk, -f, -rc, -pc, -p, -l");
+                    System.exit(0);
             }
         }
         return parsed;

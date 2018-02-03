@@ -58,7 +58,9 @@ public class TimeZones {
             novaBot.getConfig().getTimeZoneKeys().remove(key);
         }catch (RequestDeniedException e){
                 novaBot.novabotLog.info(String.format("API key %s is not authorised to use the timezone api, removing from rotation. Enable key again with !reload.", key));
-                novaBot.getConfig().getTimeZoneKeys().remove(key);
+                synchronized (novaBot.getConfig().getTimeZoneKeys()) {
+                    novaBot.getConfig().getTimeZoneKeys().remove(key);
+                }
         } catch (ApiException | InterruptedException | IOException e) {
             novaBot.novabotLog.error("Error executing getTimeZone",e);
         }
@@ -66,12 +68,14 @@ public class TimeZones {
     }
 
     private synchronized String getNextKey() {
-        if (TimeZones.lastKey >= novaBot.getConfig().getTimeZoneKeys().size() - 1) {
-            TimeZones.lastKey = 0;
+        synchronized (novaBot.getConfig().getTimeZoneKeys()) {
+            if (TimeZones.lastKey >= novaBot.getConfig().getTimeZoneKeys().size() - 1) {
+                TimeZones.lastKey = 0;
+                return novaBot.getConfig().getTimeZoneKeys().get(TimeZones.lastKey);
+            }
+            ++TimeZones.lastKey;
             return novaBot.getConfig().getTimeZoneKeys().get(TimeZones.lastKey);
         }
-        ++TimeZones.lastKey;
-        return novaBot.getConfig().getTimeZoneKeys().get(TimeZones.lastKey);
     }
 
     public int getRequests() {

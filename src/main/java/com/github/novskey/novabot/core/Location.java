@@ -1,10 +1,11 @@
 package com.github.novskey.novabot.core;
 
-import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import lombok.Data;
 
 import java.util.ArrayList;
+
+import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
 
 @Data
 public class Location {
@@ -58,7 +59,7 @@ public class Location {
 
     public static Location fromString(final String str, NovaBot novaBot) {
 
-        if (novaBot.getConfig().isAllowAllLocation() && str.equalsIgnoreCase(novaBot.getLocalString("All"))) return Location.ALL;
+        if (novaBot.getConfig().isAllowAllLocation() && str.equalsIgnoreCase(getLocalString("All"))) return Location.ALL;
 
         if (novaBot.getConfig().useGeofences()) {
             ArrayList<GeofenceIdentifier> identifiers = GeofenceIdentifier.fromString(str);
@@ -112,7 +113,7 @@ public class Location {
             case Geofence:
                 return GeofenceIdentifier.listToString(this.geofenceIdentifiers);
             case All:
-                return StringLocalizer.getLocalString("all");
+                return getLocalString("all");
         }
 
         return "";

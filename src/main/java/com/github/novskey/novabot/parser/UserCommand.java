@@ -8,6 +8,8 @@ import com.github.novskey.novabot.raids.Raid;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
+
 public class UserCommand
 {
     public final NovaBot novaBot;
@@ -91,6 +93,14 @@ public class UserCommand
             strings[i] = params[i].toString();
         }
         return strings;
+    }
+
+    private Integer[] toIntegers(final Object[] params) {
+        final Integer[] integers = new Integer[params.length];
+        for (int i = 0; i < params.length; ++i) {
+            integers[i] = (Integer) params[i];
+        }
+        return integers;
     }
 
     public Argument getArg(final int i) {
@@ -178,9 +188,9 @@ public class UserCommand
         if (containsArg(ArgType.IV)) {
             final Argument ivArg = getArg(ArgType.IV);
             if (ivArg.getParams().length == 1) {
-                message = message + " " + ivArg.getParams()[0] + "% " + novaBot.getLocalString("IvOrAbove");
+                message = message + " " + ivArg.getParams()[0] + "% " + getLocalString("IvOrAbove");
             } else {
-                message = message + " " + novaBot.getLocalString("Between") + " " + ivArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + ivArg.getParams()[1] + "% " + novaBot.getLocalString("IV");
+                message = message + " " + getLocalString("Between") + " " + ivArg.getParams()[0] + " " + getLocalString("And") + " " + ivArg.getParams()[1] + "% " + getLocalString("IV");
             }
         }
         return message;
@@ -190,6 +200,10 @@ public class UserCommand
     public Raid[] buildRaids() {
         Location[] locations = { Location.ALL };
         String[] bossNames = new String[0];
+        String[] gymNames = {""};
+        Integer[] eggLevels = {};
+
+        boolean foundEggLevels = false;
         for (final Argument arg : this.args) {
             switch (arg.getType()) {
                 case Locations:
@@ -197,16 +211,38 @@ public class UserCommand
                     break;
                 case Pokemon:
                     bossNames = this.toStrings(arg.getParams());
+                    if(!foundEggLevels) {
+                        eggLevels = new Integer[0];
+                    }
+                    break;
+                case Egg:
+                    eggLevels = this.toIntegers(arg.getParams());
+                    foundEggLevels = true;
+                    break;
+                case GymName:
+                    gymNames = this.toStrings(arg.getParams());
                     break;
             }
         }
 
         final ArrayList<Raid> raids = new ArrayList<>();
         for (final String bossName : bossNames) {
-            for (final Location location : locations) {
-                Raid raid = new Raid(Pokemon.nameToID(bossName),location);
-                System.out.println(raid);
-                raids.add(raid);
+            for (String gymName : gymNames) {
+                for (final Location location : locations) {
+                    Raid raid = new Raid(Pokemon.nameToID(bossName),0,gymName,location);
+                    System.out.println(raid);
+                    raids.add(raid);
+                }
+            }
+        }
+
+        for (Integer eggLevel : eggLevels) {
+            for (String gymName : gymNames) {
+                for (final Location location : locations) {
+                    Raid raid = new Raid(0,eggLevel,gymName,location);
+                    System.out.println(raid);
+                    raids.add(raid);
+                }
             }
         }
 
@@ -219,10 +255,10 @@ public class UserCommand
         if (containsArg(ArgType.CP)) {
             final Argument cpArg = getArg(ArgType.CP);
             if (cpArg.getParams().length == 1) {
-                message = message + " " + cpArg.getParams()[0] + " " + novaBot.getLocalString("CpOrAbove");
+                message = message + " " + cpArg.getParams()[0] + " " + getLocalString("CpOrAbove");
             }
             else {
-                message = message + " " + novaBot.getLocalString("Between") + " " + cpArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + cpArg.getParams()[1] + " " + novaBot.getLocalString("CP");
+                message = message + " " + getLocalString("Between") + " " + cpArg.getParams()[0] + " " + getLocalString("And") + " " + cpArg.getParams()[1] + " " + getLocalString("CP");
             }
         }
         return message;
@@ -233,10 +269,10 @@ public class UserCommand
         if (containsArg(ArgType.Level)) {
             final Argument levelArg = getArg(ArgType.Level);
             if (levelArg.getParams().length == 1) {
-                message = message + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[0] + " " + novaBot.getLocalString("OrAbove");
+                message = message + " " + getLocalString("Level") + " " + levelArg.getParams()[0] + " " + getLocalString("OrAbove");
             }
             else {
-                message = message + " " + novaBot.getLocalString("Between") + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[0] + " " + novaBot.getLocalString("And") + " " + novaBot.getLocalString("Level") + " " + levelArg.getParams()[1];
+                message = message + " " + getLocalString("Between") + " " + getLocalString("Level") + " " + levelArg.getParams()[0] + " " + getLocalString("And") + " " + getLocalString("Level") + " " + levelArg.getParams()[1];
             }
         }
         return message;

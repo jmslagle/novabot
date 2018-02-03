@@ -6,7 +6,6 @@ import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.maps.GeofenceIdentifier;
 import com.github.novskey.novabot.pokemon.PokeSpawn;
 import com.github.novskey.novabot.pokemon.Pokemon;
-import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import java.util.HashSet;
 public class PokeNotificationSender extends NotificationSender implements Runnable {
 
     public static Logger notificationLog = LoggerFactory.getLogger("Poke-Notif-Sender");
-    private JDA jdaInstance;
     private Logger localLog;
 
     public PokeNotificationSender(NovaBot novaBot, int id) {
@@ -33,7 +31,6 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
         try {
             while (novaBot.getConfig().pokemonEnabled()) {
                 PokeSpawn pokeSpawn = novaBot.notificationsManager.pokeQueue.take();
-                this.jdaInstance = novaBot.getNextNotificationBot();
                 localLog.info("Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
 
                 if (pokeSpawn.disappearTime.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) {
@@ -93,7 +90,7 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
     }
 
     private void notifyUser(final String userID, final Message message) {
-        final User user = jdaInstance.getUserById(userID);
+        final User user = novaBot.getUserJDA(userID).getUserById(userID);
         if (user == null) return;
 
 
@@ -112,6 +109,6 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
 
     private void sendChannelAlert(Message message, String channelId) {
         localLog.info("Sending public alert message to channel " + channelId);
-        jdaInstance.getTextChannelById(channelId).sendMessage(message).queue(m -> localLog.info("Successfully sent message."));
+        novaBot.getNextNotificationBot().getTextChannelById(channelId).sendMessage(message).queue(m -> localLog.info("Successfully sent message."));
     }
 }

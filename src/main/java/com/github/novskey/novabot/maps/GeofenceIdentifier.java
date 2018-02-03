@@ -19,11 +19,6 @@ public class GeofenceIdentifier {
 
 
     public static ArrayList<GeofenceIdentifier> fromString(String str) {
-
-//        if(Geofencing.geofencesMap.size() == 0){
-//            Geofencing.loadGeofences();
-//        }
-
         ArrayList<GeofenceIdentifier> geofenceIdentifiers = new ArrayList<>();
 
         if (str.equalsIgnoreCase("none")) {

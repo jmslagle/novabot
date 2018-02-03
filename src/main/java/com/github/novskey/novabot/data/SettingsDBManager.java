@@ -88,10 +88,12 @@ public class SettingsDBManager implements IDataBase {
     @Override
     public void addRaid(final String userID, final Raid raid) {
         try (Connection connection = getNbConnection();
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO raid VALUES (?,?,?)")) {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO raid (user_id,boss_id,egg_level,gym_name,location) VALUES (?,?,?,?,?)")) {
             statement.setString(1, userID);
             statement.setDouble(2, raid.bossId);
-            statement.setString(3, raid.location.toDbString());
+            statement.setDouble(3, raid.eggLevel);
+            statement.setString(4,raid.gymName);
+            statement.setString(5, raid.location.toDbString());
 
             dbLog.debug(statement.toString());
             statement.executeUpdate();
@@ -103,10 +105,13 @@ public class SettingsDBManager implements IDataBase {
     }
 
     @Override
-    public void addUser(final String userID) {
+    public void addUser(final String userID, String botToken) {
         try (Connection connection = getNbConnection();
-             Statement statement = connection.createStatement()) {
-            statement.executeUpdate(String.format("INSERT INTO users (id) VALUES (%s);", "'" + userID + "'"));
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (id, bot_token) VALUES (?,?)"))
+        {
+            statement.setString(1,userID);
+            statement.setString(2,botToken);
+            statement.executeUpdate();
         } catch (SQLIntegrityConstraintViolationException e3) {
             dbLog.warn("Cannot add duplicate");
         } catch (SQLException e) {
@@ -233,6 +238,29 @@ public class SettingsDBManager implements IDataBase {
         } catch (SQLException e) {
             dbLog.error("Error executing clearRaid",e);
         }
+    }
+
+    @Override
+    public void clearTokens(ArrayList<String> toRemove) {
+        StringBuilder tokensString = new StringBuilder("(");
+        for (int i = 0; i < toRemove.size(); ++i) {
+            if (i == toRemove.size() - 1) {
+                tokensString.append(String.format("'%s'", toRemove.get(i)));
+            } else {
+                tokensString.append(String.format("'%s'", toRemove.get(i))).append(",");
+            }
+        }
+        tokensString.append(")");
+
+        int affected = 0;
+        try (Connection connection = getNbConnection();
+             Statement statement = connection.createStatement()) {
+            affected = statement.executeUpdate(String.format("UPDATE users SET bot_token=NULL WHERE bot_token IN %s;", tokensString.toString()));
+        } catch (SQLException e) {
+            dbLog.error("Error executing clearTokens", e);
+        }
+
+        dbLog.info(String.format("Cleared %s invalid tokens", affected));
     }
 
     @Override
@@ -523,6 +551,26 @@ public class SettingsDBManager implements IDataBase {
     }
 
     @Override
+    public User getUser(String id) {
+        try (Connection connection = getNbConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT id, paused, bot_token FROM users WHERE id = ?"))
+        {
+            statement.setString(1, id);
+            final ResultSet rs = statement.getResultSet();
+            if (!rs.next()) {
+                String   userId = rs.getString(1);
+                boolean  paused = rs.getBoolean(2);
+                String botToken = rs.getString(3);
+
+                return new User(userId,paused,botToken);
+            }
+        } catch (SQLException e) {
+            dbLog.error("Error executing notContainsUser",e);
+        }
+        return null;
+    }
+
+    @Override
     public ArrayList<String> getUserIDsToNotify(final RaidSpawn raidSpawn) {
         final ArrayList<String> ids = new ArrayList<>();
 
@@ -537,13 +585,25 @@ public class SettingsDBManager implements IDataBase {
         }
         if (geofences > 0) geofenceQMarks.append(",");
 
-        String sql = String.format(
-                "SELECT DISTINCT(user_id) " +
-                        "FROM raid " +
-                        "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
-                        "AND LOWER(location) IN (%s%s'all') " +
-                        "AND boss_id=?;", geofenceQMarks.toString(), (novaBot.suburbsEnabled() ? "?, " : "")
-        );
+        String sql;
+        if(raidSpawn.bossId != 0) {
+            sql = String.format(
+                    "SELECT DISTINCT(user_id) " +
+                    "FROM raid " +
+                    "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
+                    "AND LOWER(location) IN (%s%s'all') " +
+                    "AND (boss_id=? OR egg_level=?) " +
+                    "AND gym_name IN ('',?);", geofenceQMarks.toString(), (novaBot.suburbsEnabled() ? "?, " : "")
+                               );
+        }else{
+            sql = String.format(
+                    "SELECT DISTINCT(user_id) " +
+                    "FROM raid " +
+                    "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
+                    "AND LOWER(location) IN (%s%s'all') " +
+                    "AND egg_level=? " +
+                    "AND gym_name IN ('',?);", geofenceQMarks.toString(), (novaBot.suburbsEnabled() ? "?, " : ""));
+        }
 
         try (Connection connection = getNbConnection();
              PreparedStatement statement = connection.prepareStatement(sql)
@@ -556,7 +616,15 @@ public class SettingsDBManager implements IDataBase {
                 statement.setString(geofences + offset, raidSpawn.getProperties().get(novaBot.getConfig().getGoogleSuburbField()).toLowerCase());
                 offset++;
             }
-            statement.setInt(geofences + offset, raidSpawn.bossId);
+            if (raidSpawn.bossId != 0) {
+                statement.setInt(geofences + offset, raidSpawn.bossId);
+                offset++;
+            }else {
+                statement.setInt(geofences + offset, raidSpawn.raidLevel);
+                offset++;
+            }
+            statement.setString(geofences + offset, raidSpawn.getProperties().get("gym_name"));
+
             dbLog.debug(statement.toString());
             System.out.println(statement);
             final ResultSet rs = statement.executeQuery();
@@ -794,38 +862,40 @@ public class SettingsDBManager implements IDataBase {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
 //        novaBot.dbManager.novabotdbConnect();
-
-        PokeSpawn pokeSpawn = new PokeSpawn(
-                1,
-                -35.265134, 149.122796,
-                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
-                null,
-                null,
-                null,
-                null,
-                null,
-                0,
-                0,
-                null,
-                null,
-                null, null);
-
-        System.out.println(novaBot.dataManager.getUserPref("107730875596169216").allPokemonToString());
-        System.out.println(pokeSpawn.buildMessage("formatting.ini").getEmbeds().get(0).getDescription());
-        System.out.println(novaBot.dataManager.getUserIDsToNotify(pokeSpawn));
-
-//        System.out.println(new RaidSpawn(
-//                "gym",
-//                "id",
+//
+//        PokeSpawn pokeSpawn = new PokeSpawn(
+//                1,
 //                -35.265134, 149.122796,
-//                Team.Valor,
-//                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
 //                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
-//                383,
-//                155555,
-//                18,
-//                22,
-//                5).buildMessage("formatting.ini").getEmbeds().get(0).getDescription());
+//                null,
+//                null,
+//                null,
+//                null,
+//                null,
+//                0,
+//                0,
+//                null,
+//                null,
+//                null, null);
+//
+//        System.out.println(novaBot.dataManager.getUserPref("107730875596169216").allPokemonToString());
+//        System.out.println(pokeSpawn.buildMessage("formatting.ini").getEmbeds().get(0).getDescription());
+//        System.out.println(novaBot.dataManager.getUserIDsToNotify(pokeSpawn));
+
+        RaidSpawn spawn = new RaidSpawn(
+                "lincoln park gazebo",
+                "id",
+                -35.265134, 149.122796,
+                Team.Valor,
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
+                383,
+                155555,
+                18,
+                22,
+                5);
+
+        System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
     }
 
     @Override
@@ -939,7 +1009,21 @@ public class SettingsDBManager implements IDataBase {
         resetPokemon(id);
         resetPresets(id);
     }
-    
+
+    @Override
+    public void setBotToken(String id, String botToken) {
+        try (Connection connection = getNbConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE users SET bot_token = ? WHERE id = ?")
+        ) {
+            statement.setString(1, botToken);
+            statement.setString(2, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            dbLog.error("Error executing pauseUser",e);
+        }
+    }
+
     @Override
     public void setGeocodedLocation(final double lat, final double lon, GeocodedLocation location) {
 
@@ -1132,13 +1216,14 @@ public class SettingsDBManager implements IDataBase {
         try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement())
         {
-            ResultSet rs = statement.executeQuery("SELECT id, paused FROM users");
+            ResultSet rs = statement.executeQuery("SELECT id, paused, bot_token FROM users");
 
             while (rs.next()){
                 String id = rs.getString(1);
                 boolean paused = rs.getBoolean(2);
+                String botToken = rs.getObject(3, String.class);
 
-                users.put(id, new User(id, paused));
+                users.put(id, new User(id, paused,botToken));
             }
         } catch (SQLException e) {
             dbLog.error("Error executing dumpUsers",e);
@@ -1190,24 +1275,22 @@ public class SettingsDBManager implements IDataBase {
         try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement())
         {
-            ResultSet rs = statement.executeQuery("SELECT user_id, boss_id, location FROM raid");
+            ResultSet rs = statement.executeQuery("SELECT user_id, boss_id, egg_level, gym_name, location FROM raid");
 
             while (rs.next()){
                 String userId = rs.getString(1);
                 int bossId = rs.getInt(2);
-                Location location = Location.fromDbString(rs.getString(3).toLowerCase(),novaBot);
+                int eggLevel = rs.getInt(3);
+                String gymName = rs.getString(4);
+                Location location = Location.fromDbString(rs.getString(5).toLowerCase(),novaBot);
 
                 if (location == null){
                     dbLog.warn("Location is null, not dumping raid setting");
                     continue;
                 }
 
-                Set<Raid> userSettings = raids.get(userId);
-                if(userSettings == null){
-                    userSettings = ConcurrentHashMap.newKeySet();
-                    raids.put(userId,userSettings);
-                }
-                userSettings.add(new Raid(bossId,location));
+                Set<Raid> userSettings = raids.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet());
+                userSettings.add(new Raid(bossId,eggLevel,gymName,location));
             }
         } catch (SQLException e) {
             dbLog.error("Error executing dumpRaids",e);

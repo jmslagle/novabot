@@ -1,5 +1,6 @@
 package com.github.novskey.novabot.parser;
 
+import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.core.Location;
 import com.github.novskey.novabot.core.LocationType;
 import com.github.novskey.novabot.core.NovaBot;
@@ -22,6 +23,7 @@ public class Parser {
     private static final Pattern ONLY_NUMBERS = Pattern.compile("[0-9]+");
     private static final Pattern CP_PATTERN = Pattern.compile("(cp[0-9]+)|([0-9]+cp)");
     private static final Pattern IV_PATTERN = Pattern.compile("iv[0-9]+|([0-9]+iv)|[0-9]+");
+    private static final Pattern EGG_PATTERN = Pattern.compile("egg[1-5]");
 
 
     private final NovaBot novaBot;
@@ -87,6 +89,12 @@ public class Parser {
         } else if (valid.contains(ArgType.Pokemon) && Pokemon.nameToID(trimmed) != 0) {
             argument.setType(ArgType.Pokemon);
             argument.setParams(new Object[]{trimmed});
+        } else if (valid.contains(ArgType.Egg) && EGG_PATTERN.matcher(trimmed).matches()) {
+            argument.setType(ArgType.Egg);
+            Matcher matcher = ONLY_NUMBERS.matcher(trimmed);
+            if (matcher.find()) {
+                argument.setParams(new Object[]{Integer.valueOf(matcher.group())});
+            }
         } else {
             final Location location;
             if (valid.contains(ArgType.Locations) && (location = Location.fromString(trimmed, novaBot)) != null) {
@@ -208,6 +216,14 @@ public class Parser {
                             args.add(loc);
                         }
                         break;
+                    case GymName:
+                        if (novaBot.dataManager.getGymNames().contains(trimmed)) {
+                            args.add(trimmed);
+                        }else{
+                            malformed.add(trimmed);
+                            args.add(null);
+                        }
+                        break;
                     case Pokemon:
                         final Pokemon pokemon = new Pokemon(trimmed);
                         if (pokemon.name == null) {
@@ -262,6 +278,17 @@ public class Parser {
                                 }
                             } else {
                                 malformed.add(string);
+                            }
+                        } else {
+                            malformed.add(string);
+                        }
+                        break;
+                    case Egg:
+                        if (EGG_PATTERN.matcher(trimmed).matches()) {
+                            argument.setType(ArgType.Egg);
+                            Matcher matcher = ONLY_NUMBERS.matcher(trimmed);
+                            if (matcher.find()) {
+                                args.add(Integer.valueOf(matcher.group()));
                             }
                         } else {
                             malformed.add(string);
@@ -323,7 +350,9 @@ public class Parser {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
 
-        String[] testStrings = new String [] {"!addpokemon Ralts <90iv, 100iv>","!addpokemon ralts", "!addpokemon ralts 90iv", "!addpokemon ralts 90", "!addpokemon ralts iv90", "!addpokemon ralts <iv90,iv99>"};
+        System.out.println(StringLocalizer.getLocalString("StatusDescription"));
+
+        String[] testStrings = new String [] {"!addpokemon Ralts <90iv, 100iv>","!addpokemon ralts", "!addpokemon ralts 90iv", "!addpokemon ralts 90", "!addpokemon ralts iv90", "!addpokemon ralts <iv90,iv99>","!addraid egg5"};
 
         for (String testString : testStrings) {
             System.out.println(testString);
@@ -331,10 +360,9 @@ public class Parser {
             System.out.println(command.getExceptions());
         }
 
-        UserCommand command = novaBot.parser.parseInput("!addpokemon <larvitar,pupitar,tyranitar> <100> <lyneham,tu/rner> /l30");
+        UserCommand command = novaBot.parser.parseInput("!addraid <egg1,egg2>");
         System.out.println(command.getExceptions());
-        command = novaBot.parser.parseInput("!addpokemon dratini 100 l30");
-        System.out.println(command.getExceptions());
+        System.out.println(command.buildRaids());
     }
 
 }

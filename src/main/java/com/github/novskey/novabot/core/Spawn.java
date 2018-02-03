@@ -12,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
+
 @Data
 public class Spawn {
     protected static final DateTimeFormatter printFormat24hr = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -47,21 +49,21 @@ public class Spawn {
     protected static String getWeather(int weather) {
         switch(weather){
             case 0:
-                return novaBot.getLocalString("None");
+                return getLocalString("None");
             case 1:
-                return novaBot.getLocalString("Clear");
+                return getLocalString("Clear");
             case 2:
-                return novaBot.getLocalString("Rain");
+                return getLocalString("Rain");
             case 3:
-                return novaBot.getLocalString("PartlyCloudy");
+                return getLocalString("PartlyCloudy");
             case 4:
-                return novaBot.getLocalString("Cloudy");
+                return getLocalString("Cloudy");
             case 5:
-                return novaBot.getLocalString("Windy");
+                return getLocalString("Windy");
             case 6:
-                return novaBot.getLocalString("Snow");
+                return getLocalString("Snow");
             case 7:
-                return novaBot.getLocalString("Fog");
+                return getLocalString("Fog");
             default:
                 return "unkn";
         }
@@ -96,7 +98,7 @@ public class Spawn {
     }
 
     protected String getGmapsLink() {
-        return String.format("https://www.google.com/maps?q=%s,%s", this.lat, this.lon);
+        return String.format("http://maps.google.com/maps?q=%s,%s", this.lat, this.lon);
     }
 
     private synchronized static String getNextKey() {

@@ -1,17 +1,16 @@
 package com.github.novskey.novabot.core;
 
+import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.data.Preset;
 import com.github.novskey.novabot.pokemon.Pokemon;
 import com.github.novskey.novabot.raids.Raid;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class UserPref {
-    private final HashMap<String, Set<Pokemon>> pokemonPrefs = new HashMap<>();
-    private final HashMap<String, Set<Raid>> raidPrefs = new HashMap<>();
-    private final HashMap<String, Set<String>> presetPrefs = new HashMap<>();
+    private final TreeMap<String, TreeSet<Pokemon>> pokemonPrefs = new TreeMap<>();
+    private final TreeMap<String, TreeSet<Raid>> raidPrefs = new TreeMap<>();
+    private final TreeMap<String, TreeSet<String>> presetPrefs = new TreeMap<>();
     private final NovaBot novaBot;
 
     public UserPref(NovaBot novaBot) {
@@ -25,7 +24,7 @@ public class UserPref {
 
 
         if (!this.pokemonPrefs.containsKey(location.toWords())) {
-            final Set<Pokemon> set = new HashSet<>();
+            final TreeSet<Pokemon> set = new TreeSet<>(Comparator.comparing(Pokemon::toString));
             set.add(pokemon);
             this.pokemonPrefs.put(location.toWords(), set);
         } else {
@@ -35,10 +34,12 @@ public class UserPref {
 
     public void addPreset(String presetName, Location location) {
 
+        if (!novaBot.getConfig().getPresets().containsKey(presetName)) return;
+
         if (location == null) return;
 
         if (!this.presetPrefs.containsKey(location.toWords())) {
-            Set<String> set = new HashSet<>();
+            TreeSet<String> set = new TreeSet<>(Comparator.comparing(String::toString));
             set.add(presetName);
             this.presetPrefs.put(location.toWords(), set);
         } else {
@@ -52,7 +53,7 @@ public class UserPref {
         if (location == null) return;
 
         if (!this.raidPrefs.containsKey(location.toWords())) {
-            final Set<Raid> set = new HashSet<>();
+            final TreeSet<Raid> set = new TreeSet<>(Comparator.comparing(Raid::toString));
             set.add(raid);
             this.raidPrefs.put(location.toWords(), set);
         } else {
@@ -107,7 +108,16 @@ public class UserPref {
             }
             str.append("**").append(locname).append("**:\n");
             for (final Raid raid : this.raidPrefs.get(locStr)) {
-                str.append(String.format("    %s%n", Pokemon.idToName(raid.bossId)));
+                if (raid.bossId != 0) {
+                    str.append(String.format("    %s", Pokemon.idToName(raid.bossId)));
+                }else{
+                    str.append(String.format("    %s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                }
+
+                if (!raid.gymName.equals("")){
+                    str.append(String.format(" %s %s",StringLocalizer.getLocalString("At"),raid.gymName));
+                }
+                str.append("\n");
             }
             str.append("\n");
         }
@@ -115,26 +125,46 @@ public class UserPref {
     }
 
     public String allSettingsToString() {
-        HashMap<String, Set<String>> prefMap = new HashMap<>();
+        TreeMap<String, TreeSet<String>> prefMap = new TreeMap<>();
 
         raidPrefs.forEach((location, raids) -> {
             if (!prefMap.containsKey(location)) {
-                final Set<String> set = new HashSet<>();
+                final TreeSet<String> set = new TreeSet<>();
 
                 for (Raid raid : raids) {
-                    set.add(String.format("%s raids", Pokemon.idToName(raid.bossId)));
+                    StringBuilder str = new StringBuilder();
+                    if (raid.bossId != 0) {
+                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId),StringLocalizer.getLocalString("Raids")));
+                    }else{
+                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                    }
+
+                    if (!raid.gymName.equals("")){
+                        str.append(String.format(" %s %s",StringLocalizer.getLocalString("At"),raid.gymName));
+                    }
+                    set.add(str.toString());
                 }
                 prefMap.put(location, set);
             } else {
                 for (Raid raid : raids) {
-                    prefMap.get(location).add(String.format("%s raids", Pokemon.idToName(raid.bossId)));
+                    StringBuilder str = new StringBuilder();
+                    if (raid.bossId != 0) {
+                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId),StringLocalizer.getLocalString("Raids")));
+                    }else{
+                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                    }
+
+                    if (!raid.gymName.equals("")){
+                        str.append(String.format(" %s %s",StringLocalizer.getLocalString("At"),raid.gymName));
+                    }
+                    prefMap.get(location).add(str.toString());
                 }
             }
         });
 
         pokemonPrefs.forEach((location, pokemons) -> {
             if (!prefMap.containsKey(location)) {
-                final Set<String> set = new HashSet<>();
+                final TreeSet<String> set = new TreeSet<>();
 
                 for (Pokemon pokemon : pokemons) {
                     set.add(pokePrefString(pokemon));
@@ -149,7 +179,7 @@ public class UserPref {
 
         presetPrefs.forEach((location, presets) -> {
             if (!prefMap.containsKey(location)) {
-                Set<String> set = new HashSet<>();
+                TreeSet<String> set = new TreeSet<>();
 
                 for (String preset : presets) {
                     set.add(presetString(preset));
