@@ -28,7 +28,7 @@ import static com.github.novskey.novabot.data.DataManager.PgSQL_DRIVER;
 public class ScanDBManager  {
 
     private Logger dbLog;
-    
+
     private final ScannerDb scannerDb;
     private ZonedDateTime lastChecked;
     private RotatingSet<Integer> hashCodes;
@@ -534,6 +534,9 @@ public class ScanDBManager  {
                       "       height," +
                       "       gender," +
                       "       form," +
+                      "       catch_prob_1," +
+                      "       catch_prob_2," +
+                      "       catch_prob_3," +
                       "       cp, " +
                       "       cp_multiplier, " +
                       "       weather_id " +
@@ -622,8 +625,9 @@ public class ScanDBManager  {
                         form = (Integer) rs.getObject(13);
                         cp = (Integer) rs.getObject(14);
                         cpMod = rs.getDouble(15);
-                        int weather = rs.getInt(16);
-                        pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp, cpMod, weather);
+                        float catchprob1 = rs.getFloat(16);
+                        int weather = rs.getInt(17);
+                        pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, weight, height, gender, form, cp, cpMod, catchprob1, weather);
                         break;
                     case PhilMap:
                         id = rs.getInt(1);

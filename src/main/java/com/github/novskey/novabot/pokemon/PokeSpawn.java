@@ -173,6 +173,16 @@ public class PokeSpawn extends Spawn
         }
     }
 
+    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, float catchprob1, int weather) {
+        this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,cpMod);
+        getProperties().put("catchprob1",String.valueOf(catchprob1));
+        Weather w = Weather.fromId(weather);
+        if (w != null) {
+            getProperties().replace("weather", w.toString());
+            getProperties().replace("weather_icon", w.getEmote());
+        }
+    }
+
     public Message buildMessage(String formatFile) {
         if(builtMessages.get(formatFile) == null) {
 
