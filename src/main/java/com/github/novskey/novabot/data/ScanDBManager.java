@@ -511,6 +511,9 @@ public class ScanDBManager  {
                       "       height," +
                       "       gender," +
                       "       form," +
+                      "       catch_prob_1," +
+                      "       catch_prob_2," +
+                      "       catch_prob_3," +
                       "       cp, " +
                       "       cp_multiplier, " +
                       "       weather_boosted_condition " +
