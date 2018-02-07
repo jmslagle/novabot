@@ -151,10 +151,10 @@ public class Pokemon {
     }
 
     public static String getIcon(final int id) {
-        String url = "https://bitbucket.org/anzmap/sprites/raw/HEAD/";
+        String url = "https://bitbucket.org/SkOODaT/skoodatshuffle/raw/master/";
         if (id >= 2011) {
             final int form = id % 201;
-            url = url +  "201-" + form;
+            url = url +  "201_" + form;
         } else {
             url += id;
         }
@@ -178,18 +178,18 @@ public class Pokemon {
         float size = heightRatio + weightRatio;
 
         if (size < 1.5) {
-            return "tiny";
+            return "Tiny";
         }
         if (size <= 1.75) {
-            return "small";
+            return "Small";
         }
         if (size < 2.25) {
-            return "normal";
+            return "Normal";
         }
         if (size <= 2.5) {
-            return "large";
+            return "Large";
         }
-        return "big";
+        return "Big";
     }
 
     public static ArrayList<String> getTypes(int bossId) {
