@@ -44,6 +44,9 @@ public class PokeSpawn extends Spawn
     private Integer iv_defense;
     private Integer iv_stamina;
 
+    public Float catchprob1;
+    public Float catchprob2;
+    public Float catchprob3;
 
     public PokeSpawn(int i) {
         super();
@@ -173,9 +176,22 @@ public class PokeSpawn extends Spawn
         }
     }
 
-    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, float catchprob1, int weather) {
+    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, float catchprob1, float catchprob2, float catchprob3, int weather) {
         this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,cpMod);
-        getProperties().put("catchprob1",String.valueOf(catchprob1));
+
+        this.catchprob1 = null;
+        this.catchprob2 = null;
+        this.catchprob3 = null;
+
+        this.catchprob1 = catchprob1;
+        getProperties().put("catchprob1", getCatchProb1());
+
+        this.catchprob2 = catchprob2;
+        getProperties().put("catchprob2", getCatchProb2());
+
+        this.catchprob3 = catchprob3;
+        getProperties().put("catchprob3", getCatchProb3());
+
         Weather w = Weather.fromId(weather);
         if (w != null) {
             getProperties().replace("weather", w.toString());
@@ -315,6 +331,21 @@ public class PokeSpawn extends Spawn
 
     private String getHeight() {
         return PokeSpawn.df.format(this.height);
+    }
+
+    private String getCatchProb1() {
+        catchprob1 = catchprob1 * 100;
+        return PokeSpawn.df.format(this.catchprob1);
+    }
+
+    private String getCatchProb2() {
+        catchprob2 = catchprob2 * 100;
+        return PokeSpawn.df.format(this.catchprob2);
+    }
+
+    private String getCatchProb3() {
+        catchprob3 = catchprob3 * 100;
+        return PokeSpawn.df.format(this.catchprob3);
     }
 
     private String getIv() {
