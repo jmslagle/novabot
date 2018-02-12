@@ -20,7 +20,7 @@ public class LobbyManager {
     final ConcurrentHashMap<String, RaidLobby> activeLobbies = new ConcurrentHashMap<>();
     private static final Logger lobbyManagerLog = LoggerFactory.getLogger("Lobby-Manager");
 
-    private final RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200);
+    private final RotatingSet<String> oldLobbyRoleIds = new RotatingSet<>(200,ConcurrentHashMap.newKeySet(200));
     private final NovaBot novaBot;
 
     public LobbyManager(NovaBot novaBot) {

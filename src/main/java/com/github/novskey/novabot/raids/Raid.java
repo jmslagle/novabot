@@ -12,8 +12,9 @@ import java.util.*;
  */
 public class Raid {
 
-    public int bossId;
+    public int bossId = 0;
     public int eggLevel = 0;
+    public int raidLevel = 0;
     public Location location;
     public String gymName = "";
 
@@ -33,23 +34,42 @@ public class Raid {
         this.gymName = gymName;
     }
 
+    public Raid(int bossId,int eggLevel,int raidLevel, String gymName,Location location){
+        this(bossId,eggLevel,gymName,location);
+        this.raidLevel = raidLevel;
+    }
+
     public static String getRaidsString(Raid[] raids) {
         StringBuilder str = new StringBuilder();
 
-        for (int i = 0; i < raids.length; i++) {
-            Raid raid = raids[i];
+        HashSet<Raid> uniqueRaids = new HashSet<>();
+
+        for (Raid raid : raids) {
+            uniqueRaids.add(new Raid(raid.bossId,raid.eggLevel,raid.raidLevel,raid.gymName,Location.ALL));
+        }
+
+        int i = 0;
+        for (Raid raid : uniqueRaids) {
             if(i != 0){
                 str.append(", ");
+                if (i == uniqueRaids.size() - 1){
+                    str.append("and ");
+                }
             }
             if (raid.bossId != 0) {
                 str.append(String.format("%s %s", Pokemon.idToName(raid.bossId), StringLocalizer.getLocalString("Raids")));
             }else{
-                str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                if (raid.eggLevel != 0){
+                    str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                }else {
+                    str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.raidLevel, StringLocalizer.getLocalString("Raids")));
+                }
             }
 
             if (!raid.gymName.equals("")){
                 str.append(String.format(" %s %s",StringLocalizer.getLocalString("At"),raid.gymName));
             }
+            i++;
         }
         return str.toString();
     }
@@ -65,12 +85,12 @@ public class Raid {
     public boolean equals(Object obj) {
         if (!obj.getClass().equals(this.getClass())) return false;
         Raid raid = (Raid) obj;
-        return raid.bossId == this.bossId && raid.gymName.equalsIgnoreCase(this.gymName) && raid.eggLevel == this.eggLevel && raid.location.toDbString().equals(this.location.toDbString());
+        return raid.bossId == this.bossId && raid.gymName.equalsIgnoreCase(this.gymName) && raid.eggLevel == this.eggLevel && raid.raidLevel == this.raidLevel && raid.location.toDbString().equals(this.location.toDbString());
     }
 
     @Override
     public String toString() {
-        return String.format("RAID: %s,%s,%s,%s",bossId,eggLevel, gymName,location);
+        return String.format("RAID: %s,%s,%s,%s,%s",bossId,eggLevel,raidLevel,gymName,location);
     }
 
     public static String[] getBossWeaknessEmotes(int bossId){

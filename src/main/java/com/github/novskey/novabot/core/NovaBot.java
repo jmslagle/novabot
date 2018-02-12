@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
 import static com.github.novskey.novabot.core.Spawn.printFormat24hr;
 import static com.github.novskey.novabot.core.Weather.None;
+import static com.github.novskey.novabot.parser.ArgType.CommandName;
 
 public class NovaBot {
 
@@ -49,6 +50,7 @@ public class NovaBot {
     private final String raidChannels;
     private final String pokeChannels;
     private final String presets;
+    private final String globalFilter;
     public TextChannel roleLog;
     public Guild guild = null;
     private boolean testing = false;
@@ -87,6 +89,7 @@ public class NovaBot {
         this.raidChannels = cliopt.getRaidChannels();
         this.pokeChannels = cliopt.getPokeChannels();
         this.presets = cliopt.getPresets();
+        this.globalFilter = cliopt.getGlobalFilter();
         this.cliopt = cliopt;
     }
 
@@ -105,6 +108,10 @@ public class NovaBot {
 
     public DataManager getDataManager() {
         return dataManager;
+    }
+
+    public String getGlobalFilter() {
+        return globalFilter;
     }
 
     public JDA getUserJDA(String userID) {
@@ -137,7 +144,7 @@ public class NovaBot {
             cliopt.setConfig("config.example.ini");
         }
         setConfig(new Config(getConfigName(), getGkeys(), getFormatting(), getRaidChannels(), getPokeChannels(),
-                getSupporterLevels(), getPresets()));
+                             getSupporterLevels(), getPresets(), getGlobalFilter()));
     }
 
     private void loadGeofences() {
@@ -389,27 +396,6 @@ public class NovaBot {
 //                        "%s",author,config.raidChatsList()).queue();
 //                return;
 //            }
-        } else if (msg.equals(getLocalString("HelpCommand"))) {
-            channel.sendMessageFormat(getLocalString("HelpMessageStart") +
-                                      (getConfig().pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
-                                      (getConfig().raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
-                                      (getConfig().getPresets().size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
-                                      getLocalString("HelpMessageOtherCommandsStart") +
-                                      (getConfig().statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
-                                      (getConfig().isRaidOrganisationEnabled()
-                            && getConfig().getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
-                            || channel.getType() == ChannelType.PRIVATE
-                            ? getLocalString("HelpMessageJoinLobbyCommand")
-                            : "") +
-//                    (config.isRaidOrganisationEnabled()
-//                            && config.getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
-//                            || channel.getType() == ChannelType.PRIVATE
-//                            ? "!!activeraids\n"
-//                            : "") +
-                                      (getConfig().useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
-                                      (suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
-                                      getLocalString("HelpMessageOtherCommands")).queue();
-            return;
         } else if (getConfig().useGeofences() && (msg.equals(getLocalString("RegionListCommand")) || msg.equals(getLocalString("RegionsCommand")))) {
             MessageBuilder builder = new MessageBuilder().appendFormat("%s, %s%n%s", author, getLocalString("RegionListMessageStart"), Geofencing.getListMessage());
             builder.buildAll(MessageBuilder.SplitPolicy.NEWLINE).forEach(m -> channel.sendMessage(m).queue());
@@ -440,10 +426,31 @@ public class NovaBot {
             return;
         }
 
-
-
         if(matchingCommand == null){
             return;
+        }
+
+        if (matchingCommand.equals("helpcommand")) {
+            if(userCommand.getArgs().length == 1) {
+                channel.sendMessageFormat(getLocalString("HelpMessageStart") +
+                                          (getConfig().pokemonEnabled() ? getLocalString("HelpMessagePokemonCommands") : "") +
+                                          (getConfig().raidsEnabled() ? getLocalString("HelpMessageRaidCommands") : "") +
+                                          (getConfig().getPresets().size() > 0 ? getLocalString("HelpMessagePresetCommands") : "") +
+                                          getLocalString("HelpMessageOtherCommandsStart") +
+                                          (getConfig().statsEnabled() ? getLocalString("HelpMessageStatsCommand") : "") +
+                                          (getConfig().isRaidOrganisationEnabled()
+                                           && getConfig().getRaidChatGeofences(channel.getLatestMessageId()).size() > 0
+                                           || channel.getType() == ChannelType.PRIVATE
+                                           ? getLocalString("HelpMessageJoinLobbyCommand")
+                                           : "") +
+                                          (getConfig().useGeofences() ? getLocalString("HelpMessageRegionCommands") : "") +
+                                          (suburbsEnabled() ? getLocalString("HelpMessageSuburbCommands") : "") +
+                                          getLocalString("HelpMessageOtherCommands")).queue();
+                return;
+            }else{
+                Argument commandName = userCommand.getArg(CommandName);
+                channel.sendMessage(commands.get((String) commandName.getParams()[0]).getHelpMessage()).queue();
+            }
         }
 
         if (matchingCommand.equals("statscommand")) {

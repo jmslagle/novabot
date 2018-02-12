@@ -7,12 +7,11 @@ public enum InputError
 {
     InvalidArg,
     BlacklistedPokemon,
-    TooManyArgs,
-    NotEnoughArgs,
+    InvalidArgCombination,
     DuplicateArgs,
     MissingRequiredArg,
     MalformedArg,
-    InvalidCommand;
+    InvalidCommand, ;
 
     public String getErrorMessage(final UserCommand userCommand) {
         switch (this) {
@@ -29,14 +28,11 @@ public enum InputError
                 }
                 return str.toString();
             }
-            case TooManyArgs: {
-                int max = userCommand.novaBot.commands.get((String) userCommand.getArg(0).getParams()[0]).getMaxArgs();
-                return "You entered too many options. That command can have at most " + max + ((max == 1) ? " option" : " options");
-            }
-            case NotEnoughArgs: {
-                int    min = userCommand.novaBot.commands.get((String) userCommand.getArg(0).getParams()[0]).getMinArgs();
-                String str = "You didn't specify enough options. That command needs at least " + min + ((min == 1) ? " option" : " options");
-                return str + "\n\n";
+            case InvalidArgCombination: {
+                StringBuilder str = new StringBuilder("You entered an invalid argument combination for that command. Try `!help ")
+                        .append(((String)userCommand.getArg(ArgType.CommandStr).getParams()[0]).substring(1))
+                        .append("` to see all valid combinations.");
+                return str.toString();
             }
             case DuplicateArgs: {
                 final ArgType duplicateType = Argument.getDuplicateArg(userCommand.getArgs());

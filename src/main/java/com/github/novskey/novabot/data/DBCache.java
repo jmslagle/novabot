@@ -288,8 +288,9 @@ public class DBCache implements IDataBase {
 
         return new ArrayList<>(UtilityFunctions.filterByValue(unPausedUsers, raidsSet -> {
             Stream<Raid> matchingIds = raidsSet.stream().filter(r -> (r.gymName.equals("") || r.gymName.equalsIgnoreCase(raidSpawn.getProperties().get("gym_name"))) &&
-                                                                 ((r.bossId == raidSpawn.bossId) || (r.bossId == 0 && (r.eggLevel == raidSpawn.raidLevel))));
-            return matchingIds.anyMatch(raid -> raidSpawn.getSpawnLocation().intersect(raid.location));
+                                                                 ((r.bossId != 0 && (r.bossId == raidSpawn.bossId)) || (r.bossId == 0 && (r.eggLevel == raidSpawn.raidLevel)))
+            );
+            return matchingIds.anyMatch(raid -> raidSpawn.getSpawnLocation ().intersect(raid.location));
         }).keySet());
     }
 

@@ -31,7 +31,6 @@ public class ScanDBManager  {
     
     private final ScannerDb scannerDb;
     private ZonedDateTime lastChecked;
-    private RotatingSet<Integer> hashCodes;
     private java.lang.String scanUrl;
     public final HashMap<String, RaidSpawn> knownRaids = new HashMap<>();
     private ZonedDateTime lastCheckedRaids;
@@ -45,7 +44,6 @@ public class ScanDBManager  {
         this.novaBot = novabot;
         this.scannerDb = scannerDb;
         dbLog = LoggerFactory.getLogger("Scan-DB-" + id);
-        hashCodes = new RotatingSet<>(novaBot.getConfig().getMaxStoredHashes());
         lastChecked = ZonedDateTime.now(UtilityFunctions.UTC);
         lastCheckedRaids = ZonedDateTime.now(UtilityFunctions.UTC);
         scanDbConnect();
@@ -366,7 +364,6 @@ public class ScanDBManager  {
                         break;
                 }
                 dbLog.debug(raidSpawn.toString());
-
                 knownRaids.put(gymId, raidSpawn);
 
                 if (!firstRun) {
@@ -391,14 +388,14 @@ public class ScanDBManager  {
         final ArrayList<PokeSpawn> pokeSpawns = new ArrayList<>();
 
         if (blacklistQuery.length() == 0 && novaBot.getConfig().getBlacklist().size() > 0) {
-            blacklistQuery = new StringBuilder("pokemon_id NOT IN (");
+            blacklistQuery = new StringBuilder(" AND pokemon_id NOT IN (");
             for (int i = 0; i < novaBot.getConfig().getBlacklist().size(); ++i) {
                 blacklistQuery.append("?");
                 if (i != novaBot.getConfig().getBlacklist().size() - 1) {
                     blacklistQuery.append(",");
                 }
             }
-            blacklistQuery.append(") AND ");
+            blacklistQuery.append(")");
         }
 
         String sql = null;
@@ -416,11 +413,11 @@ public class ScanDBManager  {
                       "       move_2," +
                       "       display " +
                       "FROM sightings " +
-                      "WHERE " + blacklistQuery + " " +
-                      "expire_timestamp > " +
-                      (scannerDb.getProtocol().equals("mysql")
-                       ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
-                       : "extract(epoch from now())");
+                      "WHERE expire_timestamp > " +
+                            (scannerDb.getProtocol().equals("mysql")
+                             ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
+                             : "extract(epoch from now())" + blacklistQuery
+                     );
 //                                : "extract(epoch from (now() - INTERVAL ? SECOND))");
                 break;
             case Hydro74000Monocle:
@@ -440,16 +437,15 @@ public class ScanDBManager  {
                       "       level, " +
                       "       weather_boosted_condition " +
                       "FROM sightings " +
-                      "WHERE " + blacklistQuery + " " +
-                      "updated >= " +
-                      (scannerDb.getProtocol().equals("mysql")
-                       ? "UNIX_TIMESTAMP(? - INTERVAL 1 SECOND)"
-                       : "extract(epoch from (?::timestamptz - INTERVAL '1' SECOND)) ") +
-                      "AND expire_timestamp > " +
-                      (scannerDb.getProtocol().equals("mysql")
-                       ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
-//                            : "extract(epoch from (now() - INTERVAL ? SECOND))");
-                       : "extract(epoch from now())");
+                      "WHERE updated >= " +
+                            (scannerDb.getProtocol().equals("mysql")
+                             ? "UNIX_TIMESTAMP(? - INTERVAL 1 SECOND)"
+                             : "extract(epoch from (?::timestamptz - INTERVAL '1' SECOND)) ") +
+                            "AND expire_timestamp > " +
+                            (scannerDb.getProtocol().equals("mysql")
+                             ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
+                             : "extract(epoch from now())")
+                      + blacklistQuery;
                 break;
             case RocketMap:
                 sql = "" +
@@ -469,9 +465,9 @@ public class ScanDBManager  {
                       "       cp, " +
                       "       cp_multiplier " +
                       "FROM pokemon " +
-                      "WHERE " + blacklistQuery + " " +
-                      "last_modified >= (? - INTERVAL 1 SECOND) " +
-                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
+                      "WHERE last_modified >= (? - INTERVAL 1 SECOND) " +
+                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)" + blacklistQuery;
+                      ;
                 break;
             case PhilMap:
                 sql = "" +
@@ -492,9 +488,8 @@ public class ScanDBManager  {
                       "       cp_multiplier, " +
                       "       weather_boosted " +
                       "FROM pokemon " +
-                      "WHERE " + blacklistQuery + " " +
-                      "last_modified >= (? - INTERVAL 1 SECOND) " +
-                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
+                      "WHERE last_modified >= (? - INTERVAL 1 SECOND) " +
+                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)" + blacklistQuery;
                 break;
             case SloppyRocketMap:
                 sql = "" +
@@ -515,9 +510,9 @@ public class ScanDBManager  {
                       "       cp_multiplier, " +
                       "       weather_boosted_condition " +
                       "FROM pokemon " +
-                      "WHERE " + blacklistQuery + " " +
-                      "last_modified >= (? - INTERVAL 1 SECOND) " +
-                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
+                      "WHERE last_modified >= (? - INTERVAL 1 SECOND) " +
+                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)" +
+                      blacklistQuery;
                 break;
             case SkoodatRocketMap:
                 sql = "" +
@@ -538,9 +533,8 @@ public class ScanDBManager  {
                       "       cp_multiplier, " +
                       "       weather_id " +
                       "FROM pokemon " +
-                      "WHERE " + blacklistQuery + " " +
-                      "last_modified >= (? - INTERVAL 1 SECOND) " +
-                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)";
+                      "WHERE last_modified >= (? - INTERVAL 1 SECOND) " +
+                      "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)" + blacklistQuery;
                 break;
         }
 
@@ -548,29 +542,37 @@ public class ScanDBManager  {
         int newSpawns = 0;
         try (Connection connection = getScanConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            for (int i = 1; i <= novaBot.getConfig().getBlacklist().size(); ++i) {
-                statement.setInt(i, novaBot.getConfig().getBlacklist().get(i - 1));
-            }
+
+            int offset = 1;
 
             switch (scannerDb.getScannerType()) {
                 case RocketMap:
                 case SloppyRocketMap:
                 case SkoodatRocketMap:
                 case PhilMap:
-                    statement.setObject(novaBot.getConfig().getBlacklist().size() + 1, lastChecked.toLocalDateTime(), Types.TIMESTAMP);
+                    statement.setObject(offset, lastChecked.toLocalDateTime(), Types.TIMESTAMP);
+                    offset++;
                     break;
+                case Monocle:
                 case Hydro74000Monocle:
                     LocalDateTime localDateTime = lastChecked.withZoneSameInstant(novaBot.getConfig().getTimeZone()).toLocalDateTime();
                     String timeStamp = String.format("%s %s", localDateTime.toLocalDate(), localDateTime.toLocalTime());
 
-                    statement.setString(novaBot.getConfig().getBlacklist().size() + 1, timeStamp);
+                    statement.setString(offset, timeStamp);
+                    offset++;
 //                    statement.setObject(novaBot.getConfig().getBlacklist().size() + 1, lastChecked.withZoneSameInstant(novaBot.getConfig().getTimeZone()).toLocalDateTime(), Types.TIMESTAMP);
                     break;
             }
+
             if (scannerDb.getProtocol().equals("mysql")) {
-                statement.setString(novaBot.getConfig().getBlacklist().size() +
-                                    (scannerDb.getScannerType() == ScannerType.Monocle ? 1 : 2),
+                statement.setString(offset,
                                     String.valueOf(novaBot.getConfig().getMinSecondsLeft()));
+                offset++;
+            }
+
+            for (int i = 1; i <= novaBot.getConfig().getBlacklist().size(); ++i) {
+                statement.setInt(offset, novaBot.getConfig().getBlacklist().get(i - 1));
+                offset++;
             }
 
             dbLog.info("Executing query:" + statement);
@@ -681,10 +683,10 @@ public class ScanDBManager  {
                     dbLog.info(pokeSpawn.toString());
                     dbLog.info(Integer.toString(pokeSpawn.hashCode()));
 
-                    if (!hashCodes.contains(pokeSpawn.hashCode())) {
+                    if (!novaBot.getDataManager().containsHashCode(pokeSpawn.hashCode())) {
                         dbLog.debug("new pokemon, adding to list");
                         newSpawns++;
-                        hashCodes.add(pokeSpawn.hashCode());
+                        novaBot.getDataManager().addHashCode(pokeSpawn.hashCode());
 
                         novaBot.notificationsManager.pokeQueue.add(pokeSpawn);
 //                        pokeSpawns.add(pokeSpawn);

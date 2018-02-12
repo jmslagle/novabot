@@ -88,12 +88,13 @@ public class SettingsDBManager implements IDataBase {
     @Override
     public void addRaid(final String userID, final Raid raid) {
         try (Connection connection = getNbConnection();
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO raid (user_id,boss_id,egg_level,gym_name,location) VALUES (?,?,?,?,?)")) {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO raid (user_id,boss_id,egg_level,raid_level,gym_name,location) VALUES (?,?,?,?,?,?)")) {
             statement.setString(1, userID);
-            statement.setDouble(2, raid.bossId);
-            statement.setDouble(3, raid.eggLevel);
-            statement.setString(4,raid.gymName);
-            statement.setString(5, raid.location.toDbString());
+            statement.setInt(2, raid.bossId);
+            statement.setInt(3, raid.eggLevel);
+            statement.setInt(4, raid.raidLevel);
+            statement.setString(5,raid.gymName);
+            statement.setString(6, raid.location.toDbString());
 
             dbLog.debug(statement.toString());
             statement.executeUpdate();
@@ -592,7 +593,7 @@ public class SettingsDBManager implements IDataBase {
                     "FROM raid " +
                     "WHERE (SELECT paused FROM users WHERE users.id = raid.user_id) = FALSE " +
                     "AND LOWER(location) IN (%s%s'all') " +
-                    "AND (boss_id=? OR egg_level=?) " +
+                    "AND (boss_id=? OR raid_level=?) " +
                     "AND gym_name IN ('',?);", geofenceQMarks.toString(), (novaBot.suburbsEnabled() ? "?, " : "")
                                );
         }else{
@@ -782,19 +783,22 @@ public class SettingsDBManager implements IDataBase {
                 }
             }
 
-            statement.executeQuery(String.format("SELECT boss_id,location FROM raid WHERE user_id='%s'", id));
+            statement.executeQuery(String.format("SELECT boss_id,egg_level,raid_level,gym_name,location FROM raid WHERE user_id='%s'", id));
 
             rs = statement.getResultSet();
 
             while (rs.next()) {
                 final int bossId = rs.getInt(1);
-                final Location location = Location.fromDbString(rs.getString(2).toLowerCase(), novaBot);
+                final int eggLevel = rs.getInt(2);
+                final int raidLevel = rs.getInt(3);
+                final String gymName = rs.getString(4);
+                final Location location = Location.fromDbString(rs.getString(5).toLowerCase(), novaBot);
 
                 if (location == null){
                     dbLog.warn("Location is null, skipping raid setting");
                     continue;
                 }
-                userPref.addRaid(new Raid(bossId, location));
+                userPref.addRaid(new Raid(bossId, eggLevel, raidLevel, gymName, location));
             }
 
             statement.executeQuery(String.format("SELECT preset_name, location FROM preset WHERE user_id = '%s'", id));
@@ -882,6 +886,8 @@ public class SettingsDBManager implements IDataBase {
 //        System.out.println(pokeSpawn.buildMessage("formatting.ini").getEmbeds().get(0).getDescription());
 //        System.out.println(novaBot.dataManager.getUserIDsToNotify(pokeSpawn));
 
+        System.out.println(novaBot.getDataManager().getUserPref("107730875596169216").allSettingsToString());
+
         RaidSpawn spawn = new RaidSpawn(
                 "lincoln park gazebo",
                 "id",
@@ -889,11 +895,71 @@ public class SettingsDBManager implements IDataBase {
                 Team.Valor,
                 ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
                 ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
-                383,
+                0,
                 155555,
                 18,
                 22,
                 5);
+
+        System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
+
+        spawn = new RaidSpawn(
+                "lincoln park gazebo",
+                "id",
+                -35.265134, 149.122796,
+                Team.Valor,
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
+                0,
+                155555,
+                18,
+                22,
+                4);
+
+        System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
+
+        spawn = new RaidSpawn(
+                "lincoln park gazebo",
+                "id",
+                -35.265134, 149.122796,
+                Team.Valor,
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
+                0,
+                155555,
+                18,
+                22,
+                3);
+
+        System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
+
+        spawn = new RaidSpawn(
+                "lincoln park gazebo",
+                "id",
+                -35.265134, 149.122796,
+                Team.Valor,
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
+                0,
+                155555,
+                18,
+                22,
+                2);
+
+        System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
+
+        spawn = new RaidSpawn(
+                "lincoln park gazebo",
+                "id",
+                -35.265134, 149.122796,
+                Team.Valor,
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(120), UtilityFunctions.UTC),
+                ZonedDateTime.ofInstant(Instant.now().plusSeconds(60), UtilityFunctions.UTC),
+                0,
+                155555,
+                18,
+                22,
+                1);
 
         System.out.println(novaBot.dataManager.getUserIDsToNotify(spawn));
     }
@@ -1275,14 +1341,15 @@ public class SettingsDBManager implements IDataBase {
         try (Connection connection = getNbConnection();
              Statement statement = connection.createStatement())
         {
-            ResultSet rs = statement.executeQuery("SELECT user_id, boss_id, egg_level, gym_name, location FROM raid");
+            ResultSet rs = statement.executeQuery("SELECT user_id, boss_id, egg_level, raid_level, gym_name, location FROM raid");
 
             while (rs.next()){
                 String userId = rs.getString(1);
                 int bossId = rs.getInt(2);
                 int eggLevel = rs.getInt(3);
-                String gymName = rs.getString(4);
-                Location location = Location.fromDbString(rs.getString(5).toLowerCase(),novaBot);
+                int raidLevel = rs.getInt(4);
+                String gymName = rs.getString(5);
+                Location location = Location.fromDbString(rs.getString(6).toLowerCase(),novaBot);
 
                 if (location == null){
                     dbLog.warn("Location is null, not dumping raid setting");
@@ -1290,7 +1357,7 @@ public class SettingsDBManager implements IDataBase {
                 }
 
                 Set<Raid> userSettings = raids.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet());
-                userSettings.add(new Raid(bossId,eggLevel,gymName,location));
+                userSettings.add(new Raid(bossId,eggLevel,raidLevel,gymName,location));
             }
         } catch (SQLException e) {
             dbLog.error("Error executing dumpRaids",e);

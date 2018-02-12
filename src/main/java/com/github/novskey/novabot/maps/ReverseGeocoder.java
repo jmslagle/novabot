@@ -37,7 +37,7 @@ public class ReverseGeocoder {
     public static void main(String[] args) {
         NovaBot novaBot = new NovaBot(CommandLineOptions.parse(args));
         novaBot.setup();
-        novaBot.reverseGeocoder.geocodedLocation(-35.4653241474502,149.10350310045);
+        novaBot.reverseGeocoder.geocodedLocation(-35.4553241474502,149.10350310045);
     }
 
     public GeocodedLocation geocodedLocation(double lat, double lon) {
@@ -67,7 +67,9 @@ public class ReverseGeocoder {
                 for (GeocodingResult result : results) {
                     if (knownComponents.size() == 8) break;
 
-                    location.set("address",result.formattedAddress);
+                    if(!location.getProperties().containsKey("address")) {
+                        location.set("address", result.formattedAddress);
+                    }
 
                     for (final AddressComponent addressComponent : result.addressComponents) {
                         final AddressComponentType[] types = addressComponent.types;
@@ -77,7 +79,7 @@ public class ReverseGeocoder {
                             switch (type) {
                                 case STREET_NUMBER:
                                     if (!knownComponents.contains(STREET_NUMBER)) {
-                                        location.set("street_num", addressComponent.longName);
+                                        location.set("street_num", addressComponent.shortName);
                                         knownComponents.add(STREET_NUMBER);
                                     }
                                     break;

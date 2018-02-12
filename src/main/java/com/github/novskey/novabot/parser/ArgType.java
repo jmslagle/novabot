@@ -4,19 +4,22 @@ import java.util.*;
 
 public enum ArgType
 {
+    CommandName,
+    CommandStr,
+    CP,
+    Egg,
     Float,
+    GymName,
+    Int,
+    IV,
+    Level,
     Locations,
     Pokemon,
-    CommandStr,
-    Unknown,
-    TimeUnit,
-    Status,
-    Int,
-    Level,
-    IV,
     Preset,
-    GymName,
-    CP, Egg;
+    Status,
+    TimeUnit,
+    Unknown;
+
 
     public static void main(final String[] args) {
         final HashSet<ArgType> hashSet = new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations));
@@ -54,6 +57,8 @@ public enum ArgType
                 return "preset";
             case CommandStr:
                 return "command";
+            case CommandName:
+                return "command name";
             default:
                 return null;
         }

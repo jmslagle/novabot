@@ -31,6 +31,17 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
         try {
             while (novaBot.getConfig().pokemonEnabled()) {
                 PokeSpawn pokeSpawn = novaBot.notificationsManager.pokeQueue.take();
+                localLog.info("Checking against global filter: " + pokeSpawn.id);
+
+                if(novaBot.getConfig().useGlobalFilter()) {
+                    if (novaBot.getConfig().passesGlobalFilter(pokeSpawn)) {
+                        localLog.info("Passed global filter, continuing processing");
+                    } else {
+                        localLog.info("Didn't pass global filter, skipping spawn");
+                        continue;
+                    }
+                }
+
                 localLog.info("Checking if anyone wants: " + Pokemon.idToName(pokeSpawn.id));
 
                 if (pokeSpawn.disappearTime.isBefore(ZonedDateTime.now(UtilityFunctions.UTC))) {

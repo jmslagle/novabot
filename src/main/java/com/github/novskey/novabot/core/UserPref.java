@@ -109,9 +109,13 @@ public class UserPref {
             str.append("**").append(locname).append("**:\n");
             for (final Raid raid : this.raidPrefs.get(locStr)) {
                 if (raid.bossId != 0) {
-                    str.append(String.format("    %s", Pokemon.idToName(raid.bossId)));
+                    str.append(String.format("%s %s", Pokemon.idToName(raid.bossId), StringLocalizer.getLocalString("Raids")));
                 }else{
-                    str.append(String.format("    %s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                    if (raid.eggLevel != 0){
+                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                    }else {
+                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.raidLevel, StringLocalizer.getLocalString("Raids")));
+                    }
                 }
 
                 if (!raid.gymName.equals("")){
@@ -134,9 +138,13 @@ public class UserPref {
                 for (Raid raid : raids) {
                     StringBuilder str = new StringBuilder();
                     if (raid.bossId != 0) {
-                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId),StringLocalizer.getLocalString("Raids")));
+                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId), StringLocalizer.getLocalString("Raids")));
                     }else{
-                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                        if (raid.eggLevel != 0){
+                            str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                        }else {
+                            str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.raidLevel, StringLocalizer.getLocalString("Raids")));
+                        }
                     }
 
                     if (!raid.gymName.equals("")){
@@ -149,9 +157,13 @@ public class UserPref {
                 for (Raid raid : raids) {
                     StringBuilder str = new StringBuilder();
                     if (raid.bossId != 0) {
-                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId),StringLocalizer.getLocalString("Raids")));
+                        str.append(String.format("%s %s", Pokemon.idToName(raid.bossId), StringLocalizer.getLocalString("Raids")));
                     }else{
-                        str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                        if (raid.eggLevel != 0){
+                            str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.eggLevel, StringLocalizer.getLocalString("Eggs")));
+                        }else {
+                            str.append(String.format("%s %s %s", StringLocalizer.getLocalString("Level"), raid.raidLevel, StringLocalizer.getLocalString("Raids")));
+                        }
                     }
 
                     if (!raid.gymName.equals("")){

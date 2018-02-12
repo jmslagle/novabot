@@ -4,12 +4,15 @@ import com.github.novskey.novabot.core.Location;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.pokemon.Pokemon;
 import com.github.novskey.novabot.raids.Raid;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
 
+@Data
 public class UserCommand
 {
     public final NovaBot novaBot;
@@ -19,6 +22,15 @@ public class UserCommand
     public UserCommand(NovaBot novaBot) {
         this.exceptions = new ArrayList<>();
         this.novaBot = novaBot;
+    }
+
+    public HashSet<ArgType> getArgTypes() {
+        HashSet<ArgType> argTypes = new HashSet<>();
+
+        for (Argument arg : args) {
+            argTypes.add(arg.getType());
+        }
+        return argTypes;
     }
 
     public ArrayList<InputError> getExceptions() {
@@ -199,11 +211,11 @@ public class UserCommand
 
     public Raid[] buildRaids() {
         Location[] locations = { Location.ALL };
-        String[] bossNames = new String[0];
+        String[] bossNames = {""};
         String[] gymNames = {""};
-        Integer[] eggLevels = {};
+        Integer[] eggLevels = {0};
+        Integer[] raidLevels = {0};
 
-        boolean foundEggLevels = false;
         for (final Argument arg : this.args) {
             switch (arg.getType()) {
                 case Locations:
@@ -211,37 +223,30 @@ public class UserCommand
                     break;
                 case Pokemon:
                     bossNames = this.toStrings(arg.getParams());
-                    if(!foundEggLevels) {
-                        eggLevels = new Integer[0];
-                    }
                     break;
                 case Egg:
                     eggLevels = this.toIntegers(arg.getParams());
-                    foundEggLevels = true;
                     break;
                 case GymName:
                     gymNames = this.toStrings(arg.getParams());
+                    break;
+                case Level:
+                    raidLevels = this.toIntegers(arg.getParams());
                     break;
             }
         }
 
         final ArrayList<Raid> raids = new ArrayList<>();
         for (final String bossName : bossNames) {
-            for (String gymName : gymNames) {
-                for (final Location location : locations) {
-                    Raid raid = new Raid(Pokemon.nameToID(bossName),0,gymName,location);
-                    System.out.println(raid);
-                    raids.add(raid);
-                }
-            }
-        }
-
-        for (Integer eggLevel : eggLevels) {
-            for (String gymName : gymNames) {
-                for (final Location location : locations) {
-                    Raid raid = new Raid(0,eggLevel,gymName,location);
-                    System.out.println(raid);
-                    raids.add(raid);
+            for (Integer eggLevel : eggLevels) {
+                for (Integer raidLevel : raidLevels) {
+                    for (String gymName : gymNames) {
+                        for (final Location location : locations) {
+                            Raid raid = new Raid(Pokemon.nameToID(bossName),eggLevel,raidLevel, gymName,location);
+                            System.out.println(raid);
+                            raids.add(raid);
+                        }
+                    }
                 }
             }
         }

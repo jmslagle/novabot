@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Paris on 18/01/2018.
@@ -31,12 +32,27 @@ public class DataManager implements IDataBase {
     public static final String PgSQL_DRIVER = "org.postgresql.Driver";
     private final HashSet<ScanDBManager> scanDBManagers = new HashSet<>();
 
+
+    public static RotatingSet<Integer> hashCodes = null;
+
+    public synchronized void addHashCode(int hashCode) {
+        hashCodes.syncAdd(hashCode);
+    }
+
+    public synchronized boolean containsHashCode(int hashCode) {
+        return hashCodes.contains(hashCode);
+    }
+
     public HashSet<String> getGymNames() {
         HashSet<String> gymNames = new HashSet<>();
 
         scanDBManagers.forEach(db -> gymNames.addAll(db.getGymNames()));
 
         return gymNames;
+    }
+
+    public RotatingSet<Integer> getHashCodes() {
+        return hashCodes;
     }
 
     public Map<String, Integer> getTokenUses() {
@@ -77,6 +93,8 @@ public class DataManager implements IDataBase {
 
         settingsDbManager = new SettingsDBManager(novaBot);
         settingsDbManager.novabotdbConnect();
+
+        hashCodes = new RotatingSet<>(novaBot.getConfig().getMaxStoredHashes(), ConcurrentHashMap.newKeySet(novaBot.getConfig().getMaxStoredHashes()));
 
         int scannerDbId = 1;
         for (ScannerDb scannerDb : scannerDbs) {

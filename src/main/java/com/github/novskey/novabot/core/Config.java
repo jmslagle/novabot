@@ -14,12 +14,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.maps.GeoApiContext;
-import lombok.extern.slf4j.Slf4j;
 import lombok.Data;
-import net.dv8tion.jda.core.entities.*;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Role;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
-
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -28,6 +28,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -39,6 +40,8 @@ public class Config {
 
     private static final String[] formatKeys = new String[]{"pokemon", "raidEgg", "raidBoss"};
     private static final String[] formattingVars = new String[]{"title", "titleUrl", "body", "content", "showMap", "mapZoom", "mapWidth", "mapHeight"};
+    private static final HashSet<String> filterTypes = new HashSet<>(Arrays.asList("atk", "def", "sta", "level", "iv", "cp"));
+    private JsonObject globalFilter = null;
     private final HashMap<String, JsonObject> pokeFilters = new HashMap<>();
     private final HashMap<String, JsonObject> raidFilters = new HashMap<>();
     private final HashMap<String, NotificationLimit> roleLimits = new HashMap<>();
@@ -95,7 +98,7 @@ public class Config {
     private String mainGuild = null;
 
     public Config(String configName, String gkeys, String formatting, String raidChannelsFile, String pokeChannelsFile,
-                  String supporterLevelsFile, String presetsFile) {
+                  String supporterLevelsFile, String presetsFile, String globalFilterFile) {
 
         Ini configIni = null;
         try {
@@ -160,11 +163,40 @@ public class Config {
             pokeChannels = new AlertChannels();
         }
 
+        loadGlobalFilter(globalFilterFile);
+
         log.info(String.format("Loading %s...", presetsFile));
         loadPresets(presetsFile);
         log.info("Finished loading " + presetsFile);
 
         log.info("Finished configuring");
+    }
+
+    public boolean passesGlobalFilter(PokeSpawn pokeSpawn) {
+        return matchesFilter(globalFilter,pokeSpawn,"global");
+    }
+
+    public boolean useGlobalFilter() {
+        return globalFilter != null;
+    }
+
+    private void loadGlobalFilter(String globalFilterFile) {
+        JsonObject filter = null;
+        JsonParser parser = new JsonParser();
+
+        try {
+            JsonElement element = parser.parse(new FileReader(globalFilterFile));
+
+            if (element.isJsonObject()) {
+                filter = element.getAsJsonObject();
+            }
+
+            log.info(String.format("Loaded global filter %s", globalFilterFile));
+            } catch (FileNotFoundException e) {
+            log.warn(String.format("Couldn't find global filter file %s.",globalFilterFile));
+        }
+
+        globalFilter = filter;
     }
 
     private void loadNovaBotDbConfig(Ini configIni) {
@@ -471,72 +503,69 @@ public class Config {
         NovaBot novaBot = new NovaBot();
         novaBot.setup();
 
-        PokeSpawn pokeSpawn = new PokeSpawn(248);
+        PokeSpawn pokeSpawn = new PokeSpawn(1);
         System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().getPokeFilters().get("ultrarare.json"),pokeSpawn,"ultrarare.json"));
+        System.out.println(novaBot.getConfig().passesGlobalFilter(pokeSpawn));
+
+        RaidSpawn raidSpawn = new RaidSpawn("gymname", "gymid", -35, 149, Team.Valor, ZonedDateTime.now(),ZonedDateTime.now(), 249,50012,1,2,5);
+        System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().getRaidFilters().get("raidfilter.json"),raidSpawn));
 
     }
 
     public boolean matchesFilter(JsonObject filter, RaidSpawn raidSpawn) {
+        ArrayList<String> searchStrings = new ArrayList<>();
+        searchStrings.add(raidSpawn.gymId);
+        searchStrings.add(raidSpawn.getProperties().get("gym_name"));
+        searchStrings.add("Default");
+        searchStrings.add((raidSpawn.bossId >= 1) ? Pokemon.getFilterName(raidSpawn.bossId) : "Egg" + raidSpawn.raidLevel);
+
         RaidNotificationSender.notificationLog.info("Filter: " + filter);
-        String searchStr = raidSpawn.gymId;
 
-        JsonElement raidFilter = searchFilter(filter,searchStr);
-        RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
+        JsonElement raidFilter;
 
-        if (raidFilter == null) {
-            RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'",searchStr));
-            searchStr = raidSpawn.getProperties().get("gym_name");
-            raidFilter = searchFilter(filter, searchStr);
+        for (String searchStr: searchStrings) {
+            raidFilter        = searchFilter(filter,searchStr);
             RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
 
             if (raidFilter == null) {
-                RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'", searchStr));
-
-                searchStr = "Default";
+                RaidNotificationSender.notificationLog.info(String.format("couldn't find filter for '%s'",searchStr));
                 raidFilter = searchFilter(filter, searchStr);
                 RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
+            }else {
+                if (raidFilter.isJsonObject()) {
 
-                if (raidFilter == null){
-                    RaidNotificationSender.notificationLog.info("no default block in filter, moving on");
-                    return false;
+                    JsonElement subFilter = searchFilter(raidFilter.getAsJsonObject(), searchStr);
+                    RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
+
+                    if (subFilter != null) {
+                        return checkAsBoolean(subFilter,searchStr);
+                    } else {
+                        subFilter = searchFilter(raidFilter.getAsJsonObject(), "Level" + raidSpawn.raidLevel);
+                        RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
+
+                        if (subFilter != null && subFilter.getAsBoolean()) {
+                            RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", "Level" + raidSpawn.raidLevel));
+                            return true;
+                        } else {
+                            RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", "Level" + raidSpawn.raidLevel));
+                            return false;
+                        }
+                    }
+                } else {
+                    return checkAsBoolean(raidFilter,searchStr);
                 }
             }
         }
+        return false;
+    }
 
-        if (raidFilter.isJsonObject()) {
-            searchStr = (raidSpawn.bossId >= 1) ? Pokemon.getFilterName(raidSpawn.bossId) : "Egg" + raidSpawn.raidLevel;
-
-            JsonElement subFilter = searchFilter(raidFilter.getAsJsonObject(),searchStr);
-            RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
-
-            if (subFilter != null){
-                if (subFilter.getAsBoolean()) {
-                    RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", searchStr));
-                    return true;
-                }else {
-                    RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", searchStr));
-                    return false;
-                }
-            } else {
-                subFilter = searchFilter(raidFilter.getAsJsonObject(),"Level"+raidSpawn.raidLevel);
-                RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
-
-                if(subFilter != null && subFilter.getAsBoolean()){
-                    RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", "Level"+ raidSpawn.raidLevel));
-                    return true;
-                }else {
-                    RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", "Level"+ raidSpawn.raidLevel));
-                    return false;
-                }
-            }
+    private boolean checkAsBoolean(JsonElement element, String searchStr) {
+        if (element.getAsBoolean()) {
+            RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", searchStr));
+            return true;
         } else {
-            if (raidFilter.getAsBoolean()) {
-                RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", searchStr));
-                return true;
-            }else{
-                RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", searchStr));
-                return false;
-            }
+            RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", searchStr));
+            return false;
         }
     }
 
@@ -554,53 +583,76 @@ public class Config {
         if (pokeFilter.isJsonArray()) {
             JsonArray array = pokeFilter.getAsJsonArray();
             for (JsonElement element : array) {
-                if (processElement(element, pokeSpawn,filterName)) return true;
+                PokeNotificationSender.notificationLog.info(String.format("Checking %s against filter: %s", pokeSpawn.getProperties().get("pkmn"),element));
+                if (processPokeElement(element, pokeSpawn, filterName)) return true;
+                PokeNotificationSender.notificationLog.info(String.format("%s didn't pass.",pokeSpawn.getProperties().get("pkmn")));
             }
+        }else {
+            return processPokeElement(pokeFilter, pokeSpawn, filterName);
         }
-        return processElement(pokeFilter,pokeSpawn,filterName);
+
+        return false;
     }
 
-    private boolean processElement(JsonElement pokeFilter, PokeSpawn pokeSpawn, String filterName) {
+    private boolean processPokeElement(JsonElement pokeFilter, PokeSpawn pokeSpawn, String filterName) {
         if (pokeFilter.isJsonObject()) {
             JsonObject obj = pokeFilter.getAsJsonObject();
 
-            JsonElement maxObj = obj.get("max_iv");
-            JsonElement minObj = obj.get("min_iv");
+            for (String filterType : filterTypes) {
+                JsonElement maxObj = obj.get("max_" + filterType);
+                JsonElement minObj = obj.get("min_" + filterType);
 
-            float max = maxObj == null ? Integer.MAX_VALUE : maxObj.getAsFloat();
-            float min = minObj == null ? Integer.MIN_VALUE : minObj.getAsFloat();
+                float max = maxObj == null ? Integer.MAX_VALUE : maxObj.getAsFloat();
+                float min = minObj == null ? Integer.MIN_VALUE : minObj.getAsFloat();
 
-            if ((pokeSpawn.iv == null ? -1 : pokeSpawn.iv) <= max && (pokeSpawn.iv == null ? -1 : pokeSpawn.iv) >= min) {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon between specified ivs (%s,%s)", infOrNum(min), infOrNum(max)));
-            } else {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon (%s%%) not between specified ivs (%s,%s). filter %s", pokeSpawn.iv, infOrNum(min), infOrNum(max), filterName));
-                return false;
-            }
+                boolean passed = true;
+                String  failed = "";
 
-            maxObj = obj.get("max_cp");
-            minObj = obj.get("min_cp");
+                switch (filterType) {
+                    case "iv":
+                        if (!((pokeSpawn.iv == null ? -1 : pokeSpawn.iv) <= max && (pokeSpawn.iv == null ? -1 : pokeSpawn.iv) >= min)) {
+                            failed = String.valueOf(pokeSpawn.iv);
+                            passed = false;
+                        }
+                        break;
+                    case "cp":
+                        if (!((pokeSpawn.cp == null ? -1 : pokeSpawn.cp) <= max && (pokeSpawn.cp == null ? -1 : pokeSpawn.cp) >= min)) {
+                            failed = String.valueOf(pokeSpawn.cp);
+                            passed = false;
+                        }
+                        break;
+                    case "level":
+                        if (!((pokeSpawn.level == null ? -1 : pokeSpawn.level) <= max && (pokeSpawn.level == null ? -1 : pokeSpawn.level) >= min)) {
+                            failed = String.valueOf(pokeSpawn.level);
+                            passed = false;
+                        }
+                        break;
+                    case "atk":
+                        if (!((pokeSpawn.iv_attack == null ? -1 : pokeSpawn.iv_attack) <= max && (pokeSpawn.iv_attack == null ? -1 : pokeSpawn.iv_attack) >= min)) {
+                            failed = String.valueOf(pokeSpawn.iv_attack);
+                            passed = false;
+                        }
+                        break;
+                    case "def":
+                        if (!((pokeSpawn.iv_defense == null ? -1 : pokeSpawn.iv_defense) <= max && (pokeSpawn.iv_defense == null ? -1 : pokeSpawn.iv_defense) >= min)) {
+                            failed = String.valueOf(pokeSpawn.iv_defense);
+                            passed = false;
+                        }
+                        break;
+                    case "sta":
+                        if (!((pokeSpawn.iv_stamina == null ? -1 : pokeSpawn.iv_stamina) <= max && (pokeSpawn.iv_stamina == null ? -1 : pokeSpawn.iv_stamina) >= min)) {
+                            failed = String.valueOf(pokeSpawn.iv_stamina);
+                            passed = false;
+                        }
+                        break;
+                }
 
-            max = maxObj == null ? Integer.MAX_VALUE : maxObj.getAsFloat();
-            min = minObj == null ? Integer.MIN_VALUE : minObj.getAsFloat();
-
-            if ((pokeSpawn.cp == null ? -1 : pokeSpawn.cp) <= max && (pokeSpawn.cp == null ? -1 : pokeSpawn.cp) >= min) {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon between specified cp (%s,%s)", infOrNum(min), infOrNum(max)));
-            } else {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon (%sCP) not between specified cp (%s,%s)", pokeSpawn.cp, infOrNum(min), infOrNum(max)));
-                return false;
-            }
-
-            maxObj = obj.get("max_level");
-            minObj = obj.get("min_level");
-
-            max = maxObj == null ? Integer.MAX_VALUE : maxObj.getAsInt();
-            min = minObj == null ? Integer.MIN_VALUE : minObj.getAsFloat();
-
-            if ((pokeSpawn.level == null ? -1 : pokeSpawn.level) <= max && (pokeSpawn.level == null ? -1 : pokeSpawn.level) >= min) {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon between specified level (%s,%s)", infOrNum(min), infOrNum(max)));
-            } else {
-                PokeNotificationSender.notificationLog.info(String.format("Pokemon (level %s) not between specified level (%s,%s)", pokeSpawn.level, infOrNum(min), infOrNum(max)));
-                return false;
+                if (passed) {
+                    PokeNotificationSender.notificationLog.info(String.format("Pokemon between specified %s (%s,%s)", filterType, infOrNum(min), infOrNum(max)));
+                } else {
+                    PokeNotificationSender.notificationLog.info(String.format("Pokemon (%s %s) not between specified %s (%s,%s). filter %s", filterType, failed, filterType, infOrNum(min), infOrNum(max), filterName));
+                    return false;
+                }
             }
 
             JsonArray sizes = obj.getAsJsonArray("size");
@@ -622,6 +674,7 @@ public class Config {
                     return false;
                 }
             }
+
             return true;
         } else {
             if (pokeFilter.getAsBoolean()) {

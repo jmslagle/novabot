@@ -2,10 +2,9 @@ package com.github.novskey.novabot.parser;
 
 import com.github.novskey.novabot.core.Config;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
+
+import static com.github.novskey.novabot.parser.ArgType.*;
 
 public class Commands {
     private HashMap<String, Command> commands;
@@ -13,32 +12,34 @@ public class Commands {
     public Commands(Config config) {
         commands = new HashMap<>();
         final Command clearLocation = new Command()
-                .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
-                .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Locations)))
-                .setArgRange(1, 2);
+                .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Locations)))
+                .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Locations)))
+                .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Locations)));
 
         commands.put("!clearlocation", clearLocation);
 
         if(config.presetsEnabled()){
             Command loadPreset = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset,ArgType.Locations)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
-                    .setArgRange(1,3);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset, Locations)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset, Locations)));
 
             Command delPreset = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset,ArgType.Locations)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
-                    .setArgRange(1,3);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset, Locations)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset, Locations)));
 
             Command clearPreset = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Preset)))
-                    .setArgRange(1,2);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset)));
 
             Command clearPresetLocation = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Locations)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Locations)))
-                    .setArgRange(1,2);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Locations)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Locations)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Locations)));
 
             commands.put("!loadpreset", loadPreset);
             commands.put("!delpreset", delPreset);
@@ -48,24 +49,40 @@ public class Commands {
 
         if(config.pokemonEnabled()) {
             final Command addPokemon = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Locations, ArgType.IV, ArgType.Level, ArgType.CP)))
-                    .setArgRange(1, 5);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon, Locations, IV, Level, CP)));
 
             if (config.isAllowAllLocation()){
-                addPokemon.setRequiredArgTypes(new HashSet<>(Collections.singletonList(ArgType.Pokemon)));
+                addPokemon.setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon)))
+                          .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)));
             }else{
-                addPokemon.setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.Pokemon,ArgType.Locations)));
+                addPokemon.setRequiredArgTypes(new HashSet<>(Arrays.asList(Pokemon, Locations)));
             }
+            addPokemon.addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, IV)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, IV, Level)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, IV, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, IV, Level, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, Level)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, Level, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, IV)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, IV, Level)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, IV, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, IV, Level, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level, CP)))
+                      .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, CP)));
 
             final Command delPokemon = new Command()
                     .setValidArgTypes(addPokemon.getValidArgTypes())
                     .setRequiredArgTypes(addPokemon.getRequiredArgTypes())
-                    .setArgRange(1, 5);
+                    .setValidArgCombinations(addPokemon.getValidArgCombinations());
 
             final Command clearPokemon = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon)))
-                    .setArgRange(1, 2);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)));
 
             commands.put("!addpokemon", addPokemon);
             commands.put("!delpokemon", delPokemon);
@@ -75,24 +92,58 @@ public class Commands {
 
         if(config.raidsEnabled()){
             final Command addRaid = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon,ArgType.Egg, ArgType.Locations, ArgType.GymName)))
-                    .setArgRange(1, 4);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Locations, Level, GymName)));
 
             if (config.isAllowAllLocation()){
-                addRaid.setRequiredArgTypes(new HashSet<>(Collections.singletonList(ArgType.CommandStr)));
+                addRaid.setRequiredArgTypes(new HashSet<>(Collections.singletonList(CommandStr)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Level)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Level)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Level)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Level, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Level, GymName)))
+                       .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Level, GymName)));
             }else{
-                addRaid.setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr,ArgType.Locations)));
+                addRaid.setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Locations)));
             }
+
+            addRaid.addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Level, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Level, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Level, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Level, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Level, GymName, Locations)))
+                   .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Level, GymName, Locations)));
 
             final Command delRaid = new Command()
                     .setValidArgTypes(addRaid.getValidArgTypes())
                     .setRequiredArgTypes(addRaid.getRequiredArgTypes())
-                    .setArgRange(1, 3);
+                    .setValidArgCombinations(addRaid.getValidArgCombinations());
 
             Command clearRaid = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Egg)))
-                    .setRequiredArgTypes(new HashSet<>(Collections.singletonList(ArgType.CommandStr)))
-                    .setArgRange(1, 2);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon, Level, Egg)))
+                    .setRequiredArgTypes(new HashSet<>(Collections.singletonList(CommandStr)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Level)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon, Egg, Level)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Egg, Level)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Level)));
 
             commands.put("!addraid", addRaid);
             commands.put("!delraid", delRaid);
@@ -102,19 +153,36 @@ public class Commands {
 
         if(config.statsEnabled()) {
             final Command stats = new Command()
-                    .setValidArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(ArgType.CommandStr, ArgType.Pokemon, ArgType.Int, ArgType.TimeUnit)))
-                    .setArgRange(1, 3);
+                    .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon, Int, TimeUnit)))
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Pokemon, Int, TimeUnit)))
+                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr,Pokemon, Int, TimeUnit)));
             commands.put("!stats", stats);
         }
+        Command help = new Command()
+                .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, CommandName)))
+                .setRequiredArgTypes(new HashSet<>(Collections.singleton(CommandStr)))
+                .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, CommandName)))
+                .addValidArgCombination(new TreeSet<>(Collections.singletonList(CommandStr)));
+        commands.put("!help",help);
     }
 
     public Command get(final String firstArg) {
-        return commands.get(firstArg);
+        if(!firstArg.startsWith("!")){
+            return commands.get("!"+firstArg);
+        }else{
+            return commands.get(firstArg);
+        }
     }
 
     public boolean isCommandWithArgs(final String s) {
         return commands.get(s) != null;
     }
 
+    public boolean validName(String trimmed) {
+        if(!trimmed.startsWith("!")){
+            return commands.containsKey("!"+trimmed);
+        }else{
+            return commands.containsKey(trimmed);
+        }
+    }
 }

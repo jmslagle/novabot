@@ -1,12 +1,16 @@
 package com.github.novskey.novabot.parser;
 
-import java.util.*;
+import lombok.Data;
 
-public class Command
-{
-    int minArgs;
-    int maxArgs;
+import java.util.HashSet;
+import java.util.TreeSet;
+
+import static com.github.novskey.novabot.parser.ArgType.CommandStr;
+
+@Data
+public class Command {
     HashSet<ArgType> validArgTypes;
+    HashSet<TreeSet<ArgType>> validArgCombinations;
     private HashSet<ArgType> requiredArgTypes;
     final boolean allowDuplicateArgs;
     private Argument[] arguments;
@@ -14,7 +18,57 @@ public class Command
     public Command() {
         this.validArgTypes = new HashSet<>();
         this.requiredArgTypes = new HashSet<>();
+        this.validArgCombinations = new HashSet<>();
         this.allowDuplicateArgs = false;
+    }
+
+    public Command addValidArgCombination(final TreeSet<ArgType> validCombination) {
+        this.validArgCombinations.add(validCombination);
+        return this;
+    }
+
+    public String getHelpMessage() {
+        StringBuilder str = new StringBuilder();
+
+        str.append("Valid argument types:\n\n");
+        for (ArgType validArgType : validArgTypes) {
+            if(validArgType == CommandStr) continue;
+            str.append(String.format("  %s%n",(validArgType)));
+        }
+        str.append("\nValid argument combinations:\n\n");
+        for (TreeSet<ArgType> validArgCombination : validArgCombinations) {
+            str.append(String.format("  %s%n",(argCombinationToString(validArgCombination))));
+        }
+        return str.toString();
+    }
+
+    private String argCombinationToString(TreeSet<ArgType> validArgCombination) {
+        StringBuilder str = new StringBuilder();
+
+        if (validArgCombination.size() == 1 && validArgCombination.contains(CommandStr)){
+            str.append("nothing");
+        }else{
+            int i = 0;
+            for (ArgType argType : validArgCombination) {
+                if (argType == CommandStr) continue;
+                if (i != 0) {
+                    str.append(", ");
+                }
+                str.append(argType);
+                i++;
+            }
+        }
+
+        return str.toString();
+    }
+
+    public HashSet<TreeSet<ArgType>> getValidArgCombinations() {
+        return validArgCombinations;
+    }
+
+    public Command setValidArgCombinations(final HashSet<TreeSet<ArgType>> validArgCombinations){
+        this.validArgCombinations = validArgCombinations;
+        return this;
     }
 
     public Command setValidArgTypes(final HashSet<ArgType> validArgTypes) {
@@ -29,12 +83,6 @@ public class Command
 
     public HashSet<ArgType> getValidArgTypes() {
         return this.validArgTypes;
-    }
-
-    public Command setArgRange(final int min, final int max) {
-        this.minArgs = min;
-        this.maxArgs = max;
-        return this;
     }
 
     public HashSet<ArgType> getRequiredArgTypes() {
@@ -57,11 +105,23 @@ public class Command
         return true;
     }
 
-    public int getMinArgs() {
-        return this.minArgs;
-    }
-
-    public int getMaxArgs() {
-        return this.maxArgs;
+    public boolean validCombination(HashSet<ArgType> argTypes) {
+        boolean match = false;
+        for (TreeSet<ArgType> validArgCombination : validArgCombinations) {
+            match = true;
+            if (argTypes.size() == validArgCombination.size()) {
+                for (ArgType argType : validArgCombination) {
+                    if (!argTypes.contains(argType)) {
+                        match = false;
+                    }
+                }
+            } else {
+                match = false;
+            }
+            if (match){
+                break;
+            }
+        }
+        return match;
     }
 }

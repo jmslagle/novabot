@@ -13,6 +13,7 @@ public class CommandLineOptions {
     private String raidChannels = "raidchannels.ini";
     private String pokeChannels = "pokechannels.ini";
     private String presets = "presets.ini";
+    private String globalFilter = "globalfilter.json";
     private String locale = "en";
 
     public static CommandLineOptions parse(String[] args) {
@@ -24,6 +25,9 @@ public class CommandLineOptions {
                     break;
                 case "-gf":
                     parsed.setGeofences(args[i + 1]);
+                    break;
+                case "-glf":
+                    parsed.setGlobalFilter(args[i + 1]);
                     break;
                 case "-sl":
                     parsed.setSupporterLevels(args[i + 1]);

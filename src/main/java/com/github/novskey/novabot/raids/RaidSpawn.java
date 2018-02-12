@@ -82,10 +82,7 @@ public class RaidSpawn extends Spawn {
 
         this.raidEnd = raidEnd;
 
-        getProperties().put("time_left", timeLeft(raidEnd));
-
         this.battleStart = battleStart;
-        getProperties().put("time_left_start", timeLeft(battleStart));
 
 
         this.bossId = bossId;
@@ -144,6 +141,9 @@ public class RaidSpawn extends Spawn {
     public Message buildMessage(String formatFile) {
 
         if (builtMessages.get(formatFile) == null) {
+
+            getProperties().put("time_left", timeLeft(raidEnd));
+            getProperties().put("time_left_start", timeLeft(battleStart));
 
             if (!getProperties().containsKey("city")) {
                 novaBot.reverseGeocoder.geocodedLocation(lat, lon).getProperties().forEach(getProperties()::put);

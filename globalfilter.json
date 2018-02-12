@@ -1,0 +1,4745 @@
+{
+  "Bulbasaur": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ivysaur": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Venusaur": "True",
+  "Charmander": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Charmeleon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Charizard": "True",
+  "Squirtle": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wartortle": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Blastoise": "True",
+  "Caterpie": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Metapod": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Butterfree": "True",
+  "Weedle": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Kakuna": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Beedrill": "True",
+  "Pidgey": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pidgeotto": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pidgeot": "True",
+  "Rattata": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Raticate": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Spearow": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Fearow": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ekans": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Arbok": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pikachu": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Raichu": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Sandshrew": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sandslash": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nidoran♀": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nidorina": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nidoqueen": "True",
+  "Nidoran♂": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nidorino": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nidoking": "True",
+  "Clefairy": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Clefable": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Vulpix": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ninetales": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Jigglypuff": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wigglytuff": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Zubat": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Golbat": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Oddish": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Gloom": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Vileplume": "True",
+  "Paras": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Parasect": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Venonat": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Venomoth": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Diglett": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Dugtrio": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Meowth": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Persian": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Psyduck": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Golduck": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Mankey": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Primeape": "True",
+  "Growlithe": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Arcanine": "True",
+  "Poliwag": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Poliwhirl": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Poliwrath": "True",
+  "Abra": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Kadabra": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Alakazam": "True",
+  "Machop": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Machoke": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Machamp": "True",
+  "Bellsprout": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Weepinbell": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Victreebel": "True",
+  "Tentacool": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Tentacruel": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Geodude": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Graveler": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Golem": "True",
+  "Ponyta": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Rapidash": "True",
+  "Slowpoke": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Slowbro": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Magnemite": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Magneton": "True",
+  "Farfetch\u0027d": "True",
+  "Doduo": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Dodrio": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Seel": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Dewgong": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Grimer": "True",
+  "Muk": "True",
+  "Shellder": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Cloyster": "True",
+  "Gastly": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Haunter": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Gengar": "True",
+  "Onix": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Drowzee": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Hypno": "tRUE",
+  "Krabby": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Kingler": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Voltorb": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Electrode": "tRUE",
+  "Exeggcute": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Exeggutor": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Cubone": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Marowak": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Hitmonlee": "True",
+  "Hitmonchan": "True",
+  "Lickitung": "True",
+  "Koffing": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Weezing": "True",
+  "Rhyhorn": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Rhydon": "True",
+  "Chansey": "True",
+  "Tangela": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Kangaskhan": "True",
+  "Horsea": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Seadra": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Goldeen": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Seaking": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Staryu": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Starmie": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Mr. Mime": "True",
+  "Scyther": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Jynx": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Electabuzz": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Magmar": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pinsir": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Tauros": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Magikarp": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Gyarados": "True",
+  "Lapras": "True",
+  "Ditto": "True",
+  "Eevee": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Vaporeon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Jolteon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Flareon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Porygon": "True",
+  "Omanyte": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Omastar": "True",
+  "Kabuto": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Kabutops": "True",
+  "Aerodactyl": "True",
+  "Snorlax": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Articuno": "True",
+  "Zapdos": "True",
+  "Moltres": "True",
+  "Dratini": "True",
+  "Dragonair": "True",
+  "Dragonite": "True",
+  "Mewtwo": "True",
+  "Mew": "True",
+  "Chikorita": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Bayleef": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    },
+    {
+      "min_iv": "90"
+    }
+  ],
+  "Meganium": "True",
+  "Cyndaquil": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Quilava": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Typhlosion": "True",
+  "Totodile": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Croconaw": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Feraligatr": "True",
+  "Sentret": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Furret": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Hoothoot": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Noctowl": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ledyba": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ledian": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Spinarak": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ariados": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Crobat": "True",
+  "Chinchou": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Lanturn": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pichu": "True",
+  "Cleffa": "True",
+  "Igglybuff": "True",
+  "Togepi": "True",
+  "Togetic": "True",
+  "Natu": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Xatu": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Mareep": "True",
+  "Flaaffy": "true",
+  "Ampharos": "True",
+  "Bellossom": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Marill": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Azumarill": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sudowoodo": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Politoed": "True",
+  "Hoppip": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Skiploom": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Jumpluff": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Aipom": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sunkern": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sunflora": "true",
+  "Yanma": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wooper": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Quagsire": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Espeon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Umbreon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Murkrow": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Slowking": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Misdreavus": [
+    {
+      "min_iv": "0"
+    },
+    {
+      "min_cp": "420"
+    },
+    {
+      "min_cp": "666"
+    },
+    {
+      "min_iv": "100"
+    }
+  ],
+  "Unown": "True",
+  "Wobbuffet": "True",
+  "Girafarig": "True",
+  "Pineco": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Forretress": "True",
+  "Dunsparce": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Gligar": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Steelix": "True",
+  "Snubbull": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Granbull": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Qwilfish": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Scizor": "True",
+  "Shuckle": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Heracross": "True",
+  "Sneasel": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Teddiursa": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ursaring": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Slugma": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Magcargo": "True",
+  "Swinub": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Piloswine": "True",
+  "Corsola": "True",
+  "Remoraid": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Octillery": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Delibird": "True",
+  "Mantine": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Skarmory": "True",
+  "Houndour": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Houndoom": "True",
+  "Kingdra": "True",
+  "Phanpy": "True",
+  "Donphan": "True",
+  "Porygon2": "True",
+  "Stantler": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Smeargle": "True",
+  "Tyrogue": "True",
+  "Hitmontop": "True",
+  "Smoochum": "True",
+  "Elekid": "True",
+  "Magby": "True",
+  "Miltank": "True",
+  "Blissey": "True",
+  "Raikou": "True",
+  "Entei": "True",
+  "Suicune": "True",
+  "Larvitar": "True",
+  "Pupitar": "True",
+  "Tyranitar": "True",
+  "Lugia": "True",
+  "Ho-Oh": "True",
+  "Celebi": "True",
+  "Treecko": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Grovyle": "True",
+  "Sceptile": "True",
+  "Torchic": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Combusken": "true",
+  "Blaziken": "True",
+  "Mudkip": "True",
+  "Marshtomp": "True",
+  "Swampert": "True",
+  "Poochyena": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Mightyena": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Zigzagoon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Linoone": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wurmple": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Silcoon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Beautifly": "True",
+  "Cascoon": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Dustox": "True",
+  "Lotad": "True",
+  "Lombre": "True",
+  "Ludicolo": "True",
+  "Seedot": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Nuzleaf": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Shiftry": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Taillow": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Swellow": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wingull": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Pelipper": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Ralts": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Kirlia": "True",
+  "Gardevoir": "True",
+  "Surskit": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Masquerain": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Shroomish": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Breloom": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Slakoth": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "90"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Vigoroth": "True",
+  "Slaking": "True",
+  "Nincada": "true",
+  "Ninjask": "true",
+  "Shedinja": "true",
+  "Whismur": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Loudred": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Exploud": "true",
+  "Makuhita": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Hariyama": "true",
+  "Azurill": "true",
+  "Nosepass": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Skitty": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Delcatty": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sableye": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Mawile": "true",
+  "Aron": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Lairon": "true",
+  "Aggron": "True",
+  "Meditite": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Medicham": "True",
+  "Electrike": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Manectric": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Plusle": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Minun": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Volbeat": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Illumise": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Roselia": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Gulpin": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Swalot": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Carvanha": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sharpedo": "true",
+  "Wailmer": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Wailord": "True",
+  "Numel": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Camerupt": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Torkoal": "True",
+  "Spoink": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Grumpig": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Spinda": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Trapinch": "True",
+  "Vibrava": "True",
+  "Flygon": "True",
+  "Cacnea": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Cacturne": "True",
+  "Swablu": "True",
+  "Altaria": "True",
+  "Zangoose": "True",
+  "Seviper": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Lunatone": "True",
+  "Solrock": "True",
+  "Barboach": "True",
+  "Whiscash": "True",
+  "Corphish": "True",
+  "Crawdaunt": "True",
+  "Baltoy": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Claydol": "True",
+  "Lileep": "True",
+  "Cradily": "True",
+  "Anorith": "True",
+  "Armaldo": "True",
+  "Feebas": "True",
+  "Milotic": "true",
+  "Castform": "True",
+  "Kecleon": "True",
+  "Shuppet": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Banette": "True",
+  "Duskull": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Dusclops": "True",
+  "Tropius": "True",
+  "Chimecho": "True",
+  "Absol": "True",
+  "Wynaut": "True",
+  "Snorunt": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Glalie": "True",
+  "Spheal": [
+    {
+      "min_iv": "0",
+      "max_iv": "0"
+    },
+    {
+      "min_cp": "420",
+      "max_cp": "420"
+    },
+    {
+      "min_cp": "666",
+      "max_cp": "666"
+    },
+    {
+      "min_iv": "100",
+      "max_iv": "100"
+    },
+    {
+      "min_level": "1",
+      "max_level": "1"
+    }
+  ],
+  "Sealeo": "True",
+  "Walrein": "True",
+  "Clamperl": "True",
+  "Huntail": "True",
+  "Gorebyss": "True",
+  "Relicanth": "True",
+  "Luvdisc": "True",
+  "Bagon": "True",
+  "Shelgon": "True",
+  "Salamence": "True",
+  "Beldum": "True",
+  "Metang": "True",
+  "Metagross": "True",
+  "Regirock": "True",
+  "Regice": "True",
+  "Registeel": "True",
+  "Latias": "True",
+  "Latios": "True",
+  "Kyogre": "True",
+  "Groudon": "True",
+  "Rayquaza": "True",
+  "Jirachi": "True",
+  "Deoxys": "True"
+}

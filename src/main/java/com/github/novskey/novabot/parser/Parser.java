@@ -57,14 +57,11 @@ public class Parser {
             command.addException(InputError.DuplicateArgs);
             return command;
         }
-        if (args.length - 1 < cmd.minArgs) {
-            command.addException(InputError.NotEnoughArgs);
+        if(!cmd.validCombination(command.getArgTypes())){
+            command.addException(InputError.InvalidArgCombination);
             return command;
         }
-        if (args.length - 1 > cmd.maxArgs) {
-            command.addException(InputError.TooManyArgs);
-            return command;
-        }
+
         if (!args[0].getParams()[0].equals("!nest") && command.containsArg(ArgType.Pokemon) && command.containsBlacklisted()) {
             command.addException(InputError.BlacklistedPokemon);
             return command;
@@ -110,12 +107,18 @@ public class Parser {
                     locations.add(location);
                 }
                 argument.setParams(locations.toArray());
-            } else if (valid.contains(ArgType.CP) && CP_PATTERN.matcher(trimmed).matches()){
+            } else if (valid.contains(ArgType.GymName) && novaBot.dataManager.getGymNames().contains(trimmed)){
+                argument.setType(ArgType.GymName);
+                argument.setParams(new Object[]{trimmed});
+            } else if (valid.contains(ArgType.CP) && CP_PATTERN.matcher(trimmed).matches()) {
                 argument.setType(ArgType.CP);
                 Matcher matcher = ONLY_NUMBERS.matcher(trimmed);
                 if (matcher.find()) {
                     argument.setParams(new Object[]{Integer.valueOf(matcher.group())});
                 }
+            } else if (valid.contains(ArgType.CommandName) && novaBot.commands.validName(trimmed)){
+                argument.setType(ArgType.CommandName);
+                argument.setParams(new String[]{trimmed});
             } else if (valid.contains(ArgType.Level) && LEVEL_PATTERN.matcher(trimmed).matches()) {
                 argument.setType(ArgType.Level);
                 Matcher matcher = ONLY_NUMBERS.matcher(trimmed);
@@ -352,7 +355,7 @@ public class Parser {
 
         System.out.println(StringLocalizer.getLocalString("StatusDescription"));
 
-        String[] testStrings = new String [] {"!addpokemon Ralts <90iv, 100iv>","!addpokemon ralts", "!addpokemon ralts 90iv", "!addpokemon ralts 90", "!addpokemon ralts iv90", "!addpokemon ralts <iv90,iv99>","!addraid egg5"};
+        String[] testStrings = new String [] {"!addpokemon Ralts <90iv, 100iv>","!addpokemon ralts", "!addpokemon ralts 90iv", "!addpokemon ralts 90", "!addpokemon ralts iv90", "!addpokemon ralts <iv90,iv99>","!addraid egg5", "!addraid", "!help", "!help addpokemon"};
 
         for (String testString : testStrings) {
             System.out.println(testString);
@@ -360,9 +363,11 @@ public class Parser {
             System.out.println(command.getExceptions());
         }
 
-        UserCommand command = novaBot.parser.parseInput("!addraid <egg1,egg2>");
+
+        UserCommand command = novaBot.parser.parseInput("!addraid level5");
         System.out.println(command.getExceptions());
         System.out.println(command.buildRaids());
+
     }
 
 }

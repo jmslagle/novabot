@@ -1,7 +1,10 @@
 package com.github.novskey.novabot.parser;
 
+import lombok.Data;
+
 import java.util.*;
 
+@Data
 public class Argument
 {
     private ArgType type;
