@@ -318,7 +318,7 @@ public class Config {
         commandChannelId = config.get("commandChannel", commandChannelId);
 
         if (commandChannelId == null) {
-            log.warn("Couldn't find commandChannel in %s. novabot will only be able to accept commands in DM.", configName);
+            log.warn(String.format("Couldn't find commandChannel in %s. novabot will only be able to accept commands in DM.", configName));
         }
 
         raidLobbyCategory = config.get("raidLobbyCategory",raidLobbyCategory);
@@ -326,7 +326,7 @@ public class Config {
         mainGuild = config.get("mainGuild",mainGuild);
 
         if (mainGuild == null){
-            log.warn("Couldn't find mainGuild in %s. novabot will use the first guild it finds as main guild.", configName);
+            log.warn(String.format("Couldn't find mainGuild in %s. novabot will use the first guild it finds as main guild.", configName));
         }
     }
 
@@ -507,23 +507,31 @@ public class Config {
         System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().getPokeFilters().get("ultrarare.json"),pokeSpawn,"ultrarare.json"));
         System.out.println(novaBot.getConfig().passesGlobalFilter(pokeSpawn));
 
-        RaidSpawn raidSpawn = new RaidSpawn("gymname", "gymid", -35, 149, Team.Valor, ZonedDateTime.now(),ZonedDateTime.now(), 249,50012,1,2,5);
+        RaidSpawn raidSpawn = new RaidSpawn("gymname", "gymid", -35, 149, Team.Valor, ZonedDateTime.now(),ZonedDateTime.now(), 0,50012,1,2,5);
         System.out.println(novaBot.getConfig().matchesFilter(novaBot.getConfig().getRaidFilters().get("raidfilter.json"),raidSpawn));
 
     }
 
     public boolean matchesFilter(JsonObject filter, RaidSpawn raidSpawn) {
-        ArrayList<String> searchStrings = new ArrayList<>();
-        searchStrings.add(raidSpawn.gymId);
-        searchStrings.add(raidSpawn.getProperties().get("gym_name"));
-        searchStrings.add("Default");
-        searchStrings.add((raidSpawn.bossId >= 1) ? Pokemon.getFilterName(raidSpawn.bossId) : "Egg" + raidSpawn.raidLevel);
+        ArrayList<String> topLevelSearchStrs = new ArrayList<>();
+        topLevelSearchStrs.add(raidSpawn.gymId);
+        topLevelSearchStrs.add(raidSpawn.getProperties().get("gym_name"));
+        topLevelSearchStrs.add("Default");
+
+
+        ArrayList<String> subSearchStrs = new ArrayList<>();
+        if(raidSpawn.bossId == 0){
+            subSearchStrs.add("Egg" + raidSpawn.raidLevel);
+        }else{
+            subSearchStrs.add(Pokemon.getFilterName(raidSpawn.bossId));
+        }
+        subSearchStrs.add("Level" + raidSpawn.raidLevel);
 
         RaidNotificationSender.notificationLog.info("Filter: " + filter);
 
         JsonElement raidFilter;
 
-        for (String searchStr: searchStrings) {
+        for (String searchStr: topLevelSearchStrs) {
             raidFilter        = searchFilter(filter,searchStr);
             RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
 
@@ -533,25 +541,19 @@ public class Config {
                 RaidNotificationSender.notificationLog.info(searchStr + ": " + raidFilter);
             }else {
                 if (raidFilter.isJsonObject()) {
+                    JsonObject object = raidFilter.getAsJsonObject();
+                        for (String subSearchStr : subSearchStrs) {
+                            JsonElement subFilter = searchFilter(object, subSearchStr);
 
-                    JsonElement subFilter = searchFilter(raidFilter.getAsJsonObject(), searchStr);
-                    RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
+                            RaidNotificationSender.notificationLog.info(String.format("%s - %s: %s",searchStr,subSearchStr, subFilter));
 
-                    if (subFilter != null) {
-                        return checkAsBoolean(subFilter,searchStr);
-                    } else {
-                        subFilter = searchFilter(raidFilter.getAsJsonObject(), "Level" + raidSpawn.raidLevel);
-                        RaidNotificationSender.notificationLog.info(searchStr + ": " + subFilter);
-
-                        if (subFilter != null && subFilter.getAsBoolean()) {
-                            RaidNotificationSender.notificationLog.info(String.format("Raid enabled in filter block '%s', posting to discord", "Level" + raidSpawn.raidLevel));
-                            return true;
-                        } else {
-                            RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s', ignoring spawn", "Level" + raidSpawn.raidLevel));
-                            return false;
+                            if (subFilter != null) {
+                                return checkAsBoolean(subFilter, searchStr);
+                            } else {
+                                RaidNotificationSender.notificationLog.info(String.format("Raid not enabled in filter block '%s'",subSearchStr));
+                            }
                         }
-                    }
-                } else {
+                    } else {
                     return checkAsBoolean(raidFilter,searchStr);
                 }
             }
