@@ -21,9 +21,13 @@ public class Commands {
         if(config.presetsEnabled()){
             Command loadPreset = new Command()
                     .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset, Locations)))
-                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)))
-                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset)))
-                    .addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset, Locations)));
+                    .setRequiredArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset)));
+
+            if (config.isAllowAllLocation()){
+                loadPreset.addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Pokemon)));
+            }else{
+                loadPreset.addValidArgCombination(new TreeSet<>(Arrays.asList(CommandStr, Preset, Locations)));
+            }
 
             Command delPreset = new Command()
                     .setValidArgTypes(new HashSet<>(Arrays.asList(CommandStr, Preset, Locations)))
