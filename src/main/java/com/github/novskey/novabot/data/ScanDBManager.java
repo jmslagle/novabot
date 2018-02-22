@@ -435,7 +435,8 @@ public class ScanDBManager  {
                       "       form," +
                       "       cp," +
                       "       level, " +
-                      "       weather_boosted_condition " +
+                      "       weather_boosted_condition, " +
+                      "       encounter_id " +
                       "FROM sightings " +
                       "WHERE updated >= " +
                             (scannerDb.getProtocol().equals("mysql")
@@ -683,7 +684,8 @@ public class ScanDBManager  {
                         cp = (Integer) rs.getObject(12);
                         Integer level = (Integer) rs.getObject(13);
                         weather = rs.getInt(14);
-                        pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, 0, 0, gender, form, cp, level, weather);
+                        String encounter_id = rs.getString(15);
+                        pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, 0, 0, gender, form, cp, level, weather, encounter_id);
 
                         break;
                 }

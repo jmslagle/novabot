@@ -142,6 +142,7 @@ public class PokeSpawn extends Spawn
 
         getProperties().put("weather","unkn");
         getProperties().put("weather_icon","");
+        getProperties().put("encounter_id","");
     }
 
     public PokeSpawn(final int id, final double lat, final double lon, final ZonedDateTime disappearTime, final Integer attack, final Integer defense, final Integer stamina, final Integer move1, final Integer move2, final float weight, final float height, final Integer gender, final Integer form, Integer cp, double cpModifier) {
@@ -156,13 +157,14 @@ public class PokeSpawn extends Spawn
         getProperties().put("level", String.valueOf(level));
     }
 
-    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, int weight, int height, Integer gender, Integer form, Integer cp, Integer level, int weather) {
+    public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, int weight, int height, Integer gender, Integer form, Integer cp, Integer level, int weather, String encounter_id) {
         this(id,lat,lon,disappearTime,attack,defense,stamina,move1,move2,weight,height,gender,form,cp,level);
         Weather w = Weather.fromId(weather);
         if (w != null) {
             getProperties().replace("weather", w.toString());
             getProperties().replace("weather_icon", w.getEmote());
         }
+        getProperties().replace("encounter_id",encounter_id);
     }
 
     public PokeSpawn(int id, double lat, double lon, ZonedDateTime disappearTime, Integer attack, Integer defense, Integer stamina, Integer move1, Integer move2, float weight, float height, Integer gender, Integer form, Integer cp, double cpMod, int weather) {
